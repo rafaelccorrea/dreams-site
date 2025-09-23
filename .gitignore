@@ -45,6 +45,7 @@ coverage/
 
 # History files
 .history/
+**/.history/
 
 # Temporary files
 *.tmp
