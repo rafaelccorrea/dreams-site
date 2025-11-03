@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { Link } from 'react-router-dom'
 import { AppBar, Container } from '@mui/material'
 
 export const StyledAppBar = styled(AppBar)`
@@ -97,7 +98,7 @@ export const NavigationContainer = styled.nav`
   }
 `
 
-export const NavLink = styled.a`
+export const NavLink = styled(Link)`
   color: ${({ theme }) => theme.colors.textPrimary};
   font-weight: 500;
   text-decoration: none;
@@ -250,7 +251,7 @@ export const DropdownMenu = styled.div<{ $isOpen: boolean }>`
   white-space: nowrap;
 `
 
-export const DropdownItem = styled.a`
+export const DropdownItem = styled(Link)`
   color: ${({ theme }) => theme.colors.textPrimary};
   text-decoration: none;
   padding: ${({ theme }) => theme.spacing.sm};

@@ -1,43 +1,74 @@
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 
-export const MainContentWrapper = styled.main`
-  background-image: url('/background.jpg');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-attachment: scroll;
+interface MainContentWrapperProps {
+  $showBackground?: boolean
+}
+
+export const MainContentWrapper = styled.main<MainContentWrapperProps>`
   min-height: calc(100vh - 100px);
   width: 100%;
   position: relative;
   padding-top: 100px;
   overflow-y: visible;
+  isolation: isolate;
+  background: ${({ theme, $showBackground }) => 
+    $showBackground ? 'transparent' : theme.colors.background};
   
-  /* Mostrar a imagem completa começando abaixo do header */
-  
-  /* Garantir que a imagem seja mostrada completamente */
-  background-clip: border-box;
-  
-  /* Overlay escuro para melhorar legibilidade do conteúdo */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.3) 0%,
-      rgba(0, 0, 0, 0.2) 50%,
-      rgba(0, 0, 0, 0.4) 100%
-    );
-    z-index: 0;
-  }
+  /* Camada de fundo com a imagem - altura aumentada para acomodar o card */
+  /* Apenas se $showBackground for true */
+  ${({ $showBackground, theme }) => $showBackground && css`
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(100vh - 100px + 150px);
+      max-height: calc(100vh - 100px + 150px);
+      background-image: url('/background.jpg');
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+      background-attachment: scroll;
+      z-index: 0;
+      transform: scale(1.02);
 
-  /* Garantir que o conteúdo fique acima do overlay */
+      @media (max-width: ${theme.breakpoints.md}) {
+        height: calc(100vh - 90px + 150px);
+        max-height: calc(100vh - 90px + 150px);
+      }
+    }
+    
+    /* Filtros modernos - overlay com gradiente diagonal usando cores do tema */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(100vh - 100px + 150px);
+      max-height: calc(100vh - 100px + 150px);
+      background: linear-gradient(
+        135deg,
+        rgba(51, 112, 166, 0.35) 0%,
+        rgba(0, 0, 0, 0.3) 25%,
+        rgba(0, 0, 0, 0.2) 50%,
+        rgba(0, 0, 0, 0.3) 75%,
+        rgba(51, 112, 166, 0.3) 100%
+      );
+      z-index: 1;
+
+      @media (max-width: ${theme.breakpoints.md}) {
+        height: calc(100vh - 90px + 150px);
+        max-height: calc(100vh - 90px + 150px);
+      }
+    }
+  `}
+
+  /* Garantir que o conteúdo fique acima dos overlays e nítido */
   > * {
     position: relative;
-    z-index: 1;
+    z-index: 2;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {

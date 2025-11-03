@@ -6,6 +6,7 @@ interface LocationContextType {
   setLocation: (location: Location) => void
   clearLocation: () => void
   hasLocation: boolean
+  isLocationConfirmed: boolean // Flag para indicar se o usuário confirmou a localização
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined)
@@ -14,6 +15,7 @@ const STORAGE_KEY = 'user_location'
 
 export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [location, setLocationState] = useState<Location | null>(null)
+  const [isLocationConfirmed, setIsLocationConfirmed] = useState(false)
 
   // Carregar localização do localStorage ao montar
   useEffect(() => {
@@ -22,6 +24,8 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       try {
         const parsed = JSON.parse(savedLocation)
         setLocationState(parsed)
+        // Se há localização salva, considera como confirmada (usuário já havia confirmado antes)
+        setIsLocationConfirmed(true)
       } catch (error) {
         console.error('Erro ao carregar localização:', error)
         localStorage.removeItem(STORAGE_KEY)
@@ -32,10 +36,12 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const setLocation = (newLocation: Location) => {
     setLocationState(newLocation)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newLocation))
+    setIsLocationConfirmed(true) // Marca como confirmado quando o usuário seleciona
   }
 
   const clearLocation = () => {
     setLocationState(null)
+    setIsLocationConfirmed(false)
     localStorage.removeItem(STORAGE_KEY)
   }
 
@@ -46,6 +52,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         setLocation,
         clearLocation,
         hasLocation: location !== null,
+        isLocationConfirmed,
       }}
     >
       {children}

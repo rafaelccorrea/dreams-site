@@ -16,11 +16,13 @@
     "@mui/material": "^5.15.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^7.9.5",
     "styled-components": "^6.1.11"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
+    "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "^5.1.35",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
@@ -32,4 +34,3 @@
     "vite": "^5.0.8"
   }
 }
-

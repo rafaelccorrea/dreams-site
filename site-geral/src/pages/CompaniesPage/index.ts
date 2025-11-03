@@ -1,0 +1,2 @@
+export { CompaniesPage } from './CompaniesPage'
+

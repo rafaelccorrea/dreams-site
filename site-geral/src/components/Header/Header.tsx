@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Menu as MenuIcon, Close as CloseIcon, KeyboardArrowDown, Login as LoginIcon } from '@mui/icons-material'
 import {
   StyledAppBar,
@@ -27,8 +28,14 @@ interface HeaderProps {
 }
 
 export const Header = ({ currentPath = '/' }: HeaderProps) => {
+  const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+  const handleLogoClick = () => {
+    navigate('/')
+    closeMobileMenu()
+  }
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)
@@ -77,7 +84,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
         <HeaderContainer maxWidth="xl">
           {/* Seção Esquerda - Logo */}
           <LeftSection>
-            <LogoContainer>
+            <LogoContainer onClick={handleLogoClick}>
               <span style={{ fontSize: '2rem' }}>🏠</span>
               <LogoText>Imóveis</LogoText>
             </LogoContainer>
@@ -98,8 +105,11 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                       onMouseLeave={handleDropdownLeave}
                     >
                       <NavLink
-                        href={item.href}
+                        to={item.href}
                         className={isActive ? 'active' : ''}
+                        onClick={(e) => {
+                          e.preventDefault()
+                        }}
                       >
                         {item.label}
                         <ChevronIcon className={isDropdownOpen ? 'open' : ''}>
@@ -110,7 +120,8 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                         {item.submenu.map((subItem) => (
                           <DropdownItem
                             key={subItem.href}
-                            href={subItem.href}
+                            to={subItem.href}
+                            onClick={closeMobileMenu}
                           >
                             {subItem.label}
                           </DropdownItem>
@@ -123,8 +134,9 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                 return (
                   <NavLink
                     key={item.href}
-                    href={item.href}
+                    to={item.href}
                     className={currentPath === item.href ? 'active' : ''}
+                    onClick={closeMobileMenu}
                   >
                     {item.label}
                   </NavLink>
@@ -152,7 +164,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               return (
                 <div key={item.href}>
                   <NavLink
-                    href={item.href}
+                    to={item.href}
                     className={currentPath === item.href ? 'active' : ''}
                     onClick={closeMobileMenu}
                   >
@@ -161,7 +173,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                   {item.submenu.map((subItem) => (
                     <NavLink
                       key={subItem.href}
-                      href={subItem.href}
+                      to={subItem.href}
                       className={currentPath === subItem.href ? 'active' : ''}
                       onClick={closeMobileMenu}
                       style={{ paddingLeft: '2rem', fontSize: '0.9rem' }}
@@ -176,7 +188,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
             return (
               <NavLink
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className={currentPath === item.href ? 'active' : ''}
                 onClick={closeMobileMenu}
               >

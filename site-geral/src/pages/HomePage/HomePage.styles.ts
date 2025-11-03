@@ -1,134 +1,94 @@
-import styled from 'styled-components'
+import { Container, Box, Button } from '@mui/material'
+import styled, { keyframes } from 'styled-components'
 
-export const PageContainer = styled.div`
-  min-height: 100vh;
+export const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`
+
+export const HomeContainer = styled(Container)`
+  min-height: calc(100vh - 200px);
+  max-height: calc(100vh - 200px + 150px);
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding-top: ${({ theme }) => theme.spacing['2xl']};
+  padding-bottom: ${({ theme }) => theme.spacing['2xl']};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    min-height: calc(100vh - 180px);
+    max-height: calc(100vh - 180px + 150px);
+    padding-top: ${({ theme }) => theme.spacing.xl};
+    padding-bottom: ${({ theme }) => theme.spacing.xl};
+  }
+`
+
+export const LeftSection = styled(Box)`
   display: flex;
   flex-direction: column;
-  background: ${({ theme }) => theme.colors.background};
-`
-
-export const HeroSection = styled.section`
-  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary} 0%, ${({ theme }) => theme.colors.primaryLight} 100%);
-  padding: ${({ theme }) => theme.spacing['3xl']} ${({ theme }) => theme.spacing.md};
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    animation: pulse 15s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { 
-      opacity: 1; 
-      transform: scale(1); 
-    }
-    50% { 
-      opacity: 0.8; 
-      transform: scale(1.1); 
-    }
-  }
-`
-
-export const HeroContent = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-`
-
-export const HeroTitle = styled.h1`
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: 2rem;
-  }
-`
-
-export const HeroSubtitle = styled.p`
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 1.25rem;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  opacity: 0.95;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: 1rem;
-  }
-`
-
-export const SearchContainer = styled.div`
-  background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing.lg};
-  box-shadow: ${({ theme }) => theme.shadows.xl};
-  max-width: 600px;
-  margin: 0 auto ${({ theme }) => theme.spacing['2xl']};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing.md};
-  }
-`
-
-export const CTAButtons = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
+  align-items: flex-start;
   justify-content: center;
-  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.lg};
+  width: 100%;
+  padding-left: ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    align-items: center;
+    text-align: center;
+    padding-left: 0;
+  }
 `
 
-export const FeaturesSection = styled.section`
-  padding: ${({ theme }) => theme.spacing['3xl']} ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
-`
-
-export const FeaturesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${({ theme }) => theme.spacing.xl};
-  max-width: 1200px;
-  margin: 0 auto;
-`
-
-export const FeatureCard = styled.div`
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing.xl};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
+export const ContactButton = styled(Button)`
+  animation: ${fadeInUp} 1s ease-out forwards;
+  animation-delay: 1s;
+  opacity: 0;
+  padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.xl}`};
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.primary};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  transition: transform ${({ theme }) => theme.transitions.base},
-    box-shadow ${({ theme }) => theme.transitions.base};
+  align-self: flex-start;
+  margin-left: 0;
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: ${({ theme }) => theme.shadows.xl};
+    background: ${({ theme }) => theme.colors.white};
+    box-shadow: ${({ theme }) => theme.shadows.lg};
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    align-self: center;
+    margin-left: 0;
+    width: 100%;
+    max-width: 300px;
   }
 `
 
-export const FeatureIcon = styled.div`
-  font-size: 3rem;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+export const RightSection = styled(Box)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    width: 100%;
+  }
 `
 
-export const FeatureTitle = styled.h3`
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.textPrimary};
+export const PageContainer = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 `
-
-export const FeatureDescription = styled.p`
-  color: ${({ theme }) => theme.colors.textSecondary};
-  line-height: 1.6;
-`
-

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Routes, Route, useLocation as useRouterLocation } from 'react-router-dom'
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material'
 import { ThemeProvider as StyledThemeProvider } from 'styled-components'
 import { muiTheme } from './theme/muiTheme'
@@ -6,34 +7,90 @@ import { styledTheme } from './theme/styledTheme'
 import { GlobalStyle } from './styles/global'
 import { Header } from './components/Header'
 import { HomePage } from './pages/HomePage'
+import { PropertyDetails } from './pages/PropertyDetails'
+import { BrokersPage } from './pages/BrokersPage'
+import { CompaniesPage } from './pages/CompaniesPage'
+import { CompanyDetails } from './pages/CompanyDetails'
+import { BrokerDetails } from './pages/BrokerDetails'
 import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
 
 function AppContent() {
-  const { location, hasLocation } = useLocation()
-  const [showModal, setShowModal] = useState(false)
+  const { hasLocation, isLocationConfirmed } = useLocation()
+  // Verificar localStorage diretamente antes de renderizar para evitar flash
+  const [showModal, setShowModal] = useState(() => {
+    // Verificar se já existe localização salva no localStorage
+    const savedLocation = localStorage.getItem('user_location')
+    // Se já tem localização salva, não mostrar modal
+    return !savedLocation
+  })
 
+  // Verificar se deve mostrar o modal apenas na primeira visita sem localização
   useEffect(() => {
-    // Mostrar modal na primeira visita se não houver localização
-    if (!hasLocation) {
-      setShowModal(true)
+    // Se já tem localização confirmada (salva anteriormente), não mostrar modal
+    if (isLocationConfirmed) {
+      setShowModal(false)
+      return
     }
-  }, [hasLocation])
 
-  const handleModalClose = () => {
-    // Só fecha se houver uma localização definida
-    if (hasLocation) {
+    // Se não tem localização e ainda não foi confirmada, mostrar modal
+    // Mas só mostrar se realmente não houver localização salva
+    if (!hasLocation && !isLocationConfirmed) {
+      const savedLocation = localStorage.getItem('user_location')
+      if (!savedLocation) {
+        setShowModal(true)
+      }
+    }
+  }, [hasLocation, isLocationConfirmed])
+
+  // Fechar modal automaticamente quando localização for selecionada
+  useEffect(() => {
+    if (hasLocation && showModal) {
       setShowModal(false)
     }
+  }, [hasLocation, showModal])
+
+  const handleModalClose = () => {
+    // Sempre permite fechar quando chamado explicitamente
+    // O modal só é fechado via onClose quando o usuário confirma uma localização
+    setShowModal(false)
   }
+
+  const routerLocation = useRouterLocation()
 
   return (
     <>
-      <Header />
-      <MainContentWrapper>
-        <HomePage />
-      </MainContentWrapper>
+      <Header currentPath={routerLocation.pathname} />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <MainContentWrapper $showBackground={true}>
+              <HomePage />
+            </MainContentWrapper>
+          }
+        />
+        <Route path="/property/:id" element={<PropertyDetails />} />
+        <Route 
+          path="/corretores" 
+          element={
+            <MainContentWrapper $showBackground={false}>
+              <BrokersPage />
+            </MainContentWrapper>
+          } 
+        />
+        <Route path="/broker/:id" element={<BrokerDetails />} />
+        <Route 
+          path="/imobiliarias" 
+          element={
+            <MainContentWrapper $showBackground={false}>
+              <CompaniesPage />
+            </MainContentWrapper>
+          } 
+        />
+        <Route path="/company/:id" element={<CompanyDetails />} />
+      </Routes>
       <LocationModal open={showModal} onClose={handleModalClose} />
     </>
   )
