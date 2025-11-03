@@ -1,0 +1,2 @@
+export { LocationIndicator } from './LocationIndicator'
+
