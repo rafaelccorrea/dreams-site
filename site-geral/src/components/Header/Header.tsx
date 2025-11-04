@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Menu as MenuIcon, Close as CloseIcon, KeyboardArrowDown, Login as LoginIcon } from '@mui/icons-material'
+import { Menu as MenuIcon, Close as CloseIcon, KeyboardArrowDown, Login as LoginIcon, LocationOn } from '@mui/icons-material'
+import { Box } from '@mui/material'
 import {
   StyledAppBar,
   HeaderContainer,
@@ -18,10 +19,12 @@ import {
   DropdownMenu,
   DropdownItem,
   ChevronIcon,
+  MobileLocationIcon,
 } from './Header.styles'
 import { StyledButton } from './HeaderButton'
 import { NavItem } from './Header.types'
 import { LocationIndicator } from '../LocationIndicator'
+import { LocationModal } from '../LocationModal'
 
 interface HeaderProps {
   currentPath?: string
@@ -32,6 +35,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
 
   const handleLogoClick = () => {
     navigate('/')
@@ -98,8 +102,8 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               <img 
                 src="/logo-dream.png" 
                 alt="Dream Keys Logo" 
+                className="logo-header"
                 style={{ 
-                  height: '235px', 
                   width: 'auto',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.15))',
@@ -212,10 +216,23 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
 
           {/* Seção Direita - Localização e Botão Entrar */}
           <RightSection>
-            <LocationIndicator />
-            <StyledButton variant="contained" color="primary" startIcon={<LoginIcon />}>
-              Entrar
-            </StyledButton>
+            {/* LocationIndicator - apenas desktop */}
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+              <LocationIndicator />
+            </Box>
+            
+            {/* Ícone de localização - apenas mobile */}
+            <MobileLocationIcon onClick={() => setLocationModalOpen(true)}>
+              <LocationOn />
+            </MobileLocationIcon>
+            
+            {/* Botão Entrar - apenas desktop */}
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+              <StyledButton variant="contained" color="primary" startIcon={<LoginIcon />}>
+                Entrar
+              </StyledButton>
+            </Box>
+            
             <MobileMenuToggle onClick={toggleMobileMenu}>
               {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
             </MobileMenuToggle>
@@ -225,67 +242,57 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
         {/* Menu Mobile */}
         <MobileMenu $isOpen={mobileMenuOpen}>
           {navItems.map((item) => {
+            // No mobile, renderizar todos os subitens diretamente, sem mostrar o item pai
             if (item.submenu && item.submenu.length > 0) {
-              return (
-                <div key={item.href}>
+              return item.submenu.map((subItem) => {
+                // Mapear sub-itens para filtros (mesma lógica do dropdown)
+                const getFilters = (href: string) => {
+                  const params = new URLSearchParams()
+                  
+                  if (href.includes('casas-a-venda')) {
+                    params.set('type', 'house')
+                    params.set('transaction', 'sale')
+                  } else if (href.includes('casas-para-alugar')) {
+                    params.set('type', 'house')
+                    params.set('transaction', 'rent')
+                  } else if (href.includes('apartamentos-a-venda')) {
+                    params.set('type', 'apartment')
+                    params.set('transaction', 'sale')
+                  } else if (href.includes('apartamentos-para-alugar')) {
+                    params.set('type', 'apartment')
+                    params.set('transaction', 'rent')
+                  } else if (href.includes('imoveis-comerciais-a-venda')) {
+                    params.set('type', 'commercial')
+                    params.set('transaction', 'sale')
+                  } else if (href.includes('imoveis-comerciais-para-alugar')) {
+                    params.set('type', 'commercial')
+                    params.set('transaction', 'rent')
+                  }
+                  
+                  return params.toString()
+                }
+                
+                const filterParams = getFilters(subItem.href)
+                const finalHref = filterParams ? `/?${filterParams}` : '/'
+                
+                return (
                   <NavLink
-                    to={item.href}
-                    className={currentPath === item.href ? 'active' : ''}
-                    onClick={closeMobileMenu}
+                    key={subItem.href}
+                    to={finalHref}
+                    className={currentPath === subItem.href ? 'active' : ''}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      closeMobileMenu()
+                      navigate(finalHref)
+                    }}
                   >
-                    {item.label}
+                    {subItem.label}
                   </NavLink>
-                  {item.submenu.map((subItem) => {
-                    // Mapear sub-itens para filtros (mesma lógica do dropdown)
-                    const getFilters = (href: string) => {
-                      const params = new URLSearchParams()
-                      
-                      if (href.includes('casas-a-venda')) {
-                        params.set('type', 'house')
-                        params.set('transaction', 'sale')
-                      } else if (href.includes('casas-para-alugar')) {
-                        params.set('type', 'house')
-                        params.set('transaction', 'rent')
-                      } else if (href.includes('apartamentos-a-venda')) {
-                        params.set('type', 'apartment')
-                        params.set('transaction', 'sale')
-                      } else if (href.includes('apartamentos-para-alugar')) {
-                        params.set('type', 'apartment')
-                        params.set('transaction', 'rent')
-                      } else if (href.includes('imoveis-comerciais-a-venda')) {
-                        params.set('type', 'commercial')
-                        params.set('transaction', 'sale')
-                      } else if (href.includes('imoveis-comerciais-para-alugar')) {
-                        params.set('type', 'commercial')
-                        params.set('transaction', 'rent')
-                      }
-                      
-                      return params.toString()
-                    }
-                    
-                    const filterParams = getFilters(subItem.href)
-                    const finalHref = filterParams ? `/?${filterParams}` : '/'
-                    
-                    return (
-                      <NavLink
-                        key={subItem.href}
-                        to={finalHref}
-                        className={currentPath === subItem.href ? 'active' : ''}
-                        onClick={(e) => {
-                          e.preventDefault()
-                          closeMobileMenu()
-                          navigate(finalHref)
-                        }}
-                        style={{ paddingLeft: '2rem', fontSize: '0.9rem' }}
-                      >
-                        {subItem.label}
-                      </NavLink>
-                    )
-                  })}
-                </div>
-              )
+                )
+              })
             }
             
+            // Itens sem submenu aparecem normalmente
             return (
               <NavLink
                 key={item.href}
@@ -304,6 +311,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
       </StyledAppBar>
 
       <Overlay $isOpen={mobileMenuOpen} onClick={closeMobileMenu} />
+      <LocationModal open={locationModalOpen} onClose={() => setLocationModalOpen(false)} />
     </>
   )
 }

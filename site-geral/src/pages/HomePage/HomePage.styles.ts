@@ -29,6 +29,13 @@ export const HomeContainer = styled(Container)`
     padding-top: ${({ theme }) => theme.spacing.xl};
     padding-bottom: ${({ theme }) => theme.spacing.xl};
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    min-height: auto;
+    max-height: none;
+    padding-top: ${({ theme }) => theme.spacing.lg};
+    padding-bottom: ${({ theme }) => theme.spacing.lg};
+  }
 `
 
 export const LeftSection = styled(Box)`
@@ -44,6 +51,11 @@ export const LeftSection = styled(Box)`
     align-items: center;
     text-align: center;
     padding-left: 0;
+    gap: ${({ theme }) => theme.spacing.md};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    gap: ${({ theme }) => theme.spacing.sm};
   }
 `
 
@@ -144,8 +156,13 @@ export const LottieContainer = styled(Box)`
   justify-content: center;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    width: 300px;
-    height: 300px;
+    width: 250px;
+    height: 250px;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    width: 180px;
+    height: 180px;
   }
 
   svg {

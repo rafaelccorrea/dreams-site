@@ -63,9 +63,9 @@ function AppContent() {
   const routerLocation = useRouterLocation()
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
       <Header currentPath={routerLocation.pathname} />
-      <Box sx={{ flex: 1 }}>
+      <Box sx={{ flex: 1, width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
         <Routes>
           <Route
             path="/"

@@ -120,6 +120,11 @@ const CardContainer = styled.div`
     max-width: 100%;
     backdrop-filter: blur(20px) saturate(200%) brightness(1.1);
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => theme.spacing.lg};
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+  }
 `
 
 const CardTitle = styled.h3`
@@ -127,6 +132,11 @@ const CardTitle = styled.h3`
   font-weight: 700;
   color: ${({ theme }) => theme.colors.textPrimary};
   margin-bottom: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 1.25rem;
+    margin-bottom: ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 const CardSubtitle = styled.p`
@@ -134,6 +144,11 @@ const CardSubtitle = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
   line-height: 1.6;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 0.9rem;
+    margin-bottom: ${({ theme }) => theme.spacing.md};
+  }
 `
 
 const SearchContainer = styled.div`
@@ -231,12 +246,22 @@ const PriceContainer = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 const AreaContainer = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 const DrawerHeader = styled.div`

@@ -13,9 +13,15 @@ export const HeaderSection = styled(Box)`
   padding-top: calc(100px + ${({ theme }) => theme.spacing.xl});
   z-index: 1;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     margin-top: -90px;
     padding-top: calc(90px + ${({ theme }) => theme.spacing.xl});
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    margin-top: -70px;
+    padding-top: calc(70px + ${({ theme }) => theme.spacing.lg});
+    padding-bottom: ${({ theme }) => theme.spacing.lg};
   }
 
   &::before {
@@ -138,6 +144,14 @@ export const SectionTitle = styled(Typography)`
   padding-left: 0;
   margin-left: 0;
 
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 1.5rem;
+    margin-bottom: ${({ theme }) => theme.spacing.lg};
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
+
   &::before {
     content: "";
     width: 4px;
@@ -145,6 +159,11 @@ export const SectionTitle = styled(Typography)`
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 2px;
     margin-right: ${({ theme }) => theme.spacing.md};
+
+    @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+      height: 24px;
+      width: 3px;
+    }
   }
 `;
 

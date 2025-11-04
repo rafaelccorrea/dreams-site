@@ -72,6 +72,8 @@ export const GlobalStyle = createGlobalStyle`
   html {
     font-size: 16px;
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   body {
@@ -85,13 +87,17 @@ export const GlobalStyle = createGlobalStyle`
     line-height: 1.6;
     overflow-x: hidden;
     overflow-y: auto;
+    max-width: 100vw;
+    width: 100%;
   }
 
   #root {
     width: 100%;
+    max-width: 100vw;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
   }
 
   /* Tipografia */

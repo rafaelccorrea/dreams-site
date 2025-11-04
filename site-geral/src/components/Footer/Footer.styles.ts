@@ -7,57 +7,60 @@ export const StyledFooter = styled(Box)`
   padding: ${({ theme }) => theme.spacing['2xl']} 0 ${({ theme }) => theme.spacing.lg} 0;
   margin-top: auto;
   width: 100%;
+  max-width: 100vw;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
   z-index: 10;
+  overflow-x: hidden;
 `
 
 export const FooterContainer = styled(Container)`
   width: 100% !important;
   max-width: 100% !important;
   padding: ${({ theme }) => `${theme.spacing.xl} ${theme.spacing['2xl']}`} !important;
+  overflow-x: hidden;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     padding: ${({ theme }) => `${theme.spacing.lg} ${theme.spacing.lg}`} !important;
+    max-width: 100vw;
   }
 `
 
 export const FooterContent = styled(Box)`
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xl};
-  align-items: start;
+  align-items: center;
+  text-align: center;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    grid-template-columns: 350px 1fr 1fr;
-    gap: ${({ theme }) => theme.spacing['2xl']};
-    align-items: start;
+    flex-direction: row;
+    align-items: flex-start;
     justify-content: space-between;
-  }
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    grid-template-columns: 400px 1fr 1fr;
+    text-align: left;
+    gap: ${({ theme }) => theme.spacing['2xl']};
   }
 `
 
 export const LogoContainer = styled(Box)`
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   margin-bottom: ${({ theme }) => theme.spacing.md};
   width: 100%;
-  height: fit-content;
-  overflow: hidden;
 
   img {
     filter: brightness(1.1);
     max-width: 100%;
     height: auto;
     object-fit: contain;
+    width: auto;
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    justify-content: flex-start;
+    
     img {
       height: 235px !important;
       max-width: 100%;
@@ -65,12 +68,16 @@ export const LogoContainer = styled(Box)`
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    justify-content: center;
-    align-items: center;
-    
     img {
-      height: 120px !important;
-      max-width: 180px;
+      height: 180px !important;
+      max-width: 100%;
+    }
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    img {
+      height: 180px !important;
+      max-width: 100%;
     }
   }
 `
@@ -90,7 +97,8 @@ export const FooterSection = styled(Box)`
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
     align-items: flex-start;
     text-align: left;
-    max-width: 280px;
+    flex: 1;
+    max-width: none;
   }
 `
 

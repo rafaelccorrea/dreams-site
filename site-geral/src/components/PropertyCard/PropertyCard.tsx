@@ -26,6 +26,10 @@ const ImageContainer = styled.div`
   height: 250px;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    height: 200px;
+  }
 `
 
 const PriceBadge = styled.div`
@@ -40,16 +44,13 @@ const PriceBadge = styled.div`
   font-size: 1.1rem;
   box-shadow: ${({ theme }) => theme.shadows.md};
   z-index: 3;
-`
 
-const PriceContainer = styled.div`
-  position: absolute;
-  top: ${({ theme }) => theme.spacing.md};
-  right: ${({ theme }) => theme.spacing.md};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  z-index: 3;
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 0.9rem;
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+    top: ${({ theme }) => theme.spacing.sm};
+    right: ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 const PriceBadgeItem = styled.div<{ $isSecondary?: boolean }>`
@@ -61,6 +62,27 @@ const PriceBadgeItem = styled.div<{ $isSecondary?: boolean }>`
   font-size: ${({ $isSecondary }) => $isSecondary ? '0.85rem' : '1.1rem'};
   box-shadow: ${({ theme }) => theme.shadows.md};
   white-space: nowrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: ${({ $isSecondary }) => $isSecondary ? '0.75rem' : '0.9rem'};
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  }
+`
+
+const PriceContainer = styled.div`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.md};
+  right: ${({ theme }) => theme.spacing.md};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  z-index: 3;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    top: ${({ theme }) => theme.spacing.sm};
+    right: ${({ theme }) => theme.spacing.sm};
+    gap: ${({ theme }) => theme.spacing.xs};
+  }
 `
 
 const CardContentStyled = styled(CardContent)`
@@ -68,6 +90,10 @@ const CardContentStyled = styled(CardContent)`
   display: flex;
   flex-direction: column;
   padding: ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => theme.spacing.md};
+  }
 `
 
 const Title = styled(Typography)`
@@ -78,6 +104,11 @@ const Title = styled(Typography)`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 1rem;
+    margin-bottom: ${({ theme }) => theme.spacing.xs};
+  }
 `
 
 const Address = styled(Typography)`

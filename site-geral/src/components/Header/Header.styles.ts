@@ -9,10 +9,22 @@ export const StyledAppBar = styled(AppBar)`
   top: 0;
   z-index: ${({ theme }) => theme.zIndex.sticky};
   border-radius: 0 !important;
-  min-height: 100px;
+  height: 100px;
+  max-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    height: 90px;
+    max-height: 90px;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    height: 70px;
+    max-height: 70px;
+  }
 `
 
 export const HeaderContainer = styled(Container)`
@@ -25,10 +37,23 @@ export const HeaderContainer = styled(Container)`
   height: 100px !important;
   margin: 0 auto;
   box-sizing: border-box !important;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  overflow-x: hidden;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`} !important;
-    height: 90px !important;
+    height: auto !important;
+    min-height: 90px;
+    padding-top: ${({ theme }) => theme.spacing.sm} !important;
+    padding-bottom: ${({ theme }) => theme.spacing.sm} !important;
+    max-width: 100vw;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`} !important;
+    min-height: 70px;
+    max-width: 100vw;
   }
 `
 
@@ -38,6 +63,16 @@ export const LeftSection = styled.div`
   justify-content: flex-start;
   flex: 0 0 auto;
   height: 100% !important;
+  min-width: 0;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    flex: 1 1 auto;
+  }
 `
 
 export const CenterSection = styled.div`
@@ -60,9 +95,15 @@ export const RightSection = styled.div`
   flex: 0 0 auto;
   gap: ${({ theme }) => theme.spacing.md};
   height: 100% !important;
+  flex-wrap: wrap;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     justify-content: flex-end;
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    gap: ${({ theme }) => theme.spacing.xs};
   }
 `
 
@@ -74,9 +115,37 @@ export const LogoContainer = styled.div`
   transition: transform ${({ theme }) => theme.transitions.base};
   position: relative;
   overflow: visible;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     transform: scale(1.05);
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    transition: none;
+    
+    &:hover {
+      transform: none;
+    }
+  }
+
+  .logo-header {
+    height: 235px;
+    max-width: 100%;
+    width: auto;
+    object-fit: contain;
+
+    @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+      height: 180px !important;
+      width: auto;
+    }
+
+    @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+      height: 180px !important;
+      width: auto;
+    }
   }
 `
 
@@ -230,13 +299,13 @@ export const NavLink = styled(Link)`
   }
 `
 
-export const MobileMenuToggle = styled.button`
+export const MobileLocationIcon = styled.button`
   display: none;
   background: none;
   border: none;
   cursor: pointer;
   padding: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.textPrimary};
+  color: ${({ theme }) => theme.colors.primary};
   font-size: 1.5rem;
   transition: transform ${({ theme }) => theme.transitions.base};
   height: 100%;
@@ -245,6 +314,30 @@ export const MobileMenuToggle = styled.button`
 
   &:hover {
     transform: scale(1.1);
+    color: ${({ theme }) => theme.colors.primaryDark};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    display: flex;
+  }
+`
+
+export const MobileMenuToggle = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 1.5rem;
+  transition: transform ${({ theme }) => theme.transitions.base};
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    transform: scale(1.1);
+    color: ${({ theme }) => theme.colors.primaryDark};
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
@@ -289,10 +382,16 @@ export const MobileMenu = styled.div<{ $isOpen: boolean }>`
   transition: transform ${({ theme }) => theme.transitions.base},
     opacity ${({ theme }) => theme.transitions.base};
   pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+  border-top: 1px solid ${({ theme }) => theme.colors.neutralLight || '#e0e0e0'};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: flex;
     top: 90px;
+    margin-top: 0;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    top: 70px;
   }
 `
 
@@ -308,6 +407,10 @@ export const Overlay = styled.div<{ $isOpen: boolean }>`
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     top: 90px;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    top: 70px;
   }
 `
 

@@ -255,7 +255,7 @@ export const CompanyDetails = () => {
             Voltar
           </Button>
 
-          <Box sx={{ pt: 6 }}>
+          <Box sx={{ pt: { xs: 12, md: 6 } }}>
             <Grid container spacing={4} alignItems="flex-start">
             <Grid item xs={12} md={4}>
               <Card
@@ -352,10 +352,10 @@ export const CompanyDetails = () => {
           </Grid>
 
             <Grid item xs={12} md={8}>
-              <Box sx={{ display: "flex", gap: 4, flexDirection: { xs: "column", md: "row" } }}>
-                <Box sx={{ flex: 1 }} />
+              <Box sx={{ display: "flex", gap: 4, flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "stretch", md: "flex-start" } }}>
+                <Box sx={{ flex: 1, display: { xs: "none", md: "block" } }} />
 
-                <Box sx={{ minWidth: 200 }}>
+                <Box sx={{ minWidth: { xs: "100%", md: 200 }, width: { xs: "100%", md: "auto" } }}>
                   <Stack spacing={1.5}>
             {company.phone && (
                       <Button

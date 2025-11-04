@@ -15,7 +15,6 @@ export const Footer = () => {
                 src="/logo-dream.png" 
                 alt="Dream Keys Logo" 
                 style={{ 
-                  height: '235px', 
                   width: 'auto',
                   maxWidth: '100%',
                   objectFit: 'contain',

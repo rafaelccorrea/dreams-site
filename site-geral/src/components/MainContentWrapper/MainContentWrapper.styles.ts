@@ -7,8 +7,10 @@ interface MainContentWrapperProps {
 export const MainContentWrapper = styled.main<MainContentWrapperProps>`
   min-height: calc(100vh - 100px);
   width: 100%;
+  max-width: 100vw;
   position: relative;
   padding-top: 100px;
+  overflow-x: hidden;
   overflow-y: visible;
   isolation: isolate;
   background: ${({ theme, $showBackground }) => 
@@ -31,7 +33,6 @@ export const MainContentWrapper = styled.main<MainContentWrapperProps>`
       background-repeat: no-repeat;
       background-attachment: scroll;
       z-index: 0;
-      transform: scale(1.02);
 
       @media (max-width: ${theme.breakpoints.md}) {
         height: calc(100vh - 90px + 150px);
