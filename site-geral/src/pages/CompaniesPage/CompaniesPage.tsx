@@ -337,22 +337,17 @@ export const CompaniesPage = () => {
             }}
           >
             <Box
+              component="img"
+              src="/not_found.png"
+              alt="Nenhuma imobiliária encontrada"
               sx={{
-                width: { xs: 80, sm: 100 },
-                height: { xs: 80, sm: 100 },
-                borderRadius: "50%",
-                background:
-                  "linear-gradient(135deg, rgba(51, 112, 166, 0.1) 0%, rgba(139, 180, 217, 0.1) 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                width: "100%",
+                maxWidth: { xs: 300, sm: 400 },
+                height: "auto",
+                opacity: 0.8,
                 mb: 3,
               }}
-            >
-              <SearchIcon
-                sx={{ fontSize: { xs: 40, sm: 50 }, color: "#3370A6" }}
-              />
-            </Box>
+            />
             <Typography
               variant="h5"
               sx={{

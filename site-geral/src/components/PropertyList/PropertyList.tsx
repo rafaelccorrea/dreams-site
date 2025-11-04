@@ -94,6 +94,24 @@ const LoadingContainer = styled(Box)`
 const EmptyContainer = styled(Box)`
   text-align: center;
   padding: ${({ theme }) => theme.spacing['2xl']};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.lg};
+  min-height: 400px;
+  justify-content: center;
+`
+
+const EmptyImage = styled.img`
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  opacity: 0.8;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    max-width: 300px;
+  }
 `
 
 const LoadMoreTrigger = styled.div`
@@ -291,7 +309,7 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
     }
   }, [loading, loadingMore, properties.length, total])
 
-  // Intersection Observer para scroll infinito
+  // Intersection Observer para scroll infinito - carrega automaticamente quando está próximo do fim
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -301,7 +319,7 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
       },
       {
         threshold: 0.1,
-        rootMargin: '100px',
+        rootMargin: '800px', // Aumentado para carregar quando estiver a 800px do fim
       }
     )
 
@@ -314,6 +332,28 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
       if (currentTarget) {
         observer.unobserve(currentTarget)
       }
+    }
+  }, [hasMore, loadingMore, loading, loadMore])
+
+  // Verificação adicional de scroll para carregar automaticamente quando próximo do fim
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loadingMore || loading || !hasMore) return
+
+      const scrollPosition = window.innerHeight + window.scrollY
+      const documentHeight = document.documentElement.scrollHeight
+      const distanceFromBottom = documentHeight - scrollPosition
+
+      // Carrega quando estiver a 1000px do fim
+      if (distanceFromBottom < 1000) {
+        loadMore()
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [hasMore, loadingMore, loading, loadMore])
 
@@ -346,6 +386,7 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
         </PropertiesGrid>
       ) : properties.length === 0 ? (
         <EmptyContainer>
+          <EmptyImage src="/not_found.png" alt="Nenhuma propriedade encontrada" />
           <Typography variant="h6" color="textSecondary" gutterBottom>
             Nenhuma propriedade encontrada
           </Typography>
