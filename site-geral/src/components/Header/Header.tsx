@@ -8,7 +8,6 @@ import {
   CenterSection,
   RightSection,
   LogoContainer,
-  LogoText,
   NavigationContainer,
   NavLink,
   MobileMenuToggle,
@@ -73,7 +72,6 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
       ],
     },
     { label: 'Lançamentos', href: '/lancamentos' },
-    { label: 'Terrenos', href: '/terrenos' },
     { label: 'Corretores', href: '/corretores' },
     { label: 'Imobiliárias', href: '/imobiliarias' },
   ]
@@ -85,8 +83,16 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
           {/* Seção Esquerda - Logo */}
           <LeftSection>
             <LogoContainer onClick={handleLogoClick}>
-              <span style={{ fontSize: '2rem' }}>🏠</span>
-              <LogoText>Imóveis</LogoText>
+              <img 
+                src="/logo-dream.png" 
+                alt="Dream Keys Logo" 
+                style={{ 
+                  height: '235px', 
+                  width: 'auto',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.15))'
+                }} 
+              />
             </LogoContainer>
           </LeftSection>
 
