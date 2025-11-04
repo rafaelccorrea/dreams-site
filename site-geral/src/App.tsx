@@ -62,6 +62,15 @@ function AppContent() {
 
   const routerLocation = useRouterLocation()
 
+  // Scroll automático ao topo quando mudar de rota
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    })
+  }, [routerLocation.pathname])
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
       <Header currentPath={routerLocation.pathname} />

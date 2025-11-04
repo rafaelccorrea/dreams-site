@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Grid } from '@mui/material'
+import { Close as CloseIcon } from '@mui/icons-material'
 import styled from 'styled-components'
 import { PropertyCard } from '../PropertyCard'
 import { PropertyCardShimmer } from '../Shimmer'
@@ -84,13 +85,6 @@ const PropertiesGrid = styled(Grid)`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `
 
-const LoadingContainer = styled(Box)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: ${({ theme }) => theme.spacing['2xl']};
-`
-
 const EmptyContainer = styled(Box)`
   text-align: center;
   padding: ${({ theme }) => theme.spacing['2xl']};
@@ -143,25 +137,78 @@ const EndMessageSubtitle = styled(Typography)`
   color: rgba(255, 255, 255, 0.9);
 `
 
-const LoadingMoreContainer = styled(Box)`
+const ClearFiltersContainer = styled(Box)`
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing['2xl']};
+  justify-content: flex-start;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  }
+`
+
+const ClearFiltersButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: ${({ theme }) => theme.borderRadius.md || '8px'};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: ${({ theme }) => theme.colors.textPrimary};
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  svg {
+    font-size: 1rem;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover svg {
+    transform: rotate(90deg);
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+    font-size: 0.8125rem;
+  }
 `
 
 interface PropertyListProps {
   filters?: Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'>
   shouldLoad?: boolean // Flag para controlar quando deve carregar
+  onClearFilters?: () => void // Callback para limpar filtros
 }
 
-export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) => {
+export const PropertyList = ({ filters, shouldLoad = true, onClearFilters }: PropertyListProps) => {
   const navigate = useNavigate()
-  const { location, hasLocation, isLocationConfirmed } = useLocation()
+  const { location, isLocationConfirmed } = useLocation()
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [hasMore, setHasMore] = useState(false)
@@ -361,6 +408,18 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
     navigate(`/property/${property.id}`)
   }
 
+  // Verificar se há filtros aplicados
+  const hasFilters = filters && Object.keys(filters).length > 0
+
+  // Função para contar quantos filtros estão ativos
+  const getActiveFiltersCount = () => {
+    if (!filters) return 0
+    return Object.keys(filters).filter(key => {
+      const value = filters[key as keyof typeof filters]
+      return value !== undefined && value !== null && value !== ''
+    }).length
+  }
+
   // Não renderiza nada até que a localização seja confirmada pelo usuário
   if (!isLocationConfirmed || !location?.city) {
     return null
@@ -379,6 +438,16 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
             ? `${total} propriedade${total === 1 ? '' : 's'} encontrada${total === 1 ? '' : 's'}`
             : ''}
       </SectionSubtitle>
+
+      {/* Botão de limpar filtros */}
+      {hasFilters && onClearFilters && (
+        <ClearFiltersContainer>
+          <ClearFiltersButton onClick={onClearFilters}>
+            <CloseIcon />
+            Limpar filtros {getActiveFiltersCount() > 0 && `(${getActiveFiltersCount()})`}
+          </ClearFiltersButton>
+        </ClearFiltersContainer>
+      )}
 
       {loading && properties.length === 0 ? (
         <PropertiesGrid container spacing={{ xs: 2, sm: 3, md: 3 }}>

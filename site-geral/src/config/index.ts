@@ -11,6 +11,9 @@ export const config = {
     url: import.meta.env.VITE_API_URL || 'http://localhost:3000',
     timeout: 30000,
   },
+  google: {
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+  },
   pagination: {
     defaultPage: 1,
     defaultLimit: 20,

@@ -22,7 +22,7 @@ import {
 
 export const HomePage = () => {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [searchFilters, setSearchFilters] = useState<Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'> | undefined>(undefined)
   const [homeAnimation, setHomeAnimation] = useState<any>(null)
   const [showLottieModal, setShowLottieModal] = useState(true)
@@ -110,6 +110,19 @@ export const HomePage = () => {
     navigate('/corretores')
   }
 
+  const handleClearFilters = () => {
+    // Limpar filtros no estado
+    setSearchFilters(undefined)
+    
+    // Limpar parâmetros da URL
+    setSearchParams({}, { replace: true })
+    
+    // Exibir Lottie quando filtros forem limpos (apenas se não for o carregamento inicial)
+    if (!isInitialLoad) {
+      showLottie()
+    }
+  }
+
   return (
     <PageContainer>
       <LottieModal $isOpen={showLottieModal && homeAnimation}>
@@ -152,7 +165,7 @@ export const HomePage = () => {
           </Grid>
         </Grid>
       </HomeContainer>
-      <PropertyList filters={searchFilters} />
+      <PropertyList filters={searchFilters} onClearFilters={handleClearFilters} />
       <ScrollToTop />
     </PageContainer>
   )
