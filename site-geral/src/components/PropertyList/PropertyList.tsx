@@ -150,6 +150,7 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
   const observerTarget = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const previousFiltersRef = useRef<typeof filters>(undefined)
+  const shouldScrollRef = useRef(false)
 
   const loadProperties = async (pageNum: number = 1, append: boolean = false): Promise<void> => {
     if (!location?.city) {
@@ -173,21 +174,21 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
         ...filters,
       }
 
-      // Remover 'search' se existir (usado para transaction type)
-      const { search: transactionType, ...apiFilters } = searchFilters as any
+      // Manter 'search' para enviar para a API (usado para transaction type)
+      // A API suporta o parâmetro 'search' para filtrar por tipo de transação
+      const result = await searchProperties(searchFilters)
       
-      const result = await searchProperties(apiFilters)
-      
-      // Filtrar por tipo de transação (venda ou locação) se especificado
+      // Filtrar por tipo de transação (venda ou locação) se especificado no front-end também
+      // Isso garante que mesmo se a API não filtrar corretamente, o front-end filtra
       let filteredProperties = result.properties
-      if (transactionType === 'sale') {
+      if (filters?.search === 'sale') {
         filteredProperties = result.properties.filter(p => p.salePrice && Number(p.salePrice) > 0)
-      } else if (transactionType === 'rent') {
+      } else if (filters?.search === 'rent') {
         filteredProperties = result.properties.filter(p => p.rentPrice && Number(p.rentPrice) > 0)
       }
 
       // Recalcular total baseado nos filtros
-      const totalFiltered = transactionType 
+      const totalFiltered = filters?.search 
         ? filteredProperties.length + (result.total - result.properties.length)
         : result.total
 
@@ -232,13 +233,30 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
     // Só carrega propriedades se houver localização confirmada pelo usuário no modal
     if (location?.city && isLocationConfirmed && shouldLoad) {
       // Verificar se os filtros mudaram ANTES de atualizar a referência
-      const filtersChanged = JSON.stringify(previousFiltersRef.current) !== JSON.stringify(filters)
+      const previousFiltersString = previousFiltersRef.current 
+        ? JSON.stringify(previousFiltersRef.current) 
+        : 'undefined'
+      const currentFiltersString = filters 
+        ? JSON.stringify(filters) 
+        : 'undefined'
+      const filtersChanged = previousFiltersString !== currentFiltersString
       
-      // Resetar propriedades anteriores quando a cidade muda ou filtros mudam
+      // Marcar para fazer scroll se filtros foram aplicados (mudaram ou é a primeira vez)
+      const filtersApplied = filters !== undefined && (
+        previousFiltersRef.current === undefined || 
+        filtersChanged
+      )
+      
+      shouldScrollRef.current = filtersApplied
+      
+      // Sempre resetar e recarregar para permitir múltiplas buscas, mesmo com os mesmos filtros
       setProperties([])
       setPage(1)
       setTotal(0)
       setHasMore(false)
+      
+      // Atualizar referência dos filtros
+      previousFiltersRef.current = filters
       
       // Carregar propriedades da nova cidade ou com novos filtros
       loadProperties(1, false)
@@ -246,38 +264,19 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.city, location?.state, isLocationConfirmed, shouldLoad, filters])
 
-  // Fazer scroll quando os filtros mudarem e as propriedades forem carregadas
+  // Fazer scroll quando as propriedades forem carregadas após aplicar filtros
   useEffect(() => {
-    // Verificar se os filtros mudaram (comparando com a referência anterior)
-    const previousFiltersString = previousFiltersRef.current 
-      ? JSON.stringify(previousFiltersRef.current) 
-      : 'undefined'
-    const currentFiltersString = filters 
-      ? JSON.stringify(filters) 
-      : 'undefined'
-    const filtersChanged = previousFiltersString !== currentFiltersString
-    
-    // Detectar se filtros foram aplicados:
-    // - Mudou de undefined para um objeto (primeira aplicação de filtros)
-    // - Ou mudou de um objeto para outro (filtros foram alterados)
-    const filtersApplied = filters !== undefined && (
-      previousFiltersRef.current === undefined || 
-      filtersChanged
-    )
-    
     // Só fazer scroll se:
-    // 1. Filtros foram aplicados (mudaram)
+    // 1. Está marcado para fazer scroll (filtros foram aplicados)
     // 2. Não está mais carregando (propriedades foram carregadas)
-    // 3. Há propriedades carregadas OU houve tentativa de carregar (mesmo que vazio)
-    // 4. Container existe
+    // 3. Container existe
     if (
-      filtersApplied && 
+      shouldScrollRef.current && 
       !loading && 
       !loadingMore && 
-      containerRef.current &&
-      (properties.length > 0 || total > 0 || !loading)
+      containerRef.current
     ) {
-      // Aguardar um pouco mais para garantir que o DOM foi atualizado e renderizado
+      // Aguardar um pouco para garantir que o DOM foi atualizado e renderizado
       setTimeout(() => {
         if (containerRef.current) {
           containerRef.current.scrollIntoView({ 
@@ -285,13 +284,12 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
             block: 'start',
             inline: 'nearest'
           })
+          // Resetar flag após fazer scroll
+          shouldScrollRef.current = false
         }
-      }, 500) // Delay aumentado para garantir que o conteúdo foi renderizado completamente
+      }, 800) // Delay aumentado para garantir que o conteúdo foi renderizado completamente
     }
-    
-    // Atualizar referência dos filtros após verificar a mudança
-    previousFiltersRef.current = filters
-  }, [loading, loadingMore, filters, properties.length, total])
+  }, [loading, loadingMore, properties.length, total])
 
   // Intersection Observer para scroll infinito
   useEffect(() => {

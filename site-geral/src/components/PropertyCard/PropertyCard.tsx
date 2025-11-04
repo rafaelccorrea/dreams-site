@@ -42,6 +42,27 @@ const PriceBadge = styled.div`
   z-index: 3;
 `
 
+const PriceContainer = styled.div`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.md};
+  right: ${({ theme }) => theme.spacing.md};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  z-index: 3;
+`
+
+const PriceBadgeItem = styled.div<{ $isSecondary?: boolean }>`
+  background: ${({ theme, $isSecondary }) => $isSecondary ? 'rgba(0, 0, 0, 0.7)' : theme.colors.primary};
+  color: white;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-weight: 700;
+  font-size: ${({ $isSecondary }) => $isSecondary ? '0.85rem' : '1.1rem'};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  white-space: nowrap;
+`
+
 const CardContentStyled = styled(CardContent)`
   flex: 1;
   display: flex;
@@ -112,8 +133,9 @@ export const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
     return types[type] || type
   }
   
-  // Determina qual preço mostrar (venda ou aluguel)
-  const displayPrice = property.salePrice || property.rentPrice
+  // Determina quais preços mostrar (venda e/ou aluguel)
+  const hasSalePrice = property.salePrice && Number(property.salePrice) > 0
+  const hasRentPrice = property.rentPrice && Number(property.rentPrice) > 0
 
   // Buscar todas as imagens se houver imagens
   useEffect(() => {
@@ -175,7 +197,16 @@ export const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
     <StyledCard onClick={onClick}>
       <ImageContainer>
         <PropertyCardCarousel images={images} />
-        <PriceBadge>{formatPrice(displayPrice)}</PriceBadge>
+        {hasSalePrice && hasRentPrice ? (
+          <PriceContainer>
+            <PriceBadgeItem>{formatPrice(property.salePrice)}</PriceBadgeItem>
+            <PriceBadgeItem $isSecondary>Aluguel: {formatPrice(property.rentPrice)}</PriceBadgeItem>
+          </PriceContainer>
+        ) : hasSalePrice ? (
+          <PriceBadge>{formatPrice(property.salePrice)}</PriceBadge>
+        ) : hasRentPrice ? (
+          <PriceBadge>Aluguel: {formatPrice(property.rentPrice)}</PriceBadge>
+        ) : null}
       </ImageContainer>
       <CardContentStyled>
         <Title variant="h6">{property.title}</Title>

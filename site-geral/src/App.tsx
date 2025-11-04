@@ -13,6 +13,7 @@ import { BrokersPage } from './pages/BrokersPage'
 import { CompaniesPage } from './pages/CompaniesPage'
 import { CompanyDetails } from './pages/CompanyDetails'
 import { BrokerDetails } from './pages/BrokerDetails'
+import { LancamentosPage } from './pages/LancamentosPage'
 import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
@@ -93,6 +94,14 @@ function AppContent() {
             } 
           />
           <Route path="/company/:id" element={<CompanyDetails />} />
+          <Route 
+            path="/lancamentos" 
+            element={
+              <MainContentWrapper $showBackground={false}>
+                <LancamentosPage />
+              </MainContentWrapper>
+            } 
+          />
         </Routes>
       </Box>
       <Footer />

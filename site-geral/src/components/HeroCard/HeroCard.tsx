@@ -159,6 +159,7 @@ const PROPERTY_TYPES = [
   { value: 'terreno', label: 'Terreno' },
   { value: 'comercial', label: 'Comercial' },
   { value: 'rural', label: 'Rural' },
+  { value: 'aluguel', label: 'Aluguel' },
 ]
 
 const BEDROOMS = [
@@ -376,6 +377,26 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
       return
     }
 
+    // Validação de preço min/max
+    const minPriceValue = priceMin ? parseInt(priceMin.replace(/\D/g, '')) : undefined
+    const maxPriceValue = priceMax ? parseInt(priceMax.replace(/\D/g, '')) : undefined
+    
+    if (minPriceValue !== undefined && maxPriceValue !== undefined && maxPriceValue < minPriceValue) {
+      setError({ show: true, message: 'O preço máximo não pode ser menor que o preço mínimo' })
+      setTimeout(() => setError({ show: false, message: '' }), 5000)
+      return
+    }
+
+    // Validação de área min/max
+    const minAreaValue = areaMin ? parseInt(areaMin.replace(/\D/g, '')) : undefined
+    const maxAreaValue = areaMax ? parseInt(areaMax.replace(/\D/g, '')) : undefined
+    
+    if (minAreaValue !== undefined && maxAreaValue !== undefined && maxAreaValue < minAreaValue) {
+      setError({ show: true, message: 'A área máxima não pode ser menor que a área mínima' })
+      setTimeout(() => setError({ show: false, message: '' }), 5000)
+      return
+    }
+
     setLoading(true)
     setError({ show: false, message: '' })
 
@@ -384,27 +405,32 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
       const filters: PropertySearchFilters = {
         city: location.city,
         // A API não precisa do estado, apenas da cidade
+        // Se for aluguel, não definir tipo de imóvel (filtrar apenas por transação)
         type:
-          propertyType === 'casa'
-            ? 'house'
-            : propertyType === 'apartamento'
-              ? 'apartment'
-              : propertyType === 'comercial'
-                ? 'commercial'
-                : propertyType === 'terreno'
-                  ? 'land'
-                  : propertyType === 'rural'
-                    ? 'rural'
-                    : undefined,
+          propertyType === 'aluguel'
+            ? undefined
+            : propertyType === 'casa'
+              ? 'house'
+              : propertyType === 'apartamento'
+                ? 'apartment'
+                : propertyType === 'comercial'
+                  ? 'commercial'
+                  : propertyType === 'terreno'
+                    ? 'land'
+                    : propertyType === 'rural'
+                      ? 'rural'
+                      : undefined,
+        // Se for aluguel, usar search para filtrar por rentPrice
+        search: propertyType === 'aluguel' ? 'rent' : undefined,
         bedrooms: bedrooms ? parseInt(bedrooms) : undefined,
         bathrooms: bathrooms ? parseInt(bathrooms) : undefined,
         parkingSpaces: parkingSpaces ? parseInt(parkingSpaces) : undefined,
         neighborhood: neighborhood || undefined,
         isFeatured: isFeatured || undefined,
-        minPrice: priceMin ? parseInt(priceMin.replace(/\D/g, '')) : undefined,
-        maxPrice: priceMax ? parseInt(priceMax.replace(/\D/g, '')) : undefined,
-        minArea: areaMin ? parseInt(areaMin.replace(/\D/g, '')) : undefined,
-        maxArea: areaMax ? parseInt(areaMax.replace(/\D/g, '')) : undefined,
+        minPrice: minPriceValue,
+        maxPrice: maxPriceValue,
+        minArea: minAreaValue,
+        maxArea: maxAreaValue,
         page: 1,
         limit: 20,
       }
@@ -416,10 +442,14 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
       
       // Fechar o drawer quando a busca for acionada
       setDrawerOpen(false)
+      
+      // Resetar loading após um pequeno delay para garantir que a busca foi processada
+      setTimeout(() => {
+        setLoading(false)
+      }, 100)
     } catch (error) {
       setError({ show: true, message: 'Erro ao buscar propriedades. Tente novamente.' })
       setTimeout(() => setError({ show: false, message: '' }), 5000)
-    } finally {
       setLoading(false)
     }
   }

@@ -93,15 +93,16 @@ export const HomePage = () => {
     // Remove city, state, page e limit para passar apenas os filtros de busca
     const { city, state, page, limit, ...filterProps } = filters
     
-    // Verificar se os filtros mudaram antes de atualizar
-    const filtersChanged = JSON.stringify(filterProps) !== JSON.stringify(searchFilters)
+    // Criar um novo objeto para forçar a atualização do React, mesmo se os valores forem os mesmos
+    // Isso permite múltiplas buscas com os mesmos filtros
+    const newFilters = { ...filterProps }
     
-    if (filtersChanged) {
-      setSearchFilters(filterProps)
-      // Exibir Lottie quando filtros forem aplicados via busca (apenas se não for o carregamento inicial)
-      if (!isInitialLoad) {
-        showLottie()
-      }
+    // Sempre atualizar os filtros para permitir múltiplas buscas, mesmo com os mesmos filtros
+    setSearchFilters(newFilters)
+    
+    // Exibir Lottie quando filtros forem aplicados via busca (apenas se não for o carregamento inicial)
+    if (!isInitialLoad) {
+      showLottie()
     }
   }
 

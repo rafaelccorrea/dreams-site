@@ -1,0 +1,2 @@
+export { LancamentosPage } from './LancamentosPage'
+
