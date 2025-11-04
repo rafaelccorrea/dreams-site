@@ -15,7 +15,7 @@ const ContainerWrapper = styled(Box)`
   background: ${({ theme }) => theme.colors.background};
   position: relative;
   z-index: 3;
-  margin-top: ${({ theme }) => theme.spacing['2xl']};
+  margin-top: ${({ theme }) => theme.spacing.md};
   max-width: 1600px;
   margin-left: auto;
   margin-right: auto;

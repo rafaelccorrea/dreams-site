@@ -5,6 +5,7 @@ import Lottie from 'lottie-react'
 import { AnimatedText } from '../../components/AnimatedText'
 import { HeroCard } from '../../components/HeroCard'
 import { PropertyList } from '../../components/PropertyList'
+import { FeaturedProperties } from '../../components/FeaturedProperties'
 import { ScrollToTop } from '../../components/ScrollToTop'
 import { Person } from '@mui/icons-material'
 import { PropertySearchFilters } from '../../services/propertyService'
@@ -165,6 +166,7 @@ export const HomePage = () => {
           </Grid>
         </Grid>
       </HomeContainer>
+      <FeaturedProperties />
       <PropertyList filters={searchFilters} onClearFilters={handleClearFilters} />
       <ScrollToTop />
     </PageContainer>

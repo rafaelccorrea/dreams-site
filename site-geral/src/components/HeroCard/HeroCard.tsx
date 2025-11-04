@@ -22,6 +22,7 @@ import { Search, AttachMoney, FilterList, Close, LocalParking, Star } from '@mui
 import { formatCurrency, formatNumber } from '../../utils/masks'
 import { useLocation } from '../../contexts/LocationContext'
 import { searchProperties, PropertySearchFilters } from '../../services/propertyService'
+import { NeighborhoodSelect } from '../NeighborhoodSelect'
 
 const fadeIn = keyframes`
   from {
@@ -174,7 +175,6 @@ const PROPERTY_TYPES = [
   { value: 'terreno', label: 'Terreno' },
   { value: 'comercial', label: 'Comercial' },
   { value: 'rural', label: 'Rural' },
-  { value: 'aluguel', label: 'Aluguel' },
 ]
 
 const BEDROOMS = [
@@ -295,10 +295,26 @@ interface SearchErrorState {
   message: string
 }
 
+// Características comuns disponíveis
+const COMMON_FEATURES = [
+  'Piscina',
+  'Churrasqueira',
+  'Garagem',
+  'Área de lazer',
+  'Elevador',
+  'Portaria 24h',
+  'Academia',
+  'Playground',
+  'Quadra',
+  'Salão de festas',
+]
+
 export const HeroCard = ({ onSearch }: HeroCardProps) => {
   const { location } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [propertyType, setPropertyType] = useState('')
+  const [operation, setOperation] = useState<'sale' | 'rent' | 'both'>('both')
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [bedrooms, setBedrooms] = useState('')
   const [bathrooms, setBathrooms] = useState('')
   const [priceMin, setPriceMin] = useState('')
@@ -327,12 +343,24 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
     setParkingSpaces(event.target.value)
   }
 
-  const handleNeighborhoodChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNeighborhood(event.target.value)
+  const handleNeighborhoodChange = (value: string) => {
+    setNeighborhood(value)
   }
 
   const handleFeaturedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsFeatured(event.target.checked)
+  }
+
+  const handleOperationChange = (event: SelectChangeEvent<string>) => {
+    setOperation(event.target.value as 'sale' | 'rent' | 'both')
+  }
+
+  const handleFeatureToggle = (feature: string) => {
+    setSelectedFeatures(prev =>
+      prev.includes(feature)
+        ? prev.filter(f => f !== feature)
+        : [...prev, feature]
+    )
   }
 
   const handlePriceMinChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -429,24 +457,23 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
       // Converte os valores formatados para números
       const filters: PropertySearchFilters = {
         city: location.city,
-        // A API não precisa do estado, apenas da cidade
-        // Se for aluguel, não definir tipo de imóvel (filtrar apenas por transação)
+        // Tipo de imóvel
         type:
-          propertyType === 'aluguel'
-            ? undefined
-            : propertyType === 'casa'
-              ? 'house'
-              : propertyType === 'apartamento'
-                ? 'apartment'
-                : propertyType === 'comercial'
-                  ? 'commercial'
-                  : propertyType === 'terreno'
-                    ? 'land'
-                    : propertyType === 'rural'
-                      ? 'rural'
-                      : undefined,
-        // Se for aluguel, usar search para filtrar por rentPrice
-        search: propertyType === 'aluguel' ? 'rent' : undefined,
+          propertyType === 'casa'
+            ? 'house'
+            : propertyType === 'apartamento'
+              ? 'apartment'
+              : propertyType === 'comercial'
+                ? 'commercial'
+                : propertyType === 'terreno'
+                  ? 'land'
+                  : propertyType === 'rural'
+                    ? 'rural'
+                    : undefined,
+        // Nova funcionalidade: Filtro por operação (venda/aluguel)
+        operation: operation !== 'both' ? operation : undefined,
+        // Nova funcionalidade: Características selecionadas
+        features: selectedFeatures.length > 0 ? selectedFeatures : undefined,
         bedrooms: bedrooms ? parseInt(bedrooms) : undefined,
         bathrooms: bathrooms ? parseInt(bathrooms) : undefined,
         parkingSpaces: parkingSpaces ? parseInt(parkingSpaces) : undefined,
@@ -487,6 +514,8 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
     setIsFeatured(false)
     setAreaMin('')
     setAreaMax('')
+    setOperation('both')
+    setSelectedFeatures([])
   }
 
   const toggleDrawer = (open: boolean) => () => {
@@ -501,6 +530,22 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
       </CardSubtitle>
       
       <SearchContainer>
+        <StyledSelect fullWidth variant="outlined">
+          <InputLabel>Tipo de Operação</InputLabel>
+          <Select
+            value={operation}
+            onChange={handleOperationChange}
+            label="Tipo de Operação"
+            sx={{
+              textTransform: 'none',
+            }}
+          >
+            <MenuItem value="both">Venda e Aluguel</MenuItem>
+            <MenuItem value="sale">Apenas Venda</MenuItem>
+            <MenuItem value="rent">Apenas Aluguel</MenuItem>
+          </Select>
+        </StyledSelect>
+
         <StyledSelect fullWidth variant="outlined">
           <InputLabel>Tipo de Imóvel</InputLabel>
           <Select
@@ -639,13 +684,13 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
             </Select>
           </StyledSelect>
 
-          <StyledTextField
-            fullWidth
-            variant="outlined"
-            label="Bairro"
+          <NeighborhoodSelect
+            city={location?.city}
             value={neighborhood}
             onChange={handleNeighborhoodChange}
-            placeholder="Digite o nome do bairro"
+            label="Bairro"
+            placeholder="Selecione um bairro"
+            minCount={1}
           />
 
           <FormControlLabel
@@ -659,6 +704,27 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
             }
             label="Apenas propriedades em destaque"
           />
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'text.secondary' }}>
+              Características
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {COMMON_FEATURES.map((feature) => (
+                <FormControlLabel
+                  key={feature}
+                  control={
+                    <Checkbox
+                      checked={selectedFeatures.includes(feature)}
+                      onChange={() => handleFeatureToggle(feature)}
+                      size="small"
+                    />
+                  }
+                  label={feature}
+                />
+              ))}
+            </Box>
+          </Box>
 
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'text.secondary' }}>

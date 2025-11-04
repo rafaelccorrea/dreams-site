@@ -89,12 +89,30 @@ export interface PropertySearchFilters {
   sortOrder?: 'ASC' | 'DESC'
   page?: number
   limit?: number
+  // Novas funcionalidades
+  features?: string[] // Busca por características
+  operation?: 'sale' | 'rent' | 'both' // Filtro por operação (venda/aluguel)
 }
 
 export interface City {
   city: string
   state: string
   count: number
+}
+
+export interface Neighborhood {
+  name: string
+  city: string
+  state: string
+  count: number
+  avgPrice?: number
+  minPrice?: number
+  maxPrice?: number
+}
+
+export interface NeighborhoodListResponse {
+  neighborhoods: Neighborhood[]
+  total: number
 }
 
 export interface Company {
@@ -143,7 +161,6 @@ export async function searchProperties(
     params.append('city', filters.city)
 
     // Filtros de localização
-    if (filters.state) params.append('state', filters.state)
     if (filters.neighborhood) params.append('neighborhood', filters.neighborhood)
   
   // Filtros de tipo e características
@@ -159,6 +176,17 @@ export async function searchProperties(
   // Filtros de área
   if (filters.minArea !== undefined) params.append('minArea', filters.minArea.toString())
   if (filters.maxArea !== undefined) params.append('maxArea', filters.maxArea.toString())
+  
+  // Novas funcionalidades: Features e Operation
+  if (filters.features && filters.features.length > 0) {
+    filters.features.forEach(feature => {
+      params.append('features', feature)
+    })
+  }
+  
+  if (filters.operation) {
+    params.append('operation', filters.operation)
+  }
   
   // Filtros especiais
   if (filters.isFeatured !== undefined) params.append('isFeatured', filters.isFeatured.toString())
@@ -518,5 +546,104 @@ export async function getPropertyImages(propertyId: string): Promise<string[]> {
   pendingRequests.set(propertyId, requestPromise)
 
   return requestPromise
+}
+
+/**
+ * Lista bairros disponíveis com propriedades
+ * @param city - Cidade obrigatória
+ * @param minCount - Mínimo de propriedades por bairro (padrão: 1)
+ */
+export async function getNeighborhoods(
+  city: string,
+  minCount: number = 1
+): Promise<NeighborhoodListResponse> {
+  try {
+    if (!city) {
+      return {
+        neighborhoods: [],
+        total: 0,
+      }
+    }
+
+    const params = new URLSearchParams()
+    
+    params.append('city', city)
+    if (minCount > 1) params.append('minCount', minCount.toString())
+
+    const response = await fetch(`${API_BASE_URL}/properties/neighborhoods?${params}`)
+
+    if (!response.ok) {
+      return {
+        neighborhoods: [],
+        total: 0,
+      }
+    }
+
+    const data = await response.json()
+    return {
+      neighborhoods: data.neighborhoods || [],
+      total: data.total || 0,
+    }
+  } catch (error) {
+    console.error('Erro ao buscar bairros:', error)
+    return {
+      neighborhoods: [],
+      total: 0,
+    }
+  }
+}
+
+/**
+ * Busca propriedades em destaque (featured)
+ * @param city - Cidade obrigatória
+ * @param filters - Filtros opcionais
+ */
+export async function getFeaturedProperties(
+  city: string,
+  filters?: {
+    type?: 'house' | 'apartment' | 'commercial' | 'land' | 'rural'
+    page?: number
+    limit?: number
+    sortBy?: string
+    sortOrder?: 'ASC' | 'DESC'
+  }
+): Promise<PropertyListResponse> {
+  try {
+    if (!city) {
+      throw new Error('Cidade é obrigatória para buscar propriedades em destaque')
+    }
+
+    const params = new URLSearchParams()
+    params.append('city', city)
+
+    if (filters?.type) params.append('type', filters.type)
+    if (filters?.page) params.append('page', filters.page.toString())
+    if (filters?.limit) params.append('limit', filters.limit.toString())
+    if (filters?.sortBy) params.append('sortBy', filters.sortBy)
+    if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder)
+
+    const response = await fetch(`${API_BASE_URL}/properties/featured?${params}`)
+
+    if (!response.ok) {
+      return {
+        properties: [],
+        total: 0,
+        page: filters?.page || 1,
+        limit: filters?.limit || 50,
+        totalPages: 0,
+      }
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error('Erro ao buscar propriedades em destaque:', error)
+    return {
+      properties: [],
+      total: 0,
+      page: filters?.page || 1,
+      limit: filters?.limit || 50,
+      totalPages: 0,
+    }
+  }
 }
 
