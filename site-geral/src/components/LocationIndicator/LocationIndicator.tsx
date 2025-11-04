@@ -40,7 +40,7 @@ export const LocationIndicator = () => {
     return null
   }
 
-  const locationText = `${location.city}, ${location.state}`
+  const locationText = location.city
 
   return (
     <>

@@ -20,6 +20,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SortIcon from "@mui/icons-material/Sort";
 import { BrokerCard } from "../../components/BrokerCard";
 import { BrokerCardShimmer } from "../../components/Shimmer";
+import { ScrollToTop } from "../../components/ScrollToTop";
 import {
   getAvailableBrokers,
   type Broker,
@@ -427,6 +428,7 @@ export const BrokersPage = () => {
           </Grid>
         )}
       </Box>
+      <ScrollToTop />
     </Box>
   );
 };

@@ -18,8 +18,10 @@ export const LoginModalContainer = styled(Box)`
   }
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: ${({ theme }) => theme.spacing.lg};
-    max-height: calc(100vh - 64px);
+    padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.md}`};
+    max-height: calc(95vh - 64px);
+    padding-top: ${({ theme }) => theme.spacing.lg};
+    padding-bottom: ${({ theme }) => theme.spacing.lg};
   }
 `
 
@@ -42,9 +44,11 @@ export const LogoContainer = styled(Box)`
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     margin-bottom: ${({ theme }) => theme.spacing.md};
+    padding: ${({ theme }) => theme.spacing.sm} 0;
     
     img {
-      height: 100px !important;
+      height: 90px !important;
+      max-height: 90px !important;
     }
   }
 `
@@ -64,12 +68,25 @@ export const LoginModalHeader = styled(Box)`
     font-size: 1.75rem !important;
     letter-spacing: -0.5px;
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    margin-bottom: ${({ theme }) => theme.spacing.md};
+    padding-bottom: ${({ theme }) => theme.spacing.sm};
+    
+    h5 {
+      font-size: 1.25rem !important;
+    }
+  }
 `
 
 export const LoginForm = styled.form`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 export const StyledTextField = styled(TextField)`
@@ -104,6 +121,7 @@ export const GoogleButton = styled(Button)`
   position: relative;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  font-size: 0.95rem !important;
 
   &::before {
     content: '';
@@ -130,6 +148,16 @@ export const GoogleButton = styled(Button)`
   &:active {
     transform: translateY(0);
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`} !important;
+    font-size: 0.875rem !important;
+    min-height: 44px !important;
+    
+    &:hover {
+      transform: none;
+    }
+  }
 `
 
 export const LoginButton = styled(Button)`
@@ -144,6 +172,7 @@ export const LoginButton = styled(Button)`
   position: relative;
   overflow: hidden;
   border: none !important;
+  font-size: 1rem !important;
 
   &::before {
     content: '';
@@ -175,6 +204,16 @@ export const LoginButton = styled(Button)`
     opacity: 0.6;
     transform: none !important;
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`} !important;
+    font-size: 0.9rem !important;
+    min-height: 44px !important;
+    
+    &:hover {
+      transform: none;
+    }
+  }
 `
 
 export const RegisterButton = styled(Button)`
@@ -188,6 +227,7 @@ export const RegisterButton = styled(Button)`
   background: transparent !important;
   position: relative;
   overflow: hidden;
+  font-size: 1rem !important;
 
   & .MuiButton-label {
     position: relative;
@@ -226,6 +266,16 @@ export const RegisterButton = styled(Button)`
   &:active {
     transform: translateY(0);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`} !important;
+    font-size: 0.9rem !important;
+    min-height: 44px !important;
+    
+    &:hover {
+      transform: none;
+    }
   }
 `
 
@@ -282,6 +332,15 @@ export const StyledDivider = styled(Box)`
     color: ${({ theme }) => theme.colors.textSecondary};
     font-size: 0.875rem;
     font-weight: 500;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    margin: ${({ theme }) => theme.spacing.md} 0;
+    gap: ${({ theme }) => theme.spacing.sm};
+    
+    span {
+      font-size: 0.8rem;
+    }
   }
 `
 

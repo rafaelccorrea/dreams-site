@@ -110,19 +110,23 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: { xs: 0, sm: 4 },
-            maxHeight: { xs: '100vh', sm: '90vh' },
-            margin: { xs: 0, sm: 'auto' },
-            width: { xs: '100%', sm: '100%' },
-            maxWidth: { xs: '100%', sm: '520px' },
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1)',
+            borderRadius: { xs: 3, sm: 4 },
+            maxHeight: { xs: '95vh', sm: '90vh' },
+            margin: { xs: '16px', sm: 'auto' },
+            width: { xs: 'calc(100% - 32px)', sm: '100%' },
+            maxWidth: { xs: 'calc(100% - 32px)', sm: '520px' },
+            boxShadow: { xs: '0 8px 32px rgba(0, 0, 0, 0.2)', sm: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1)' },
             overflow: 'hidden',
           },
         }}
         sx={{
           '& .MuiBackdrop-root': {
             backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(8px)',
+            backdropFilter: { xs: 'blur(4px)', sm: 'blur(8px)' },
+          },
+          '& .MuiDialog-container': {
+            alignItems: { xs: 'center', sm: 'center' },
+            padding: { xs: '16px', sm: '24px' },
           },
         }}
       >
@@ -141,7 +145,14 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
           </LogoContainer>
 
           <LoginModalHeader>
-            <Typography variant="h5" fontWeight={700} color="primary">
+            <Typography 
+              variant="h5" 
+              fontWeight={700} 
+              color="primary"
+              sx={{
+                fontSize: { xs: '1.25rem', sm: '1.75rem' },
+              }}
+            >
               Bem-vindo de volta
             </Typography>
             <IconButton
@@ -149,13 +160,14 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
               sx={{
                 color: 'text.secondary',
                 transition: 'all 0.2s ease',
+                padding: { xs: '8px', sm: '12px' },
                 '&:hover': { 
                   backgroundColor: 'rgba(0, 0, 0, 0.06)',
-                  transform: 'rotate(90deg)',
+                  transform: { xs: 'none', sm: 'rotate(90deg)' },
                 },
               }}
             >
-              <Close />
+              <Close sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
             </IconButton>
           </LoginModalHeader>
 

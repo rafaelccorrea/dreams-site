@@ -20,6 +20,7 @@ import VerifiedIcon from "@mui/icons-material/Verified";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { CompanyCard } from "../../components/CompanyCard";
 import { CompanyCardShimmer } from "../../components/Shimmer";
+import { ScrollToTop } from "../../components/ScrollToTop";
 import {
   getAvailableCompanies,
   type Company,
@@ -400,6 +401,7 @@ export const CompaniesPage = () => {
           </Grid>
         )}
       </Box>
+      <ScrollToTop />
     </Box>
   );
 };
