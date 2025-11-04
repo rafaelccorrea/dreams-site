@@ -19,6 +19,12 @@ export const CompanyCard = ({ company, onClick }: CompanyCardProps) => {
     }
   }
 
+  // Função para verificar se email é técnico/teste
+  const shouldShowEmail = (email: string) => {
+    const emailLower = email.toLowerCase();
+    return !emailLower.includes("@teste.") && !emailLower.includes("master.") && !emailLower.includes("@user");
+  };
+
   return (
     <Paper
       onClick={handleClick}
@@ -121,7 +127,7 @@ export const CompanyCard = ({ company, onClick }: CompanyCardProps) => {
             </Box>
           )}
 
-          {company.email && (
+          {company.email && shouldShowEmail(company.email) && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Email color="primary" sx={{ fontSize: 18 }} />
               <Typography
@@ -169,7 +175,7 @@ export const CompanyCard = ({ company, onClick }: CompanyCardProps) => {
         <Box sx={{ mt: 'auto', pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Chip
             icon={<Home />}
-            label={`${company.propertyCount} ${company.propertyCount === 1 ? 'propriedade' : 'propriedades'}`}
+            label={`${company.propertyCount || 0} ${(company.propertyCount || 0) === 1 ? 'propriedade' : 'propriedades'}`}
             color="primary"
             size="small"
             sx={{

@@ -9,10 +9,15 @@ import {
   InputAdornment,
   Chip,
   Stack,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import BusinessIcon from "@mui/icons-material/Business";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { CompanyCard } from "../../components/CompanyCard";
 import { CompanyCardShimmer } from "../../components/Shimmer";
 import {
@@ -21,11 +26,15 @@ import {
 } from "../../services/propertyService";
 import { useLocation } from "../../contexts/LocationContext";
 
+type SortOption = "name" | "properties" | "brokers";
+
 export const CompaniesPage = () => {
   const { location } = useLocation();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [filterVerified, setFilterVerified] = useState(false);
 
   useEffect(() => {
     const loadCompanies = async () => {
@@ -52,9 +61,36 @@ export const CompaniesPage = () => {
     }
   }, [location?.city]);
 
-  const filteredCompanies = companies.filter((company) =>
-    company.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Função para verificar se email é técnico/teste
+  const shouldShowCompany = (company: Company) => {
+    if (company.email) {
+      const email = company.email.toLowerCase();
+      return !email.includes("@teste.") && !email.includes("master.") && !email.includes("@user");
+    }
+    return true;
+  };
+
+  // Filtrar e ordenar empresas
+  let filteredCompanies = companies.filter((company) => {
+    const matchesSearch = company.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVerified = !filterVerified || company.name?.includes("Verificada"); // Ajustar conforme necessário
+    const shouldShow = shouldShowCompany(company);
+    return matchesSearch && matchesVerified && shouldShow;
+  });
+
+  // Ordenar empresas
+  filteredCompanies = [...filteredCompanies].sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return (a.name || "").localeCompare(b.name || "");
+      case "properties":
+        return (b.propertyCount || 0) - (a.propertyCount || 0);
+      case "brokers":
+        return (b.brokerCount || 0) - (a.brokerCount || 0);
+      default:
+        return 0;
+    }
+  });
 
   return (
     <Box
@@ -70,135 +106,160 @@ export const CompaniesPage = () => {
           width: "100%",
           maxWidth: "1400px",
           margin: "0 auto",
-          px: "25px",
+          px: { xs: 2, sm: 3, md: "25px" },
         }}
       >
-        <Box
-          sx={{
-            mb: { xs: 3, sm: 4, md: 5 },
-            background:
-              "linear-gradient(135deg, rgba(51, 112, 166, 0.08) 0%, rgba(139, 180, 217, 0.08) 100%)",
-            borderRadius: 3,
-            p: { xs: 3, sm: 4, md: 5 },
-            position: "relative",
-            overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: "4px",
-              background: "linear-gradient(90deg, #3370A6 0%, #8BB4D9 100%)",
-            },
-          }}
-        >
-          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-            <Box
+        {/* Título e Badge de Localização */}
+        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
+            <Typography
+              variant="h3"
               sx={{
-                width: { xs: 48, sm: 56 },
-                height: { xs: 48, sm: 56 },
-                borderRadius: 2,
-                background: "linear-gradient(135deg, #3370A6 0%, #8BB4D9 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(51, 112, 166, 0.3)",
+                fontWeight: 700,
+                color: "text.primary",
+                fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
               }}
             >
-              <BusinessIcon
-                sx={{ fontSize: { xs: 28, sm: 32 }, color: "white" }}
-              />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 700,
-                  color: "text.primary",
-                  fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
-                }}
-              >
-                Imobiliárias Verificadas
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: { xs: "0.95rem", sm: "1.1rem" },
-                  mt: 0.5,
-                }}
-              >
-                {location?.city
-                  ? `${companies.length} imobiliárias em ${location.city}, ${location.state}`
-                  : "Encontre as melhores imobiliárias"}
-              </Typography>
-            </Box>
-          </Stack>
-
-          {location?.city && companies.length > 0 && (
-            <TextField
-              fullWidth
-              placeholder="Buscar imobiliária por nome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{
-                mt: 3,
-                "& .MuiOutlinedInput-root": {
-                  bgcolor: "background.paper",
-                  borderRadius: 2,
-                  "&:hover": {
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#3370A6",
-                    },
-                  },
-                  "&.Mui-focused": {
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#3370A6",
-                      borderWidth: 2,
-                    },
-                  },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "text.secondary" }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          )}
-
-          {location?.city && companies.length > 0 && (
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{ mt: 2, flexWrap: "wrap", gap: 1 }}
-            >
+              Imobiliárias
+            </Typography>
+            {location?.city && (
               <Chip
-                label="Todas"
+                icon={<LocationOnIcon />}
+                label={`${location.city}, ${location.state}`}
                 sx={{
-                  bgcolor: "#3370A6",
+                  bgcolor: "primary.main",
                   color: "white",
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#2a5a85" },
+                  height: 32,
+                  "& .MuiChip-icon": {
+                    color: "white",
+                  },
                 }}
               />
-              <Chip
-                label="Verificadas"
-                icon={<VerifiedIcon sx={{ fontSize: 18 }} />}
-                variant="outlined"
-                sx={{
-                  borderColor: "#3370A6",
-                  color: "#3370A6",
-                  fontWeight: 500,
-                  "&:hover": { bgcolor: "rgba(51, 112, 166, 0.08)" },
-                }}
-              />
-            </Stack>
-          )}
+            )}
+          </Box>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "text.secondary",
+              fontSize: { xs: "0.9rem", sm: "1rem" },
+            }}
+          >
+            {location?.city
+              ? searchTerm || filterVerified || sortBy !== "name"
+                ? `${filteredCompanies.length} ${filteredCompanies.length === 1 ? "imobiliária encontrada" : "imobiliárias encontradas"} de ${companies.length} ${companies.length === 1 ? "disponível" : "disponíveis"} em ${location.city}, ${location.state}`
+                : `${companies.length} ${companies.length === 1 ? "imobiliária disponível" : "imobiliárias disponíveis"} em ${location.city}, ${location.state}`
+              : "Encontre as melhores imobiliárias"}
+          </Typography>
         </Box>
+
+        {/* Filtros e Busca */}
+        {location?.city && companies.length > 0 && (
+          <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+            <TextField
+                fullWidth
+                placeholder="Buscar imobiliária por nome..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{
+                  mt: 3,
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    "&:hover": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3370A6",
+                      },
+                    },
+                    "&.Mui-focused": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3370A6",
+                        borderWidth: 2,
+                      },
+                    },
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                sx={{ mt: 2 }}
+                alignItems={{ xs: "stretch", sm: "center" }}
+              >
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ flexWrap: "wrap", gap: 1 }}
+                  flex={1}
+                >
+                  <Chip
+                    label="Todas"
+                    onClick={() => setFilterVerified(false)}
+                    sx={{
+                      bgcolor: !filterVerified ? "#3370A6" : "transparent",
+                      color: !filterVerified ? "white" : "text.primary",
+                      fontWeight: 600,
+                      border: !filterVerified ? "none" : "1px solid",
+                      borderColor: !filterVerified ? "transparent" : "#3370A6",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: !filterVerified ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
+                      },
+                    }}
+                  />
+                  <Chip
+                    label="Verificadas"
+                    icon={<VerifiedIcon sx={{ fontSize: 18 }} />}
+                    onClick={() => setFilterVerified(true)}
+                    sx={{
+                      bgcolor: filterVerified ? "#3370A6" : "transparent",
+                      color: filterVerified ? "white" : "#3370A6",
+                      border: filterVerified ? "none" : "1px solid",
+                      borderColor: "#3370A6",
+                      fontWeight: filterVerified ? 600 : 500,
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: filterVerified ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
+                      },
+                    }}
+                  />
+                </Stack>
+
+                <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
+                  <InputLabel>Ordenar por</InputLabel>
+                  <Select
+                    value={sortBy}
+                    label="Ordenar por"
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    sx={{
+                      bgcolor: "background.paper",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3370A6",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#2a5a85",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3370A6",
+                      },
+                    }}
+                  >
+                    <MenuItem value="name">Nome (A-Z)</MenuItem>
+                    <MenuItem value="properties">Mais Propriedades</MenuItem>
+                    <MenuItem value="brokers">Mais Corretores</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+            </Box>
+          )}
 
         {loading ? (
           <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
@@ -256,8 +317,7 @@ export const CompaniesPage = () => {
                 maxWidth: 400,
               }}
             >
-              Para visualizar as imobiliárias disponíveis, selecione uma cidade
-              primeiro.
+              Para visualizar as imobiliárias disponíveis, selecione uma cidade primeiro.
             </Typography>
           </Box>
         ) : filteredCompanies.length === 0 ? (
@@ -329,6 +389,7 @@ export const CompaniesPage = () => {
                   bgcolor: "#3370A6",
                   color: "white",
                   fontWeight: 600,
+                  cursor: "pointer",
                   "&:hover": { bgcolor: "#2a5a85" },
                 }}
               />

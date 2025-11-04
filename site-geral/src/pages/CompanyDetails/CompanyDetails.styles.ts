@@ -5,10 +5,18 @@ export const HeaderSection = styled(Box)`
   width: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: ${({ theme }) => theme.spacing.xl} 0
-    ${({ theme }) => theme.spacing["4xl"]} 0;
+    ${({ theme }) => theme.spacing["2xl"] || "80px"} 0;
   color: white;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  margin-top: -100px;
+  padding-top: calc(100px + ${({ theme }) => theme.spacing.xl});
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    margin-top: -90px;
+    padding-top: calc(90px + ${({ theme }) => theme.spacing.xl});
+  }
 
   &::before {
     content: "";
@@ -33,12 +41,12 @@ export const HeaderSection = styled(Box)`
 
 export const HeaderContent = styled(Container)`
   position: relative;
-  z-index: 2;
+  z-index: 1010;
 `;
 
 export const CompanyProfileCard = styled(Paper)`
   position: relative;
-  margin-top: -100px;
+  margin-top: -120px;
   padding: ${({ theme }) => theme.spacing["2xl"]};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
@@ -127,6 +135,8 @@ export const SectionTitle = styled(Typography)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+  padding-left: 0;
+  margin-left: 0;
 
   &::before {
     content: "";
@@ -134,6 +144,7 @@ export const SectionTitle = styled(Typography)`
     height: 32px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 2px;
+    margin-right: ${({ theme }) => theme.spacing.md};
   }
 `;
 

@@ -22,7 +22,6 @@ const Thumbnail = styled.div<{ $isActive: boolean; $hasBlur?: boolean }>`
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 120px;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   overflow: hidden;
   cursor: pointer;
@@ -435,9 +434,10 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
             sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
-              gridAutoRows: 'minmax(120px, 1fr)',
+              gridTemplateRows: 'repeat(2, 1fr)',
               gap: { xs: 1, sm: 1.5, md: 2 },
               height: '100%',
+              minHeight: { xs: '240px', sm: '280px', md: '300px' },
             }}
           >
             {imagesToShow.slice(1, 5).map((image, index) => {
@@ -459,8 +459,9 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
                   style={{
                     gridColumn: 'span 1',
                     gridRow: 'span 1',
-                    minHeight: '120px',
-                    height: 'auto',
+                    aspectRatio: '1 / 1',
+                    width: '100%',
+                    height: '100%',
                   }}
                   $hasBlur={isFifthImage}
                 >

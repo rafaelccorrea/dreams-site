@@ -4,14 +4,21 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
-  Typography,
-  Button,
-  Paper,
-  Grid,
   Container,
+  Typography,
+  Grid,
+  Stack,
+  Avatar,
   IconButton,
+  Button,
+  Divider,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  alpha,
   Card,
-  CardContent,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -20,40 +27,26 @@ import {
   Email,
   Language,
   Business,
-  Home,
-  People,
   Verified,
   Share,
   Favorite,
   FavoriteBorder,
   WhatsApp,
-  TrendingUp,
+  MailOutline,
+  People,
 } from "@mui/icons-material";
 import {
   getCompanyById,
-  type Company,
   searchProperties,
-  type Property,
-} from "../../services/propertyService";
-import { PropertyCard } from "../../components/PropertyCard";
-import { PropertyCardShimmer } from "../../components/Shimmer";
-import { useLocation } from "../../contexts/LocationContext";
-import {
   getAvailableBrokers,
+  type Company,
+  type Property,
   type Broker,
 } from "../../services/propertyService";
+import { PropertyCard } from "../../components/PropertyCard";
+import { PropertyCardShimmer, CompanyDetailsShimmer } from "../../components/Shimmer";
 import { BrokerCard } from "../../components/BrokerCard";
-import {
-  HeaderSection,
-  HeaderContent,
-  CompanyProfileCard,
-  LogoContainer,
-  LogoImage,
-  StatCard,
-  ActionButton,
-  SectionTitle,
-  InfoItem,
-} from "./CompanyDetails.styles";
+import { useLocation } from "../../contexts/LocationContext";
 
 export const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,47 +54,41 @@ export const CompanyDetails = () => {
   const { location } = useLocation();
   const [company, setCompany] = useState<Company | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [totalProperties, setTotalProperties] = useState(0);
   const [brokers, setBrokers] = useState<Broker[]>([]);
+  const [showBrokers, setShowBrokers] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingProperties, setLoadingProperties] = useState(true);
   const [loadingBrokers, setLoadingBrokers] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showBrokers, setShowBrokers] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      loadCompany(id);
-    }
+    if (id) loadCompany(id);
   }, [id]);
 
   useEffect(() => {
     if (company && location?.city) {
       loadProperties();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company, location?.city]);
 
   const loadCompany = async (companyId: string) => {
     setLoading(true);
-    setError(null);
     try {
       const data = await getCompanyById(companyId);
-      if (data) {
-        setCompany(data);
-      } else {
-        setError("Imobiliária não encontrada");
-      }
-    } catch (err) {
+      setCompany(data);
+    } catch {
       setError("Erro ao carregar imobiliária");
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const loadProperties = async () => {
-    if (!company || !location?.city) return;
-
+    if (!location?.city || !company?.id) return;
     setLoadingProperties(true);
     try {
       const result = await searchProperties({
@@ -111,24 +98,22 @@ export const CompanyDetails = () => {
         limit: 12,
       });
       setProperties(result.properties);
-    } catch (err) {
-      console.error("Erro ao carregar propriedades:", err);
+      setTotalProperties(result.total);
+    } catch {
       setProperties([]);
+      setTotalProperties(0);
     } finally {
       setLoadingProperties(false);
     }
   };
 
   const loadBrokers = async () => {
-    if (!company || !location?.city || showBrokers) return;
-
+    if (!location?.city || !company?.id) return;
     setLoadingBrokers(true);
     try {
-      const data = await getAvailableBrokers(location.city, company.id);
-      setBrokers(data);
-      setShowBrokers(true);
-    } catch (err) {
-      console.error("Erro ao carregar corretores:", err);
+      const result = await getAvailableBrokers(location.city, company.id);
+      setBrokers(result);
+    } catch {
       setBrokers([]);
     } finally {
       setLoadingBrokers(false);
@@ -138,504 +123,533 @@ export const CompanyDetails = () => {
   const handleShowBrokers = () => {
     if (!showBrokers && brokers.length === 0) {
       loadBrokers();
-    } else {
-      setShowBrokers(!showBrokers);
     }
+    setShowBrokers(!showBrokers);
   };
 
-  const handlePropertyClick = (property: Property) => {
-    navigate(`/property/${property.id}`);
+  const handleWhatsApp = () => {
+    const phone = company?.phone?.replace(/\D/g, "");
+    window.open(
+      `https://wa.me/55${phone}?text=Olá! Gostaria de saber mais sobre os imóveis da ${company?.name}`,
+      "_blank"
+    );
   };
 
-  const handleBrokerClick = (broker: Broker) => {
-    navigate(`/broker/${broker.id}`);
-  };
-
-  const handleShare = () => {
+  const handleShare = async () => {
     if (navigator.share) {
-      navigator.share({
-        title: company?.name,
-        text: `Confira o perfil de ${company?.name}`,
-        url: window.location.href,
-      });
+      try {
+        await navigator.share({
+          title: `Perfil de ${company?.name}`,
+          text: `Confira o perfil da imobiliária ${company?.name}`,
+          url: window.location.href,
+        });
+      } catch {
+        // Usuário cancelou o compartilhamento
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+      alert("Link copiado para a área de transferência!");
     }
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          width: "100%",
-          minHeight: "calc(100vh - 100px)",
-          bgcolor: "#f8f9fa",
-        }}
-      >
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <PropertyCardShimmer count={6} />
-        </Container>
-      </Box>
-    );
-  }
+  const shouldShowEmail = (email: string) => {
+    if (!email) return false;
+    const emailLower = email.toLowerCase();
+    return !emailLower.includes("@teste.") && !emailLower.includes("master.") && !emailLower.includes("@user");
+  };
 
-  if (error || !company) {
+  const getGoogleMapsUrl = () => {
+    if (!company?.address) return "";
+    const address = `${company.address}, ${company.city || ""}, ${
+      company.state || ""
+    }`;
+    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dN6ba0W8iEgGyE&q=${encodeURIComponent(
+      address
+    )}`;
+  };
+
+  if (loading) return <CompanyDetailsShimmer />;
+
+  if (error || !company)
     return (
-      <Box
-        sx={{
-          width: "100%",
-          minHeight: "calc(100vh - 100px)",
-          bgcolor: "#f8f9fa",
-        }}
-      >
-        <Container maxWidth="xl" sx={{ py: 4, textAlign: "center" }}>
-          <Typography variant="h5" gutterBottom>
-            {error || "Imobiliária não encontrada"}
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate("/")}
-            sx={{ mt: 2 }}
-          >
-            Voltar para Home
-          </Button>
-        </Container>
-      </Box>
+      <Container sx={{ py: 10, textAlign: "center" }}>
+        <Typography variant="h5" color="error">
+          {error || "Imobiliária não encontrada"}
+        </Typography>
+        <Button sx={{ mt: 3 }} onClick={() => navigate(-1)} variant="contained">
+          Voltar
+        </Button>
+      </Container>
     );
-  }
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        minHeight: "calc(100vh - 100px)",
-        bgcolor: "#f8f9fa",
-      }}
-    >
-      <HeaderSection>
-        <HeaderContent maxWidth="xl">
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 4,
-            }}
+    <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", pb: 10 }}>
+      {/* Header */}
+      <Box
+        sx={{
+          position: "relative",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          py: 4,
+          mb: 4,
+          overflow: "hidden",
+        }}
+      >
+        {/* Banner Background */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: "url('/background-companies.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            zIndex: 0,
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1))",
+              zIndex: 1,
+            },
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: "50%",
+              background: "linear-gradient(to left, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3), transparent)",
+              zIndex: 1,
+            },
+          }}
+        />
+        
+        {/* Overlay branco semi-transparente para legibilidade */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: "rgba(255, 255, 255, 0.2)",
+            zIndex: 2,
+          }}
+        />
+        
+        {/* Conteúdo */}
+        <Box sx={{ position: "relative", zIndex: 3 }}>
+        <Container maxWidth="xl">
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate(-1)}
+            sx={{ mb: 3 }}
           >
-            <IconButton
-              onClick={() => navigate(-1)}
-              sx={{
-                color: "white",
-                bgcolor: "rgba(255, 255, 255, 0.2)",
-                backdropFilter: "blur(10px)",
-                "&:hover": { bgcolor: "rgba(255, 255, 255, 0.3)" },
-              }}
-            >
-              <ArrowBack />
-            </IconButton>
+            Voltar
+          </Button>
 
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <IconButton
-                onClick={() => setIsFavorite(!isFavorite)}
+          <Box sx={{ pt: 6 }}>
+            <Grid container spacing={4} alignItems="flex-start">
+            <Grid item xs={12} md={4}>
+              <Card
                 sx={{
-                  color: "white",
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
+                  p: 3,
+                  borderRadius: 3,
+                  bgcolor: "rgba(255, 255, 255, 0.95)",
                   backdropFilter: "blur(10px)",
-                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.3)" },
-                }}
-              >
-                {isFavorite ? <Favorite /> : <FavoriteBorder />}
-              </IconButton>
-              <IconButton
-                onClick={handleShare}
-                sx={{
-                  color: "white",
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                  backdropFilter: "blur(10px)",
-                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.3)" },
-                }}
-              >
-                <Share />
-              </IconButton>
-            </Box>
-          </Box>
-
-          <Box sx={{ textAlign: "center", pb: 10 }}>
-            <LogoContainer>
-              {company.logo ? (
-                <LogoImage src={company.logo} alt={company.name} />
-              ) : (
-                <Business sx={{ fontSize: 80, color: "#667eea" }} />
-              )}
-            </LogoContainer>
-          </Box>
-        </HeaderContent>
-      </HeaderSection>
-
-      <Container maxWidth="lg" sx={{ position: "relative" }}>
-        <CompanyProfileCard elevation={0}>
-          <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
-                mb: 2,
-              }}
-            >
-              <Typography
-                variant="h3"
-                sx={{ fontWeight: 700, color: "text.primary" }}
-              >
-                {company.name}
-              </Typography>
-              <Verified sx={{ color: "#667eea", fontSize: 32 }} />
-            </Box>
-
-            {company.description && (
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.secondary",
-                  maxWidth: 600,
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
                   mx: "auto",
-                  lineHeight: 1.7,
+                  maxWidth: "100%",
                 }}
               >
-                {company.description}
-              </Typography>
-            )}
-          </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: { xs: "center", md: "center" } }}>
+                  <Avatar
+                    src={company.logo || undefined}
+                    alt={company.name}
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      border: "3px solid",
+                      borderColor: "primary.main",
+                      bgcolor: alpha("#667eea", 0.1),
+                      mb: 2,
+                    }}
+                  >
+                    {!company.logo && (
+                      <Business sx={{ fontSize: 50, color: "primary.main" }} />
+                    )}
+                  </Avatar>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="h5" fontWeight={700}>
+                      {company.name}
+                    </Typography>
+                    <Verified sx={{ color: "primary.main", fontSize: 24 }} />
+                  </Box>
+                  {company.description && (
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ mt: 1, textAlign: "center" }}
+                    >
+                      {company.description}
+                    </Typography>
+                  )}
+                  <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: "center" }}>
+                    <IconButton
+                      onClick={() => setIsFavorite(!isFavorite)}
+                      sx={{ 
+                        border: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
+                      {isFavorite ? (
+                        <Favorite sx={{ color: "#ff6b6b" }} />
+                      ) : (
+                        <FavoriteBorder />
+                      )}
+                    </IconButton>
+                    <IconButton
+                      onClick={handleShare}
+                      sx={{ 
+                        border: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Share />
+                    </IconButton>
+                  </Stack>
 
-          {(company.propertyCount !== undefined ||
-            company.brokerCount !== undefined) && (
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {company.propertyCount !== undefined && (
-                <Grid item xs={12} sm={6}>
-                  <StatCard>
-                    <CardContent sx={{ position: "relative", zIndex: 1 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          mb: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 600, opacity: 0.9 }}
-                        >
-                          Propriedades
-                        </Typography>
-                        <Home sx={{ fontSize: 32, opacity: 0.8 }} />
-                      </Box>
-                      <Typography
-                        variant="h3"
-                        sx={{ fontWeight: 700, mb: 0.5 }}
-                      >
-                        {company.propertyCount}
+                  {/* Estatísticas como rede social */}
+                  <Stack direction="row" spacing={3} sx={{ mt: 3, width: "100%", justifyContent: "center" }}>
+                    <Box sx={{ textAlign: "center" }}>
+                      <Typography variant="h6" fontWeight={700} color="primary.main">
+                        {totalProperties}
                       </Typography>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <TrendingUp fontSize="small" />
-                        <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                          Imóveis disponíveis
+                      <Typography variant="caption" color="text.secondary">
+                        Imóveis
+                      </Typography>
+                    </Box>
+                    {company.brokerCount !== undefined && (
+                      <Box sx={{ textAlign: "center" }}>
+                        <Typography variant="h6" fontWeight={700} color="primary.main">
+                          {company.brokerCount}
                         </Typography>
-                      </Box>
-                    </CardContent>
-                  </StatCard>
-                </Grid>
-              )}
-              {company.brokerCount !== undefined && (
-                <Grid item xs={12} sm={6}>
-                  <StatCard>
-                    <CardContent sx={{ position: "relative", zIndex: 1 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          mb: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 600, opacity: 0.9 }}
-                        >
+                        <Typography variant="caption" color="text.secondary">
                           Corretores
                         </Typography>
-                        <People sx={{ fontSize: 32, opacity: 0.8 }} />
                       </Box>
-                      <Typography
-                        variant="h3"
-                        sx={{ fontWeight: 700, mb: 0.5 }}
-                      >
-                        {company.brokerCount}
-                      </Typography>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <TrendingUp fontSize="small" />
-                        <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                          Profissionais ativos
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </StatCard>
-                </Grid>
-              )}
+                    )}
+                  </Stack>
+                </Box>
+              </Card>
             </Grid>
-          )}
 
-          <Grid container spacing={2} sx={{ mb: 4 }}>
-            {company.address && (
-              <Grid item xs={12} md={6}>
-                <InfoItem>
-                  <LocationOn sx={{ color: "#667eea", mt: 0.5 }} />
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", fontWeight: 600, mb: 0.5 }}
-                    >
-                      ENDEREÇO
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {company.address}
-                    </Typography>
-                    {company.city && (
-                      <Typography variant="body2" color="text.secondary">
-                        {company.city}
-                        {company.state ? `, ${company.state}` : ""}
-                      </Typography>
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: "flex", gap: 4, flexDirection: { xs: "column", md: "row" } }}>
+                <Box sx={{ flex: 1 }} />
+
+                <Box sx={{ minWidth: 200 }}>
+                  <Stack spacing={1.5}>
+                    {company.phone && (
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        size="medium"
+                        startIcon={<WhatsApp />}
+                        sx={{
+                          bgcolor: "#25D366",
+                          "&:hover": { bgcolor: "#128C7E" },
+                        }}
+                        onClick={handleWhatsApp}
+                      >
+                        WhatsApp
+                      </Button>
                     )}
-                  </Box>
-                </InfoItem>
-              </Grid>
-            )}
-
-            {company.phone && (
-              <Grid item xs={12} md={6}>
-                <InfoItem>
-                  <Phone sx={{ color: "#667eea", mt: 0.5 }} />
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", fontWeight: 600, mb: 0.5 }}
-                    >
-                      TELEFONE
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {company.phone}
-                    </Typography>
-                  </Box>
-                </InfoItem>
-              </Grid>
-            )}
-
-            {company.email && (
-              <Grid item xs={12} md={6}>
-                <InfoItem>
-                  <Email sx={{ color: "#667eea", mt: 0.5 }} />
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", fontWeight: 600, mb: 0.5 }}
-                    >
-                      EMAIL
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {company.email}
-                    </Typography>
-                  </Box>
-                </InfoItem>
-              </Grid>
-            )}
-
-            {(company.corporateName || company.cnpj) && (
-              <Grid item xs={12} md={6}>
-                <InfoItem>
-                  <Business sx={{ color: "#667eea", mt: 0.5 }} />
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", fontWeight: 600, mb: 0.5 }}
-                    >
-                      DADOS CORPORATIVOS
-                    </Typography>
-                    {company.corporateName && (
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {company.corporateName}
-                      </Typography>
+                    {company.email && shouldShowEmail(company.email) && (
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        size="medium"
+                        startIcon={<MailOutline />}
+                        onClick={() =>
+                          (window.location.href = `mailto:${company.email}`)
+                        }
+                        sx={{
+                          border: "none",
+                          boxShadow: "none",
+                          "&:hover": {
+                            boxShadow: "none",
+                          },
+                        }}
+                      >
+                        E-mail
+                      </Button>
                     )}
-                    {company.cnpj && (
-                      <Typography variant="body2" color="text.secondary">
-                        CNPJ: {company.cnpj}
-                      </Typography>
+                    {company.website && (
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        size="medium"
+                        startIcon={<Language />}
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          border: "none",
+                          boxShadow: "none",
+                          "&:hover": {
+                            boxShadow: "none",
+                          },
+                        }}
+                      >
+                        Visitar Site
+                      </Button>
                     )}
-                  </Box>
-                </InfoItem>
-              </Grid>
-            )}
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="medium"
+                      startIcon={<People />}
+                      onClick={handleShowBrokers}
+                      disabled={loadingBrokers}
+                      sx={{
+                        border: "none",
+                        boxShadow: "none",
+                        "&:hover": {
+                          boxShadow: "none",
+                        },
+                      }}
+                    >
+                      {loadingBrokers
+                        ? "Carregando..."
+                        : showBrokers
+                        ? "Ocultar Corretores"
+                        : "Ver Corretores"}
+                    </Button>
+                  </Stack>
+                </Box>
+              </Box>
+            </Grid>
           </Grid>
-
-          <Box
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 2,
-              justifyContent: "center",
-            }}
-          >
-            {company.website && (
-              <ActionButton
-                variant="outlined"
-                startIcon={<Language />}
-                href={company.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  borderColor: "#667eea",
-                  color: "#667eea",
-                  "&:hover": {
-                    borderColor: "#764ba2",
-                    bgcolor: "rgba(102, 126, 234, 0.05)",
-                  },
-                }}
-              >
-                Visitar Site
-              </ActionButton>
-            )}
-
-            {company.phone && (
-              <ActionButton
-                variant="contained"
-                startIcon={<WhatsApp />}
-                href={`https://wa.me/${company.phone.replace(/\D/g, "")}`}
-                target="_blank"
-                sx={{
-                  background:
-                    "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
-                  "&:hover": {
-                    background:
-                      "linear-gradient(135deg, #128C7E 0%, #075E54 100%)",
-                  },
-                }}
-              >
-                WhatsApp
-              </ActionButton>
-            )}
-
-            <ActionButton
-              variant="contained"
-              startIcon={<People />}
-              onClick={handleShowBrokers}
-              disabled={loadingBrokers}
-              sx={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #764ba2 0%, #667eea 100%)",
-                },
-              }}
-            >
-              {loadingBrokers
-                ? "Carregando..."
-                : showBrokers
-                ? "Ocultar Corretores"
-                : "Ver Corretores"}
-            </ActionButton>
           </Box>
-        </CompanyProfileCard>
+        </Container>
+        </Box>
+      </Box>
+
+      {/* Propriedades */}
+      <Container maxWidth="xl">
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+          <Typography variant="h5" fontWeight={700}>
+            Imóveis Disponíveis
+          </Typography>
+          <Chip
+            label={properties.length}
+            sx={{
+              bgcolor: alpha("#667eea", 0.1),
+              color: "#667eea",
+              fontWeight: 700,
+            }}
+          />
+        </Stack>
+
+        {loadingProperties ? (
+          <PropertyCardShimmer count={6} />
+        ) : properties.length > 0 ? (
+          <Grid container spacing={3}>
+            {properties.map((property) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={property.id}>
+                <PropertyCard
+                  property={property}
+                  onClick={() => navigate(`/property/${property.id}`)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Typography color="text.secondary">
+            Nenhum imóvel disponível no momento.
+          </Typography>
+        )}
       </Container>
 
-      <Container maxWidth="xl" sx={{ py: 6 }}>
-        {showBrokers && (
-          <Box sx={{ mb: 6 }}>
-            <SectionTitle variant="h5">
-              <People />
-              Nossa Equipe
-            </SectionTitle>
-            {loadingBrokers ? (
-              <Grid container spacing={3}>
-                <PropertyCardShimmer count={6} />
-              </Grid>
-            ) : brokers.length === 0 ? (
-              <Paper sx={{ p: 6, textAlign: "center", borderRadius: 4 }}>
-                <People
-                  sx={{
-                    fontSize: 80,
-                    color: "text.secondary",
-                    mb: 2,
-                    opacity: 0.5,
-                  }}
-                />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  Nenhum corretor encontrado
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Esta imobiliária ainda não possui corretores cadastrados.
-                </Typography>
-              </Paper>
-            ) : (
-              <Grid container spacing={3}>
-                {brokers.map((broker) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={broker.id}>
-                    <BrokerCard
-                      broker={broker}
-                      onClick={() => handleBrokerClick(broker)}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Box>
-        )}
-
-        <Box>
-          <SectionTitle variant="h5">
-            <Home />
-            Propriedades Disponíveis
-          </SectionTitle>
-          {loadingProperties ? (
-            <Grid container spacing={3}>
-              <PropertyCardShimmer count={6} />
-            </Grid>
-          ) : properties.length === 0 ? (
-            <Paper sx={{ p: 6, textAlign: "center", borderRadius: 4 }}>
-              <Home
+      {/* Corretores */}
+      {brokers.length > 0 && (
+        <>
+          <Divider sx={{ my: 8 }} />
+          <Container maxWidth="xl">
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={2}
+              sx={{ mb: 3 }}
+            >
+              <Typography variant="h5" fontWeight={700}>
+                Nossa Equipe
+              </Typography>
+              <Chip
+                label={brokers.length}
                 sx={{
-                  fontSize: 80,
-                  color: "text.secondary",
-                  mb: 2,
-                  opacity: 0.5,
+                  bgcolor: alpha("#667eea", 0.1),
+                  color: "#667eea",
+                  fontWeight: 700,
                 }}
               />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Nenhuma propriedade encontrada
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Esta imobiliária ainda não possui propriedades cadastradas.
-              </Typography>
-            </Paper>
-          ) : (
+            </Stack>
             <Grid container spacing={3}>
-              {properties.map((property) => (
-                <Grid item xs={12} sm={6} md={4} key={property.id}>
-                  <PropertyCard
-                    property={property}
-                    onClick={() => handlePropertyClick(property)}
+              {brokers.map((broker) => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={broker.id}>
+                  <BrokerCard
+                    broker={broker}
+                    onClick={() => navigate(`/broker/${broker.id}`)}
                   />
                 </Grid>
               ))}
             </Grid>
-          )}
-        </Box>
+          </Container>
+        </>
+      )}
+
+      {/* Divisor */}
+      <Divider sx={{ my: 8 }} />
+
+      {/* Informações */}
+      <Container maxWidth="xl">
+        <Grid container spacing={6}>
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
+              Informações da Empresa
+            </Typography>
+            <Stack spacing={2.5}>
+              {company.corporateName && (
+                <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                  <Business sx={{ color: "primary.main", fontSize: 22, mt: 0.5, flexShrink: 0 }} />
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>
+                      {company.corporateName}
+                    </Typography>
+                    {company.cnpj && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25 }}>
+                        CNPJ: {company.cnpj}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            </Stack>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
+              Informações de Contato
+            </Typography>
+            <Stack spacing={2.5}>
+              {company.address && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1.5,
+                    cursor: "pointer",
+                    py: 0.5,
+                    transition: "all 0.2s",
+                    "&:hover": { opacity: 0.8 },
+                  }}
+                  onClick={() => setShowMap(true)}
+                >
+                  <LocationOn sx={{ color: "primary.main", fontSize: 22, mt: 0.5, flexShrink: 0 }} />
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>
+                      {company.address}
+                    </Typography>
+                    {company.city && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25 }}>
+                        {company.city}{company.state ? `, ${company.state}` : ""}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+              {company.phone && (
+                <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                  <Phone sx={{ color: "primary.main", fontSize: 22, mt: 0.5, flexShrink: 0 }} />
+                  <Typography variant="body2" fontWeight={500}>
+                    {company.phone}
+                  </Typography>
+                </Box>
+              )}
+              {company.email && shouldShowEmail(company.email) && (
+                <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                  <Email sx={{ color: "primary.main", fontSize: 22, mt: 0.5, flexShrink: 0 }} />
+                  <Typography 
+                    variant="body2" 
+                    fontWeight={500}
+                    sx={{ wordBreak: "break-all" }}
+                  >
+                    {company.email}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+              Localização
+            </Typography>
+            <Box
+              sx={{
+                borderRadius: 3,
+                overflow: "hidden",
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Box
+                component="iframe"
+                src={getGoogleMapsUrl()}
+                width="100%"
+                height="300"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+              />
+            </Box>
+          </Grid>
+        </Grid>
       </Container>
+
+      {/* Dialog Mapa */}
+      <Dialog
+        open={showMap}
+        onClose={() => setShowMap(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Localização</DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <Box
+            component="iframe"
+            src={getGoogleMapsUrl()}
+            width="100%"
+            height="450"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowMap(false)} variant="contained">
+            Fechar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -9,10 +9,15 @@ import {
   InputAdornment,
   Chip,
   Stack,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import PersonIcon from "@mui/icons-material/Person";
 import StarIcon from "@mui/icons-material/Star";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import SortIcon from "@mui/icons-material/Sort";
 import { BrokerCard } from "../../components/BrokerCard";
 import { BrokerCardShimmer } from "../../components/Shimmer";
 import {
@@ -21,11 +26,16 @@ import {
 } from "../../services/propertyService";
 import { useLocation } from "../../contexts/LocationContext";
 
+type SortOption = "name" | "properties-desc" | "properties-asc";
+type FilterOption = "all" | "most-properties";
+
 export const BrokersPage = () => {
   const { location } = useLocation();
   const [brokers, setBrokers] = useState<Broker[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [filterBy, setFilterBy] = useState<FilterOption>("all");
 
   useEffect(() => {
     const loadBrokers = async () => {
@@ -50,9 +60,35 @@ export const BrokersPage = () => {
     loadBrokers();
   }, [location?.city]);
 
-  const filteredBrokers = brokers.filter((broker) =>
-    broker.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar e ordenar corretores
+  const filteredAndSortedBrokers = useMemo(() => {
+    let filtered = brokers.filter((broker) =>
+      broker.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Aplicar filtro "Mais Avaliados" (usando propriedades como proxy por enquanto)
+    if (filterBy === "most-properties") {
+      filtered = filtered.filter((broker) => broker.propertyCount > 0);
+    }
+
+    // Aplicar ordenação
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "properties-desc":
+          return b.propertyCount - a.propertyCount;
+        case "properties-asc":
+          return a.propertyCount - b.propertyCount;
+        case "name":
+        default:
+          return a.name.localeCompare(b.name, "pt-BR");
+      }
+    });
+
+    return sorted;
+  }, [brokers, searchTerm, sortBy, filterBy]);
+
+  const totalBrokers = brokers.length;
+  const displayedCount = filteredAndSortedBrokers.length;
 
   return (
     <Box
@@ -68,136 +104,173 @@ export const BrokersPage = () => {
           width: "100%",
           maxWidth: "1400px",
           margin: "0 auto",
-          px: "25px",
+          px: { xs: 2, sm: 3, md: "25px" },
         }}
       >
-        <Box
-          sx={{
-            mb: { xs: 3, sm: 4, md: 5 },
-            background:
-              "linear-gradient(135deg, rgba(51, 112, 166, 0.08) 0%, rgba(139, 180, 217, 0.08) 100%)",
-            borderRadius: 3,
-            p: { xs: 3, sm: 4, md: 5 },
-            position: "relative",
-            overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: "4px",
-              background: "linear-gradient(90deg, #3370A6 0%, #8BB4D9 100%)",
-            },
-          }}
-        >
-          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-            <Box
+        {/* Título e Badge de Localização */}
+        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
+            <Typography
+              variant="h3"
               sx={{
-                width: { xs: 48, sm: 56 },
-                height: { xs: 48, sm: 56 },
-                borderRadius: 2,
-                background: "linear-gradient(135deg, #3370A6 0%, #8BB4D9 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(51, 112, 166, 0.3)",
+                fontWeight: 700,
+                color: "text.primary",
+                fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
               }}
             >
-              <PersonIcon
-                sx={{ fontSize: { xs: 28, sm: 32 }, color: "white" }}
-              />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 700,
-                  color: "text.primary",
-                  fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
-                }}
-              >
-                Corretores Profissionais
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: { xs: "0.95rem", sm: "1.1rem" },
-                  mt: 0.5,
-                }}
-              >
-                {location?.city
-                  ? `${brokers.length} corretores em ${location.city}, ${location.state}`
-                  : "Encontre os melhores profissionais"}
-              </Typography>
-            </Box>
-          </Stack>
-
-          {location?.city && brokers.length > 0 && (
-            <TextField
-              fullWidth
-              placeholder="Buscar corretor por nome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{
-                mt: 3,
-                "& .MuiOutlinedInput-root": {
-                  bgcolor: "background.paper",
-                  borderRadius: 2,
-                  "&:hover": {
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#3370A6",
-                    },
-                  },
-                  "&.Mui-focused": {
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#3370A6",
-                      borderWidth: 2,
-                    },
-                  },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "text.secondary" }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          )}
-
-          {location?.city && brokers.length > 0 && (
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{ mt: 2, flexWrap: "wrap", gap: 1 }}
-            >
+              Corretores
+            </Typography>
+            {location?.city && (
               <Chip
-                label="Todos"
+                icon={<LocationOnIcon />}
+                label={`${location.city}, ${location.state}`}
                 sx={{
-                  bgcolor: "#3370A6",
+                  bgcolor: "primary.main",
                   color: "white",
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#2a5a85" },
+                  height: 32,
+                  "& .MuiChip-icon": {
+                    color: "white",
+                  },
                 }}
               />
-              <Chip
-                label="Mais Avaliados"
-                icon={<StarIcon sx={{ fontSize: 18 }} />}
-                variant="outlined"
-                sx={{
-                  borderColor: "#3370A6",
-                  color: "#3370A6",
-                  fontWeight: 500,
-                  "&:hover": { bgcolor: "rgba(51, 112, 166, 0.08)" },
-                }}
-              />
-            </Stack>
-          )}
+            )}
+          </Box>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "text.secondary",
+              fontSize: { xs: "0.9rem", sm: "1rem" },
+            }}
+          >
+            {location?.city
+              ? searchTerm || filterBy !== "all" || sortBy !== "name"
+                ? `${displayedCount} ${displayedCount === 1 ? "corretor encontrado" : "corretores encontrados"} de ${totalBrokers} ${totalBrokers === 1 ? "disponível" : "disponíveis"} em ${location.city}, ${location.state}`
+                : `${totalBrokers} ${totalBrokers === 1 ? "corretor disponível" : "corretores disponíveis"} em ${location.city}, ${location.state}`
+              : "Encontre os melhores profissionais"}
+          </Typography>
         </Box>
 
+        {/* Filtros e Busca */}
+        {location?.city && brokers.length > 0 && (
+          <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+            {/* Barra de Busca */}
+            <Box sx={{ mb: 2, maxWidth: "500px" }}>
+              <TextField
+                fullWidth
+                placeholder="Buscar corretor por nome..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    "&:hover": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3370A6",
+                      },
+                    },
+                    "&.Mui-focused": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3370A6",
+                        borderWidth: 2,
+                      },
+                    },
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
+
+            {/* Filtros e Ordenação */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 2,
+                alignItems: { xs: "stretch", sm: "center" },
+                flexWrap: "wrap",
+              }}
+            >
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ flexWrap: "wrap", gap: 1, flex: 1 }}
+              >
+                <Chip
+                  label="Todos"
+                  onClick={() => setFilterBy("all")}
+                  sx={{
+                    bgcolor: filterBy === "all" ? "#3370A6" : "transparent",
+                    color: filterBy === "all" ? "white" : "#3370A6",
+                    border: filterBy === "all" ? "none" : "1px solid #3370A6",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: filterBy === "all" ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
+                    },
+                  }}
+                />
+                <Chip
+                  label="Mais Propriedades"
+                  icon={<StarIcon sx={{ fontSize: 18 }} />}
+                  onClick={() => setFilterBy("most-properties")}
+                  sx={{
+                    bgcolor: filterBy === "most-properties" ? "#3370A6" : "transparent",
+                    color: filterBy === "most-properties" ? "white" : "#3370A6",
+                    border: filterBy === "most-properties" ? "none" : "1px solid #3370A6",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: filterBy === "most-properties" ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
+                    },
+                    "& .MuiChip-icon": {
+                      color: filterBy === "most-properties" ? "white" : "#3370A6",
+                    },
+                  }}
+                />
+              </Stack>
+
+              {/* Seletor de Ordenação */}
+              <FormControl
+                size="small"
+                sx={{
+                  minWidth: { xs: "100%", sm: 200 },
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                }}
+              >
+                <InputLabel id="sort-select-label">Ordenar por</InputLabel>
+                <Select
+                  labelId="sort-select-label"
+                  id="sort-select"
+                  value={sortBy}
+                  label="Ordenar por"
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  startAdornment={<SortIcon sx={{ mr: 1, color: "text.secondary" }} />}
+                  sx={{
+                    borderRadius: 2,
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#3370A6",
+                    },
+                  }}
+                >
+                  <MenuItem value="name">Nome (A-Z)</MenuItem>
+                  <MenuItem value="properties-desc">Mais Propriedades</MenuItem>
+                  <MenuItem value="properties-asc">Menos Propriedades</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        )}
+
+        {/* Conteúdo Principal */}
         {loading ? (
           <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
             <BrokerCardShimmer count={8} />
@@ -231,7 +304,7 @@ export const BrokersPage = () => {
                 mb: 3,
               }}
             >
-              <PersonIcon
+              <LocationOnIcon
                 sx={{ fontSize: { xs: 40, sm: 50 }, color: "#3370A6" }}
               />
             </Box>
@@ -252,13 +325,23 @@ export const BrokersPage = () => {
                 color: "text.secondary",
                 fontSize: { xs: "0.9rem", sm: "1rem" },
                 maxWidth: 400,
+                mb: 2,
               }}
             >
-              Para visualizar os corretores disponíveis, selecione uma cidade
-              primeiro.
+              Para visualizar os corretores disponíveis, selecione uma cidade primeiro.
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                fontSize: { xs: "0.85rem", sm: "0.9rem" },
+                maxWidth: 400,
+              }}
+            >
+              Clique no botão de localização no topo da página para escolher sua cidade.
             </Typography>
           </Box>
-        ) : filteredBrokers.length === 0 ? (
+        ) : filteredAndSortedBrokers.length === 0 ? (
           <Box
             sx={{
               textAlign: "center",
@@ -302,6 +385,8 @@ export const BrokersPage = () => {
             >
               {searchTerm
                 ? "Nenhum corretor encontrado"
+                : filterBy === "most-properties"
+                ? "Nenhum corretor com propriedades"
                 : "Nenhum corretor disponível"}
             </Typography>
             <Typography
@@ -310,6 +395,7 @@ export const BrokersPage = () => {
                 color: "text.secondary",
                 fontSize: { xs: "0.9rem", sm: "1rem" },
                 maxWidth: 400,
+                mb: 2,
               }}
             >
               {searchTerm
@@ -318,15 +404,19 @@ export const BrokersPage = () => {
                 ? `Não há corretores disponíveis em ${location.city} no momento.`
                 : "Não há corretores disponíveis no momento."}
             </Typography>
-            {searchTerm && (
+            {(searchTerm || filterBy !== "all") && (
               <Chip
-                label="Limpar busca"
-                onClick={() => setSearchTerm("")}
+                label="Limpar filtros"
+                onClick={() => {
+                  setSearchTerm("");
+                  setFilterBy("all");
+                  setSortBy("name");
+                }}
                 sx={{
-                  mt: 3,
                   bgcolor: "#3370A6",
                   color: "white",
                   fontWeight: 600,
+                  cursor: "pointer",
                   "&:hover": { bgcolor: "#2a5a85" },
                 }}
               />
@@ -334,7 +424,7 @@ export const BrokersPage = () => {
           </Box>
         ) : (
           <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-            {filteredBrokers.map((broker) => (
+            {filteredAndSortedBrokers.map((broker) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={broker.id}>
                 <BrokerCard broker={broker} />
               </Grid>
