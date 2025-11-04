@@ -413,6 +413,9 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
       if (onSearch) {
         onSearch(filters)
       }
+      
+      // Fechar o drawer quando a busca for acionada
+      setDrawerOpen(false)
     } catch (error) {
       setError({ show: true, message: 'Erro ao buscar propriedades. Tente novamente.' })
       setTimeout(() => setError({ show: false, message: '' }), 5000)

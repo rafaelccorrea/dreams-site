@@ -26,6 +26,7 @@ export const HomePage = () => {
   const [searchFilters, setSearchFilters] = useState<Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'> | undefined>(undefined)
   const [homeAnimation, setHomeAnimation] = useState<any>(null)
   const [showLottieModal, setShowLottieModal] = useState(true)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // Carregar animação Lottie
   useEffect(() => {
@@ -36,10 +37,21 @@ export const HomePage = () => {
         // Fechar modal após a animação terminar (ou após alguns segundos)
         setTimeout(() => {
           setShowLottieModal(false)
+          setIsInitialLoad(false)
         }, 3000) // 3 segundos
       })
       .catch((error) => console.error('Erro ao carregar animação Lottie:', error))
   }, [])
+
+  // Função para exibir o modal Lottie
+  const showLottie = () => {
+    if (homeAnimation && !isInitialLoad) {
+      setShowLottieModal(true)
+      setTimeout(() => {
+        setShowLottieModal(false)
+      }, 3000) // 3 segundos
+    }
+  }
 
   // Ler filtros da URL quando a página carrega
   useEffect(() => {
@@ -58,17 +70,39 @@ export const HomePage = () => {
         filters.search = transaction === 'sale' ? 'sale' : 'rent'
       }
       
-      setSearchFilters(filters)
+      // Verificar se os filtros mudaram antes de atualizar
+      const filtersChanged = JSON.stringify(filters) !== JSON.stringify(searchFilters)
+      
+      if (filtersChanged) {
+        setSearchFilters(filters)
+        // Exibir Lottie quando filtros da URL mudarem (apenas se não for o carregamento inicial)
+        if (!isInitialLoad) {
+          showLottie()
+        }
+      }
     } else {
       // Resetar filtros se não houver parâmetros na URL
-      setSearchFilters(undefined)
+      if (searchFilters !== undefined) {
+        setSearchFilters(undefined)
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
   const handleSearch = (filters: PropertySearchFilters) => {
     // Remove city, state, page e limit para passar apenas os filtros de busca
     const { city, state, page, limit, ...filterProps } = filters
-    setSearchFilters(filterProps)
+    
+    // Verificar se os filtros mudaram antes de atualizar
+    const filtersChanged = JSON.stringify(filterProps) !== JSON.stringify(searchFilters)
+    
+    if (filtersChanged) {
+      setSearchFilters(filterProps)
+      // Exibir Lottie quando filtros forem aplicados via busca (apenas se não for o carregamento inicial)
+      if (!isInitialLoad) {
+        showLottie()
+      }
+    }
   }
 
   const handleContactBrokers = () => {
