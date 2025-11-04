@@ -26,3 +26,4 @@ export const ShimmerBox = styled(ShimmerBase)<{ width?: string; height?: string 
   height: ${({ height }) => height || '20px'};
 `
 
+

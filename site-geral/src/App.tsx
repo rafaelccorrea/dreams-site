@@ -6,6 +6,7 @@ import { muiTheme } from './theme/muiTheme'
 import { styledTheme } from './theme/styledTheme'
 import { GlobalStyle } from './styles/global'
 import { Header } from './components/Header'
+import { Footer } from './components/Footer'
 import { HomePage } from './pages/HomePage'
 import { PropertyDetails } from './pages/PropertyDetails'
 import { BrokersPage } from './pages/BrokersPage'
@@ -15,6 +16,7 @@ import { BrokerDetails } from './pages/BrokerDetails'
 import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
+import { Box } from '@mui/material'
 
 function AppContent() {
   const { hasLocation, isLocationConfirmed } = useLocation()
@@ -60,39 +62,42 @@ function AppContent() {
   const routerLocation = useRouterLocation()
 
   return (
-    <>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header currentPath={routerLocation.pathname} />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <MainContentWrapper $showBackground={true}>
-              <HomePage />
-            </MainContentWrapper>
-          }
-        />
-        <Route path="/property/:id" element={<PropertyDetails />} />
-        <Route 
-          path="/corretores" 
-          element={
-            <MainContentWrapper $showBackground={false}>
-              <BrokersPage />
-            </MainContentWrapper>
-          } 
-        />
-        <Route path="/broker/:id" element={<BrokerDetails />} />
-        <Route 
-          path="/imobiliarias" 
-          element={
-            <MainContentWrapper $showBackground={false}>
-              <CompaniesPage />
-            </MainContentWrapper>
-          } 
-        />
-        <Route path="/company/:id" element={<CompanyDetails />} />
-      </Routes>
+      <Box sx={{ flex: 1 }}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <MainContentWrapper $showBackground={true}>
+                <HomePage />
+              </MainContentWrapper>
+            }
+          />
+          <Route path="/property/:id" element={<PropertyDetails />} />
+          <Route 
+            path="/corretores" 
+            element={
+              <MainContentWrapper $showBackground={false}>
+                <BrokersPage />
+              </MainContentWrapper>
+            } 
+          />
+          <Route path="/broker/:id" element={<BrokerDetails />} />
+          <Route 
+            path="/imobiliarias" 
+            element={
+              <MainContentWrapper $showBackground={false}>
+                <CompaniesPage />
+              </MainContentWrapper>
+            } 
+          />
+          <Route path="/company/:id" element={<CompanyDetails />} />
+        </Routes>
+      </Box>
+      <Footer />
       <LocationModal open={showModal} onClose={handleModalClose} />
-    </>
+    </Box>
   )
 }
 

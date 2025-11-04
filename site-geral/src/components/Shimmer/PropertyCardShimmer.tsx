@@ -121,3 +121,4 @@ export const PropertyCardShimmer = ({ count = 1 }: PropertyCardShimmerProps) => 
   )
 }
 
+

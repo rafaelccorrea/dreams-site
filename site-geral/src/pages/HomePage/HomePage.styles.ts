@@ -78,12 +78,79 @@ export const ContactButton = styled(Button)`
 
 export const RightSection = styled(Box)`
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
+  gap: ${({ theme }) => theme.spacing.lg};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     width: 100%;
+  }
+`
+
+export const LottieModal = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
+  align-items: center;
+  justify-content: center;
+  z-index: ${({ theme }) => theme.zIndex.modal};
+  pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+`
+
+export const LottieModalBackdrop = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1;
+`
+
+export const LottieModalContent = styled.div`
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  animation: fadeInScale 0.3s ease-out;
+  
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`
+
+export const LottieContainer = styled(Box)`
+  width: 400px;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    width: 300px;
+    height: 300px;
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
   }
 `
 

@@ -79,7 +79,7 @@ export const CompanyDetails = () => {
     setLoading(true);
     try {
       const data = await getCompanyById(companyId);
-      setCompany(data);
+        setCompany(data);
     } catch {
       setError("Erro ao carregar imobiliária");
     } finally {
@@ -124,7 +124,7 @@ export const CompanyDetails = () => {
     if (!showBrokers && brokers.length === 0) {
       loadBrokers();
     }
-    setShowBrokers(!showBrokers);
+      setShowBrokers(!showBrokers);
   };
 
   const handleWhatsApp = () => {
@@ -147,8 +147,8 @@ export const CompanyDetails = () => {
         // Usuário cancelou o compartilhamento
       }
     } else {
-      await navigator.clipboard.writeText(window.location.href);
-      alert("Link copiado para a área de transferência!");
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link copiado para a área de transferência!");
     }
   };
 
@@ -179,10 +179,10 @@ export const CompanyDetails = () => {
         <Button sx={{ mt: 3 }} onClick={() => navigate(-1)} variant="contained">
           Voltar
         </Button>
-      </Container>
+        </Container>
     );
 
-  return (
+    return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", pb: 10 }}>
       {/* Header */}
       <Box
@@ -196,8 +196,8 @@ export const CompanyDetails = () => {
         }}
       >
         {/* Banner Background */}
-        <Box
-          sx={{
+          <Box
+            sx={{
             position: "absolute",
             top: 0,
             left: 0,
@@ -232,8 +232,8 @@ export const CompanyDetails = () => {
         />
         
         {/* Overlay branco semi-transparente para legibilidade */}
-        <Box
-          sx={{
+    <Box
+      sx={{
             position: "absolute",
             top: 0,
             left: 0,
@@ -251,7 +251,7 @@ export const CompanyDetails = () => {
             startIcon={<ArrowBack />}
             onClick={() => navigate(-1)}
             sx={{ mb: 3 }}
-          >
+            >
             Voltar
           </Button>
 
@@ -273,7 +273,7 @@ export const CompanyDetails = () => {
                   <Avatar
                     src={company.logo || undefined}
                     alt={company.name}
-                    sx={{
+                        sx={{
                       width: 120,
                       height: 120,
                       border: "3px solid",
@@ -293,7 +293,7 @@ export const CompanyDetails = () => {
                     <Verified sx={{ color: "primary.main", fontSize: 24 }} />
                   </Box>
                   {company.description && (
-                    <Typography 
+                    <Typography
                       variant="body2" 
                       color="text.secondary"
                       sx={{ mt: 1, textAlign: "center" }}
@@ -308,7 +308,7 @@ export const CompanyDetails = () => {
                         border: "1px solid",
                         borderColor: "divider",
                       }}
-                    >
+                >
                       {isFavorite ? (
                         <Favorite sx={{ color: "#ff6b6b" }} />
                       ) : (
@@ -347,9 +347,9 @@ export const CompanyDetails = () => {
                       </Box>
                     )}
                   </Stack>
-                </Box>
+                  </Box>
               </Card>
-            </Grid>
+          </Grid>
 
             <Grid item xs={12} md={8}>
               <Box sx={{ display: "flex", gap: 4, flexDirection: { xs: "column", md: "row" } }}>
@@ -357,81 +357,81 @@ export const CompanyDetails = () => {
 
                 <Box sx={{ minWidth: 200 }}>
                   <Stack spacing={1.5}>
-                    {company.phone && (
+            {company.phone && (
                       <Button
                         fullWidth
-                        variant="contained"
+                  variant="contained"
                         size="medium"
                         startIcon={<WhatsApp />}
-                        sx={{
+                  sx={{
                           bgcolor: "#25D366",
                           "&:hover": { bgcolor: "#128C7E" },
-                        }}
-                        onClick={handleWhatsApp}
-                      >
-                        WhatsApp
+                  }}
+                  onClick={handleWhatsApp}
+                >
+                  WhatsApp
                       </Button>
-                    )}
-                    {company.email && shouldShowEmail(company.email) && (
+            )}
+            {company.email && shouldShowEmail(company.email) && (
                       <Button
                         fullWidth
-                        variant="contained"
+                variant="contained"
                         size="medium"
                         startIcon={<MailOutline />}
                         onClick={() =>
                           (window.location.href = `mailto:${company.email}`)
                         }
-                        sx={{
+                sx={{
                           border: "none",
                           boxShadow: "none",
-                          "&:hover": {
+                  "&:hover": {
                             boxShadow: "none",
-                          },
-                        }}
-                      >
+                  },
+                }}
+              >
                         E-mail
                       </Button>
-                    )}
-                    {company.website && (
+            )}
+            {company.website && (
                       <Button
                         fullWidth
                         variant="contained"
                         size="medium"
-                        startIcon={<Language />}
-                        href={company.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{
+                startIcon={<Language />}
+                href={company.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
                           border: "none",
                           boxShadow: "none",
-                          "&:hover": {
+                  "&:hover": {
                             boxShadow: "none",
-                          },
-                        }}
-                      >
-                        Visitar Site
+                  },
+                }}
+              >
+                Visitar Site
                       </Button>
-                    )}
+            )}
                     <Button
                       fullWidth
-                      variant="contained"
+              variant="contained"
                       size="medium"
-                      startIcon={<People />}
-                      onClick={handleShowBrokers}
-                      disabled={loadingBrokers}
-                      sx={{
+              startIcon={<People />}
+              onClick={handleShowBrokers}
+              disabled={loadingBrokers}
+              sx={{
                         border: "none",
                         boxShadow: "none",
-                        "&:hover": {
+                "&:hover": {
                           boxShadow: "none",
-                        },
-                      }}
-                    >
-                      {loadingBrokers
-                        ? "Carregando..."
-                        : showBrokers
-                        ? "Ocultar Corretores"
-                        : "Ver Corretores"}
+                },
+              }}
+            >
+              {loadingBrokers
+                ? "Carregando..."
+                : showBrokers
+                ? "Ocultar Corretores"
+                : "Ver Corretores"}
                     </Button>
                   </Stack>
                 </Box>
@@ -439,7 +439,7 @@ export const CompanyDetails = () => {
             </Grid>
           </Grid>
           </Box>
-        </Container>
+      </Container>
         </Box>
       </Box>
 
@@ -451,27 +451,27 @@ export const CompanyDetails = () => {
           </Typography>
           <Chip
             label={properties.length}
-            sx={{
+                  sx={{
               bgcolor: alpha("#667eea", 0.1),
               color: "#667eea",
               fontWeight: 700,
-            }}
-          />
+                  }}
+                />
         </Stack>
 
         {loadingProperties ? (
           <PropertyCardShimmer count={6} />
         ) : properties.length > 0 ? (
-          <Grid container spacing={3}>
+              <Grid container spacing={3}>
             {properties.map((property) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={property.id}>
                 <PropertyCard
                   property={property}
                   onClick={() => navigate(`/property/${property.id}`)}
-                />
+                    />
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
         ) : (
           <Typography color="text.secondary">
             Nenhum imóvel disponível no momento.
@@ -619,10 +619,10 @@ export const CompanyDetails = () => {
                 style={{ border: 0 }}
                 loading="lazy"
                 allowFullScreen
-              />
-            </Box>
-          </Grid>
-        </Grid>
+                />
+              </Box>
+                  </Grid>
+              </Grid>
       </Container>
 
       {/* Dialog Mapa */}

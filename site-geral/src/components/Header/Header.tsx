@@ -8,6 +8,7 @@ import {
   CenterSection,
   RightSection,
   LogoContainer,
+  ShootingStar,
   NavigationContainer,
   NavLink,
   MobileMenuToggle,
@@ -30,6 +31,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null)
 
   const handleLogoClick = () => {
     navigate('/')
@@ -45,11 +47,20 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
   }
 
   const handleDropdownEnter = (href: string) => {
+    // Limpar timeout se existir
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout)
+      setDropdownTimeout(null)
+    }
     setOpenDropdown(href)
   }
 
   const handleDropdownLeave = () => {
-    setOpenDropdown(null)
+    // Adicionar um pequeno delay antes de fechar para evitar fechamento prematuro
+    const timeout = setTimeout(() => {
+      setOpenDropdown(null)
+    }, 150) // 150ms de delay
+    setDropdownTimeout(timeout)
   }
 
   const navItems: NavItem[] = [
@@ -83,6 +94,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
           {/* Seção Esquerda - Logo */}
           <LeftSection>
             <LogoContainer onClick={handleLogoClick}>
+              <ShootingStar />
               <img 
                 src="/logo-dream.png" 
                 alt="Dream Keys Logo" 
@@ -90,7 +102,9 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                   height: '235px', 
                   width: 'auto',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.15))'
+                  filter: 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.15))',
+                  position: 'relative',
+                  zIndex: 1
                 }} 
               />
             </LogoContainer>
@@ -122,16 +136,61 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                           <KeyboardArrowDown fontSize="small" />
                         </ChevronIcon>
                       </NavLink>
-                      <DropdownMenu $isOpen={isDropdownOpen}>
-                        {item.submenu.map((subItem) => (
-                          <DropdownItem
-                            key={subItem.href}
-                            to={subItem.href}
-                            onClick={closeMobileMenu}
-                          >
-                            {subItem.label}
-                          </DropdownItem>
-                        ))}
+                      <DropdownMenu 
+                        $isOpen={isDropdownOpen}
+                        onMouseEnter={() => handleDropdownEnter(item.href)}
+                        onMouseLeave={handleDropdownLeave}
+                      >
+                        {item.submenu.map((subItem) => {
+                          // Mapear sub-itens para filtros
+                          const getFilters = (href: string) => {
+                            const params = new URLSearchParams()
+                            
+                            // Casas
+                            if (href.includes('casas-a-venda')) {
+                              params.set('type', 'house')
+                              params.set('transaction', 'sale')
+                            } else if (href.includes('casas-para-alugar')) {
+                              params.set('type', 'house')
+                              params.set('transaction', 'rent')
+                            }
+                            // Apartamentos
+                            else if (href.includes('apartamentos-a-venda')) {
+                              params.set('type', 'apartment')
+                              params.set('transaction', 'sale')
+                            } else if (href.includes('apartamentos-para-alugar')) {
+                              params.set('type', 'apartment')
+                              params.set('transaction', 'rent')
+                            }
+                            // Comerciais
+                            else if (href.includes('imoveis-comerciais-a-venda')) {
+                              params.set('type', 'commercial')
+                              params.set('transaction', 'sale')
+                            } else if (href.includes('imoveis-comerciais-para-alugar')) {
+                              params.set('type', 'commercial')
+                              params.set('transaction', 'rent')
+                            }
+                            
+                            return params.toString()
+                          }
+                          
+                          const filterParams = getFilters(subItem.href)
+                          const finalHref = filterParams ? `/?${filterParams}` : '/'
+                          
+                          return (
+                            <DropdownItem
+                              key={subItem.href}
+                              to={finalHref}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                closeMobileMenu()
+                                navigate(finalHref)
+                              }}
+                            >
+                              {subItem.label}
+                            </DropdownItem>
+                          )
+                        })}
                       </DropdownMenu>
                     </NavLinkWithDropdown>
                   )
@@ -176,17 +235,53 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                   >
                     {item.label}
                   </NavLink>
-                  {item.submenu.map((subItem) => (
-                    <NavLink
-                      key={subItem.href}
-                      to={subItem.href}
-                      className={currentPath === subItem.href ? 'active' : ''}
-                      onClick={closeMobileMenu}
-                      style={{ paddingLeft: '2rem', fontSize: '0.9rem' }}
-                    >
-                      {subItem.label}
-                    </NavLink>
-                  ))}
+                  {item.submenu.map((subItem) => {
+                    // Mapear sub-itens para filtros (mesma lógica do dropdown)
+                    const getFilters = (href: string) => {
+                      const params = new URLSearchParams()
+                      
+                      if (href.includes('casas-a-venda')) {
+                        params.set('type', 'house')
+                        params.set('transaction', 'sale')
+                      } else if (href.includes('casas-para-alugar')) {
+                        params.set('type', 'house')
+                        params.set('transaction', 'rent')
+                      } else if (href.includes('apartamentos-a-venda')) {
+                        params.set('type', 'apartment')
+                        params.set('transaction', 'sale')
+                      } else if (href.includes('apartamentos-para-alugar')) {
+                        params.set('type', 'apartment')
+                        params.set('transaction', 'rent')
+                      } else if (href.includes('imoveis-comerciais-a-venda')) {
+                        params.set('type', 'commercial')
+                        params.set('transaction', 'sale')
+                      } else if (href.includes('imoveis-comerciais-para-alugar')) {
+                        params.set('type', 'commercial')
+                        params.set('transaction', 'rent')
+                      }
+                      
+                      return params.toString()
+                    }
+                    
+                    const filterParams = getFilters(subItem.href)
+                    const finalHref = filterParams ? `/?${filterParams}` : '/'
+                    
+                    return (
+                      <NavLink
+                        key={subItem.href}
+                        to={finalHref}
+                        className={currentPath === subItem.href ? 'active' : ''}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          closeMobileMenu()
+                          navigate(finalHref)
+                        }}
+                        style={{ paddingLeft: '2rem', fontSize: '0.9rem' }}
+                      >
+                        {subItem.label}
+                      </NavLink>
+                    )
+                  })}
                 </div>
               )
             }

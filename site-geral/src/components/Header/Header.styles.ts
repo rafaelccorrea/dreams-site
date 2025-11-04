@@ -72,9 +72,94 @@ export const LogoContainer = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
   cursor: pointer;
   transition: transform ${({ theme }) => theme.transitions.base};
+  position: relative;
+  overflow: visible;
 
   &:hover {
     transform: scale(1.05);
+  }
+`
+
+export const ShootingStar = styled.div`
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  width: 3px;
+  height: 3px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(139, 180, 217, 0.4) 50%, transparent 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 8px rgba(255, 255, 255, 0.4),
+    0 0 12px rgba(139, 180, 217, 0.3),
+    0 0 18px rgba(139, 180, 217, 0.2);
+  animation: shootingStar 5s ease-in-out infinite;
+  z-index: 10;
+  pointer-events: none;
+  transform: translateY(-50%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    height: 1.5px;
+    background: linear-gradient(90deg, 
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 30%, 
+      rgba(139, 180, 217, 0.3) 60%, 
+      transparent 100%);
+    transform: translate(-50%, -50%);
+    transform-origin: left center;
+    filter: blur(0.5px);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%,
+      rgba(255, 255, 255, 0.2) 40%, 
+      transparent 100%);
+    transform: translate(-50%, -50%);
+    transform-origin: left center;
+    filter: blur(1px);
+  }
+
+  @keyframes shootingStar {
+    0% {
+      transform: translate(-30px, -50%) scale(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.6;
+      transform: translate(-30px, -50%) scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: translate(120px, -50%) scale(1);
+    }
+    90% {
+      opacity: 0.6;
+      transform: translate(270px, -50%) scale(1);
+    }
+    95% {
+      opacity: 1;
+      transform: translate(280px, -50%) scale(1.5);
+      box-shadow: 
+        0 0 20px rgba(255, 255, 255, 0.8),
+        0 0 40px rgba(139, 180, 217, 0.6),
+        0 0 60px rgba(139, 180, 217, 0.4),
+        0 0 80px rgba(139, 180, 217, 0.2);
+    }
+    100% {
+      transform: translate(300px, -50%) scale(0);
+      opacity: 0;
+    }
   }
 `
 
@@ -232,11 +317,24 @@ export const NavLinkWithDropdown = styled.div`
   align-items: center;
   justify-content: center;
   height: 100%;
+  
+  /* Criar uma área de hover que conecta o link ao dropdown */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: ${({ theme }) => theme.spacing.xs};
+    background: transparent;
+    z-index: ${({ theme }) => theme.zIndex.modal};
+  }
 `
 
 export const DropdownMenu = styled.div<{ $isOpen: boolean }>`
   position: absolute;
-  top: calc(100% + ${({ theme }) => theme.spacing.xs});
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   background: ${({ theme }) => theme.colors.white};
@@ -247,8 +345,20 @@ export const DropdownMenu = styled.div<{ $isOpen: boolean }>`
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xs};
-  z-index: ${({ theme }) => theme.zIndex.dropdown};
+  z-index: ${({ theme }) => theme.zIndex.modal};
   white-space: nowrap;
+  pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+  
+  /* Criar uma ponte invisível entre o link e o menu */
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    height: ${({ theme }) => theme.spacing.xs};
+    background: transparent;
+  }
 `
 
 export const DropdownItem = styled(Link)`

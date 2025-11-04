@@ -173,16 +173,32 @@ export const PropertyList = ({ filters, shouldLoad = true }: PropertyListProps) 
         ...filters,
       }
 
-      const result = await searchProperties(searchFilters)
-
-      if (append) {
-        setProperties((prev) => [...prev, ...result.properties])
-      } else {
-        setProperties(result.properties)
+      // Remover 'search' se existir (usado para transaction type)
+      const { search: transactionType, ...apiFilters } = searchFilters as any
+      
+      const result = await searchProperties(apiFilters)
+      
+      // Filtrar por tipo de transação (venda ou locação) se especificado
+      let filteredProperties = result.properties
+      if (transactionType === 'sale') {
+        filteredProperties = result.properties.filter(p => p.salePrice && Number(p.salePrice) > 0)
+      } else if (transactionType === 'rent') {
+        filteredProperties = result.properties.filter(p => p.rentPrice && Number(p.rentPrice) > 0)
       }
 
-      setTotal(result.total)
-      setHasMore(result.page < result.totalPages)
+      // Recalcular total baseado nos filtros
+      const totalFiltered = transactionType 
+        ? filteredProperties.length + (result.total - result.properties.length)
+        : result.total
+
+      if (append) {
+        setProperties((prev) => [...prev, ...filteredProperties])
+      } else {
+        setProperties(filteredProperties)
+      }
+
+      setTotal(totalFiltered)
+      setHasMore(result.page < result.totalPages && filteredProperties.length > 0)
       setPage(result.page)
       setError(null)
     } catch (err) {

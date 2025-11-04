@@ -1,8 +1,11 @@
-import { useState } from 'react'
-import { Grid } from '@mui/material'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Grid, Box } from '@mui/material'
+import Lottie from 'lottie-react'
 import { AnimatedText } from '../../components/AnimatedText'
 import { HeroCard } from '../../components/HeroCard'
 import { PropertyList } from '../../components/PropertyList'
+import { ScrollToTop } from '../../components/ScrollToTop'
 import { Person } from '@mui/icons-material'
 import { PropertySearchFilters } from '../../services/propertyService'
 import {
@@ -11,10 +14,56 @@ import {
   LeftSection,
   RightSection,
   ContactButton,
+  LottieModal,
+  LottieModalBackdrop,
+  LottieModalContent,
+  LottieContainer,
 } from './HomePage.styles'
 
 export const HomePage = () => {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [searchFilters, setSearchFilters] = useState<Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'> | undefined>(undefined)
+  const [homeAnimation, setHomeAnimation] = useState<any>(null)
+  const [showLottieModal, setShowLottieModal] = useState(true)
+
+  // Carregar animação Lottie
+  useEffect(() => {
+    fetch('/homejson.json')
+      .then((response) => response.json())
+      .then((data) => {
+        setHomeAnimation(data)
+        // Fechar modal após a animação terminar (ou após alguns segundos)
+        setTimeout(() => {
+          setShowLottieModal(false)
+        }, 3000) // 3 segundos
+      })
+      .catch((error) => console.error('Erro ao carregar animação Lottie:', error))
+  }, [])
+
+  // Ler filtros da URL quando a página carrega
+  useEffect(() => {
+    const type = searchParams.get('type') as 'house' | 'apartment' | 'commercial' | undefined
+    const transaction = searchParams.get('transaction') as 'sale' | 'rent' | undefined
+
+    if (type || transaction) {
+      const filters: any = {}
+      
+      if (type) {
+        filters.type = type
+      }
+      
+      // Para transaction, vamos usar search para filtrar por salePrice ou rentPrice
+      if (transaction) {
+        filters.search = transaction === 'sale' ? 'sale' : 'rent'
+      }
+      
+      setSearchFilters(filters)
+    } else {
+      // Resetar filtros se não houver parâmetros na URL
+      setSearchFilters(undefined)
+    }
+  }, [searchParams])
 
   const handleSearch = (filters: PropertySearchFilters) => {
     // Remove city, state, page e limit para passar apenas os filtros de busca
@@ -22,8 +71,20 @@ export const HomePage = () => {
     setSearchFilters(filterProps)
   }
 
+  const handleContactBrokers = () => {
+    navigate('/corretores')
+  }
+
   return (
     <PageContainer>
+      <LottieModal $isOpen={showLottieModal && homeAnimation}>
+        <LottieModalBackdrop onClick={() => setShowLottieModal(false)} />
+        <LottieModalContent>
+          <LottieContainer>
+            <Lottie animationData={homeAnimation} loop={true} autoplay={true} />
+          </LottieContainer>
+        </LottieModalContent>
+      </LottieModal>
       <HomeContainer maxWidth="xl">
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} alignItems="center">
           <Grid item xs={12} md={6}>
@@ -36,6 +97,7 @@ export const HomePage = () => {
               <ContactButton
                 variant="contained"
                 startIcon={<Person />}
+                onClick={handleContactBrokers}
                 sx={{
                   backgroundColor: 'white',
                   color: 'primary.main',
@@ -56,6 +118,7 @@ export const HomePage = () => {
         </Grid>
       </HomeContainer>
       <PropertyList filters={searchFilters} />
+      <ScrollToTop />
     </PageContainer>
   )
 }

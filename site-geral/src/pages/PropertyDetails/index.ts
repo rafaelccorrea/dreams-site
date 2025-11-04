@@ -1,1 +1,2 @@
 export { PropertyDetails } from './PropertyDetails'
+

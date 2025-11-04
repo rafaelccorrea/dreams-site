@@ -174,34 +174,34 @@ export const BrokerDetails = () => {
       {/* Seção do Perfil */}
       <Box sx={{ bgcolor: "#f8f9fa", pt: 15, pb: 6 }}>
         <Container maxWidth="xl">
-          <Paper
+        <Paper
             elevation={0}
-            sx={{
+          sx={{
               p: 5,
               borderRadius: 3,
               border: "1px solid",
               borderColor: "divider",
-            }}
-          >
+          }}
+        >
             <Grid container spacing={5} alignItems="flex-start">
               {/* Avatar e Nome */}
               <Grid item xs={12} md={3}>
                 <Stack alignItems="center" spacing={2}>
                   <Box sx={{ position: "relative" }}>
-                    <Avatar
-                      src={broker.avatar}
-                      alt={broker.name}
-                      sx={{
+          <Avatar
+            src={broker.avatar}
+            alt={broker.name}
+            sx={{
                         width: 140,
                         height: 140,
                         border: "4px solid",
                         borderColor: "primary.main",
-                      }}
-                    >
-                      {broker.name.charAt(0).toUpperCase()}
-                    </Avatar>
+            }}
+          >
+            {broker.name.charAt(0).toUpperCase()}
+          </Avatar>
                     <Box
-                      sx={{
+              sx={{
                         position: "absolute",
                         bottom: 5,
                         right: 5,
@@ -219,29 +219,29 @@ export const BrokerDetails = () => {
                   <Box sx={{ textAlign: "center" }}>
                     <Typography variant="h4" fontWeight={700} gutterBottom>
                       {broker.name}
-                    </Typography>
+          </Typography>
 
-                    {broker.company && (
-                      <Chip
+          {broker.company && (
+            <Chip
                         icon={<Business sx={{ fontSize: 18 }} />}
-                        label={broker.company.name}
-                        sx={{
+              label={broker.company.name}
+              sx={{
                           bgcolor: alpha("#667eea", 0.1),
                           color: "#667eea",
-                          fontWeight: 600,
-                        }}
-                      />
-                    )}
+                fontWeight: 600,
+              }}
+            />
+          )}
                   </Box>
 
                   <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                    <Tooltip
-                      title={
+            <Tooltip
+              title={
                         isFavorite
                           ? "Remover dos favoritos"
                           : "Adicionar aos favoritos"
-                      }
-                    >
+              }
+            >
                       <IconButton
                         onClick={() => setIsFavorite(!isFavorite)}
                         sx={{
@@ -249,13 +249,13 @@ export const BrokerDetails = () => {
                           borderColor: "divider",
                         }}
                       >
-                        {isFavorite ? (
-                          <Favorite sx={{ color: "#ff6b6b" }} />
-                        ) : (
+                {isFavorite ? (
+                  <Favorite sx={{ color: "#ff6b6b" }} />
+                ) : (
                           <FavoriteBorder />
-                        )}
-                      </IconButton>
-                    </Tooltip>
+                )}
+              </IconButton>
+            </Tooltip>
 
                     <Tooltip title="Compartilhar">
                       <IconButton
@@ -266,9 +266,9 @@ export const BrokerDetails = () => {
                         }}
                       >
                         <Share />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
+              </IconButton>
+            </Tooltip>
+          </Stack>
                 </Stack>
               </Grid>
 
@@ -318,7 +318,7 @@ export const BrokerDetails = () => {
                     </Box>
                   )}
 
-                  {broker.phone && (
+            {broker.phone && (
                     <Box
                       sx={{
                         display: "flex",
@@ -342,9 +342,9 @@ export const BrokerDetails = () => {
                         </Typography>
                       </Box>
                     </Box>
-                  )}
+            )}
 
-                  {broker.email && shouldShowEmail(broker.email) && (
+            {broker.email && shouldShowEmail(broker.email) && (
                     <Box
                       sx={{
                         display: "flex",
@@ -374,7 +374,7 @@ export const BrokerDetails = () => {
                         </Typography>
                       </Box>
                     </Box>
-                  )}
+            )}
 
                   <Box
                     sx={{
@@ -401,7 +401,7 @@ export const BrokerDetails = () => {
                     </Box>
                   </Box>
                 </Stack>
-              </Grid>
+          </Grid>
 
               {/* Ações de Contato */}
               <Grid item xs={12} md={4}>
@@ -415,54 +415,54 @@ export const BrokerDetails = () => {
                 </Typography>
 
                 <Stack spacing={2}>
-                  {broker.phone && (
-                    <Button
+            {broker.phone && (
+              <Button
                       fullWidth
-                      variant="contained"
+                variant="contained"
                       size="large"
                       startIcon={<WhatsApp />}
-                      onClick={handleWhatsApp}
-                      sx={{
-                        bgcolor: "#25D366",
-                        "&:hover": { bgcolor: "#128C7E" },
+                onClick={handleWhatsApp}
+                sx={{
+                  bgcolor: "#25D366",
+                  "&:hover": { bgcolor: "#128C7E" },
                         py: 2,
                         fontSize: "1rem",
-                      }}
-                    >
+                }}
+              >
                       Conversar no WhatsApp
-                    </Button>
-                  )}
+              </Button>
+            )}
 
-                  {broker.phone && (
-                    <Button
+            {broker.phone && (
+              <Button
                       fullWidth
-                      variant="outlined"
+                variant="outlined"
                       size="large"
                       startIcon={<Call />}
-                      onClick={handlePhone}
+                onClick={handlePhone}
                       sx={{ py: 2 }}
-                    >
+              >
                       Ligar Agora
-                    </Button>
-                  )}
+              </Button>
+            )}
 
-                  {broker.email && shouldShowEmail(broker.email) && (
-                    <Button
+            {broker.email && shouldShowEmail(broker.email) && (
+              <Button
                       fullWidth
-                      variant="outlined"
+                variant="outlined"
                       size="large"
                       startIcon={<MailOutline />}
-                      onClick={handleEmail}
+                onClick={handleEmail}
                       sx={{ py: 2 }}
-                    >
-                      Enviar E-mail
-                    </Button>
-                  )}
-                </Stack>
+              >
+                Enviar E-mail
+              </Button>
+            )}
+          </Stack>
               </Grid>
             </Grid>
-          </Paper>
-        </Container>
+        </Paper>
+      </Container>
       </Box>
 
       {/* Seção de Propriedades */}
@@ -482,13 +482,13 @@ export const BrokerDetails = () => {
                 </Typography>
                 <Chip
                   label={totalProperties}
-                  sx={{
+          sx={{
                     bgcolor: alpha("#667eea", 0.1),
                     color: "#667eea",
-                    fontWeight: 700,
+            fontWeight: 700,
                     fontSize: "1rem",
                     height: 36,
-                  }}
+          }}
                 />
               </Box>
             </Stack>
@@ -499,23 +499,23 @@ export const BrokerDetails = () => {
                 borderColor: "primary.main",
                 width: 100,
               }}
-            />
+          />
           </Box>
 
-          {loadingProperties ? (
-            <PropertyCardShimmer count={6} />
-          ) : properties.length > 0 ? (
-            <Grid container spacing={3}>
-              {properties.map((property) => (
+        {loadingProperties ? (
+          <PropertyCardShimmer count={6} />
+        ) : properties.length > 0 ? (
+          <Grid container spacing={3}>
+            {properties.map((property) => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={property.id}>
-                  <PropertyCard
-                    property={property}
-                    onClick={() => navigate(`/property/${property.id}`)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
+                <PropertyCard
+                  property={property}
+                  onClick={() => navigate(`/property/${property.id}`)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
             <Paper
               elevation={0}
               sx={{
@@ -533,15 +533,15 @@ export const BrokerDetails = () => {
                   mb: 3,
                 }}
               />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
                 Nenhuma propriedade disponível
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Este corretor ainda não possui imóveis cadastrados.
-              </Typography>
-            </Paper>
-          )}
-        </Container>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Este corretor ainda não possui imóveis cadastrados.
+            </Typography>
+          </Paper>
+        )}
+      </Container>
       </Box>
 
       {/* Dialog do Mapa */}

@@ -9,24 +9,27 @@ const IndicatorContainer = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  color: ${({ theme }) => theme.colors.textPrimary};
   cursor: pointer;
   padding: ${({ theme }) => theme.spacing.xs};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  transition: background-color ${({ theme }) => theme.transitions.base};
+  transition: opacity ${({ theme }) => theme.transitions.base};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.neutralLight};
+    opacity: 0.8;
   }
 `
 
 const LocationText = styled(Typography)`
   font-size: 0.875rem;
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.textPrimary};
+  color: ${({ theme }) => theme.colors.primary};
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
+  
+  svg {
+    color: ${({ theme }) => theme.colors.primary};
+  }
 `
 
 export const LocationIndicator = () => {
