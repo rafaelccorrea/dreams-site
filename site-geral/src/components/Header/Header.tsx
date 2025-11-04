@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Menu as MenuIcon, Close as CloseIcon, KeyboardArrowDown, Login as LoginIcon, LocationOn } from '@mui/icons-material'
 import { Box } from '@mui/material'
@@ -20,11 +20,13 @@ import {
   DropdownItem,
   ChevronIcon,
   MobileLocationIcon,
+  MobileLoginButton,
 } from './Header.styles'
 import { StyledButton } from './HeaderButton'
 import { NavItem } from './Header.types'
 import { LocationIndicator } from '../LocationIndicator'
 import { LocationModal } from '../LocationModal'
+import { LoginModal } from '../LoginModal'
 
 interface HeaderProps {
   currentPath?: string
@@ -36,6 +38,9 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
+  const navItemRefs = useRef<{ [key: string]: HTMLElement | null }>({})
 
   const handleLogoClick = () => {
     navigate('/')
@@ -50,12 +55,21 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
     setMobileMenuOpen(false)
   }
 
-  const handleDropdownEnter = (href: string) => {
+  const handleDropdownEnter = (href: string, element: HTMLElement | null) => {
     // Limpar timeout se existir
     if (dropdownTimeout) {
       clearTimeout(dropdownTimeout)
       setDropdownTimeout(null)
     }
+    
+    if (element) {
+      const rect = element.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left + rect.width / 2
+      })
+    }
+    
     setOpenDropdown(href)
   }
 
@@ -63,6 +77,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
     // Adicionar um pequeno delay antes de fechar para evitar fechamento prematuro
     const timeout = setTimeout(() => {
       setOpenDropdown(null)
+      setDropdownPosition(null)
     }, 150) // 150ms de delay
     setDropdownTimeout(timeout)
   }
@@ -94,7 +109,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
   return (
     <>
       <StyledAppBar>
-        <HeaderContainer maxWidth="xl">
+        <HeaderContainer maxWidth={false}>
           {/* Seção Esquerda - Logo */}
           <LeftSection>
             <LogoContainer onClick={handleLogoClick}>
@@ -125,7 +140,8 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                   return (
                     <NavLinkWithDropdown
                       key={item.href}
-                      onMouseEnter={() => handleDropdownEnter(item.href)}
+                      ref={(el) => (navItemRefs.current[item.href] = el)}
+                      onMouseEnter={() => handleDropdownEnter(item.href, navItemRefs.current[item.href])}
                       onMouseLeave={handleDropdownLeave}
                     >
                       <NavLink
@@ -142,7 +158,8 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                       </NavLink>
                       <DropdownMenu 
                         $isOpen={isDropdownOpen}
-                        onMouseEnter={() => handleDropdownEnter(item.href)}
+                        $position={dropdownPosition}
+                        onMouseEnter={() => handleDropdownEnter(item.href, navItemRefs.current[item.href])}
                         onMouseLeave={handleDropdownLeave}
                       >
                         {item.submenu.map((subItem) => {
@@ -228,7 +245,12 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
             
             {/* Botão Entrar - apenas desktop */}
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <StyledButton variant="contained" color="primary" startIcon={<LoginIcon />}>
+              <StyledButton 
+                variant="contained" 
+                color="primary" 
+                startIcon={<LoginIcon />}
+                onClick={() => setLoginModalOpen(true)}
+              >
                 Entrar
               </StyledButton>
             </Box>
@@ -304,14 +326,21 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               </NavLink>
             )
           })}
-          <StyledButton variant="contained" color="primary" fullWidth onClick={closeMobileMenu} startIcon={<LoginIcon />}>
+          <MobileLoginButton
+            onClick={() => {
+              closeMobileMenu()
+              setLoginModalOpen(true)
+            }}
+          >
+            <LoginIcon />
             Entrar
-          </StyledButton>
+          </MobileLoginButton>
         </MobileMenu>
       </StyledAppBar>
 
       <Overlay $isOpen={mobileMenuOpen} onClick={closeMobileMenu} />
       <LocationModal open={locationModalOpen} onClose={() => setLocationModalOpen(false)} />
+      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </>
   )
 }

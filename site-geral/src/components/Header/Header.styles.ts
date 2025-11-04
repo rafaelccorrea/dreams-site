@@ -14,7 +14,11 @@ export const StyledAppBar = styled(AppBar)`
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  left: 0;
+  right: 0;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     height: 90px;
@@ -28,32 +32,43 @@ export const StyledAppBar = styled(AppBar)`
 `
 
 export const HeaderContainer = styled(Container)`
+  && {
+    max-width: 100% !important;
+  }
+  
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   width: 100% !important;
-  max-width: 100% !important;
   padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.lg}`} !important;
   height: 100px !important;
-  margin: 0 auto;
+  margin: 0 !important;
   box-sizing: border-box !important;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.sm};
-  overflow-x: hidden;
+  overflow: hidden !important;
+  position: relative;
+  min-width: 0 !important;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`} !important;
     height: auto !important;
     min-height: 90px;
+    max-height: 90px;
     padding-top: ${({ theme }) => theme.spacing.sm} !important;
     padding-bottom: ${({ theme }) => theme.spacing.sm} !important;
-    max-width: 100vw;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`} !important;
     min-height: 70px;
-    max-width: 100vw;
+    max-height: 70px;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
   }
 `
 
@@ -64,14 +79,17 @@ export const LeftSection = styled.div`
   flex: 0 0 auto;
   height: 100% !important;
   min-width: 0;
+  overflow: visible;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     flex: 0 0 auto;
     min-width: 0;
+    overflow: visible;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     flex: 1 1 auto;
+    overflow: visible;
   }
 `
 
@@ -82,6 +100,8 @@ export const CenterSection = styled.div`
   flex: 1 1 auto;
   height: 100% !important;
   padding: 0 ${({ theme }) => theme.spacing.lg};
+  overflow: hidden !important;
+  position: relative;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: none !important;
@@ -96,14 +116,17 @@ export const RightSection = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   height: 100% !important;
   flex-wrap: wrap;
+  overflow: hidden;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     justify-content: flex-end;
     gap: ${({ theme }) => theme.spacing.sm};
+    overflow: hidden;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     gap: ${({ theme }) => theme.spacing.xs};
+    overflow: hidden;
   }
 `
 
@@ -246,6 +269,8 @@ export const NavigationContainer = styled.nav`
   flex-wrap: nowrap;
   height: 100%;
   width: 100%;
+  overflow: hidden !important;
+  position: relative;
   
   @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
     gap: ${({ theme }) => theme.spacing.sm};
@@ -420,47 +445,33 @@ export const NavLinkWithDropdown = styled.div`
   align-items: center;
   justify-content: center;
   height: 100%;
+  z-index: 1;
   
-  /* Criar uma área de hover que conecta o link ao dropdown */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    height: ${({ theme }) => theme.spacing.xs};
-    background: transparent;
-    z-index: ${({ theme }) => theme.zIndex.modal};
+  &:hover {
+    z-index: 10000;
   }
 `
 
-export const DropdownMenu = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: 100%;
-  left: 50%;
+export const DropdownMenu = styled.div<{ $isOpen: boolean; $position?: { top: number; left: number } | null }>`
+  position: fixed;
+  top: ${({ $position }) => ($position ? `${$position.top}px` : '-9999px')};
+  left: ${({ $position }) => ($position ? `${$position.left}px` : '-9999px')};
   transform: translateX(-50%);
   background: ${({ theme }) => theme.colors.white};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.lg};
   padding: ${({ theme }) => theme.spacing.sm};
   min-width: 240px;
-  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')} !important;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xs};
-  z-index: ${({ theme }) => theme.zIndex.modal};
+  z-index: 99999 !important;
   white-space: nowrap;
   pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+  transition: opacity ${({ theme }) => theme.transitions.base};
   
-  /* Criar uma ponte invisível entre o link e o menu */
-  &::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: 0;
-    height: ${({ theme }) => theme.spacing.xs};
-    background: transparent;
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    display: none !important;
   }
 `
 
@@ -486,6 +497,61 @@ export const ChevronIcon = styled.span`
   
   &.open {
     transform: rotate(180deg);
+  }
+`
+
+export const MobileLoginButton = styled.button`
+  width: 100%;
+  padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.lg}`};
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary} 0%, ${({ theme }) => theme.colors.primaryDark || theme.colors.primary} 100%);
+  color: ${({ theme }) => theme.colors.white};
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.lg || '12px'};
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  margin-top: ${({ theme }) => theme.spacing.md};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, ${({ theme }) => theme.colors.primaryDark || theme.colors.primary} 0%, ${({ theme }) => theme.colors.primary} 100%);
+
+    &::before {
+      left: 100%;
+    }
+
+    svg {
+      transform: translateX(4px);
+    }
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  svg {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 `
 
