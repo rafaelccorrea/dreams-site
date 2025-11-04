@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { IconButton, Button, Dialog, Box, Grid } from '@mui/material'
-import { ChevronLeft, ChevronRight, Close } from '@mui/icons-material'
-import styled from 'styled-components'
+import { ChevronLeft, ChevronRight, Close, ZoomIn, ZoomOut } from '@mui/icons-material'
+import styled, { keyframes } from 'styled-components'
 
 
 
@@ -15,6 +15,20 @@ const MainImage = styled.img`
   image-rendering: high-quality;
   backface-visibility: hidden;
   transform: translateZ(0);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+`
+
+const MainImageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  overflow: hidden;
 `
 
 
@@ -131,6 +145,17 @@ const ModalContent = styled.div`
   overflow: hidden;
 `
 
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`
+
 const ModalImageContainer = styled.div`
   position: relative;
   width: 100%;
@@ -139,42 +164,97 @@ const ModalImageContainer = styled.div`
   align-items: center;
   justify-content: center;
   background: #000;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
 `
 
-const ModalImage = styled.img`
+const ModalImageWrapper = styled.div<{ $scale: number; $translateX: number; $translateY: number }>`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(${({ $translateX }) => $translateX}px, ${({ $translateY }) => $translateY}px) scale(${({ $scale }) => $scale});
+  transition: ${({ $scale }) => ($scale === 1 ? 'transform 0.3s ease-out' : 'none')};
+  cursor: ${({ $scale }) => ($scale > 1 ? 'move' : 'zoom-in')};
+`
+
+const ModalImage = styled.img<{ $isLoading?: boolean }>`
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   image-rendering: high-quality;
+  animation: ${fadeIn} 0.3s ease-out;
+  opacity: ${({ $isLoading }) => ($isLoading ? 0.5 : 1)};
+  transition: opacity 0.2s ease;
 `
 
 const ModalNavigationButton = styled(IconButton)`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  z-index: 2;
+  z-index: 10;
   color: #212121;
   transition: all 0.3s ease;
+  width: 48px;
+  height: 48px;
 
   &:hover {
     background: rgba(255, 255, 255, 1);
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.15);
   }
 
   &.left {
-    left: ${({ theme }) => theme.spacing.md};
+    left: ${({ theme }) => theme.spacing.lg};
   }
 
   &.right {
-    right: ${({ theme }) => theme.spacing.md};
+    right: ${({ theme }) => theme.spacing.lg};
   }
 
   &:disabled {
     opacity: 0.3;
+  }
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    
+    &.left {
+      left: ${({ theme }) => theme.spacing.md};
+    }
+
+    &.right {
+      right: ${({ theme }) => theme.spacing.md};
+    }
+  }
+`
+
+const ZoomControls = styled.div`
+  position: absolute;
+  bottom: ${({ theme }) => theme.spacing.md};
+  right: ${({ theme }) => theme.spacing.md};
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing.xs};
+`
+
+const ZoomButton = styled(IconButton)`
+  color: white;
+  padding: ${({ theme }) => theme.spacing.xs};
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 `
 
@@ -271,12 +351,93 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalIndex, setModalIndex] = useState(0)
+  const [zoom, setZoom] = useState(1)
+  const [translateX, setTranslateX] = useState(0)
+  const [translateY, setTranslateY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [imageLoading, setImageLoading] = useState(false)
+  const imageRef = useRef<HTMLImageElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   
   // Reseta o índice quando as imagens mudarem
   useEffect(() => {
     setCurrentIndex(0)
     setModalIndex(0)
   }, [images.length, mainImage])
+
+  const goToModalPrevious = useCallback(() => {
+    setModalIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))
+  }, [allImages.length])
+
+  const goToModalNext = useCallback(() => {
+    setModalIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1))
+  }, [allImages.length])
+
+  const handleZoomIn = useCallback(() => {
+    setZoom((prev) => Math.min(prev + 0.5, 3))
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    setZoom((prev) => {
+      const newZoom = Math.max(prev - 0.5, 1)
+      if (newZoom === 1) {
+        setTranslateX(0)
+        setTranslateY(0)
+      }
+      return newZoom
+    })
+  }, [])
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false)
+    setZoom(1)
+    setTranslateX(0)
+    setTranslateY(0)
+  }, [])
+
+  // Reset zoom quando muda de imagem no modal
+  useEffect(() => {
+    if (modalOpen) {
+      setZoom(1)
+      setTranslateX(0)
+      setTranslateY(0)
+      setImageLoading(true)
+    }
+  }, [modalIndex, modalOpen])
+
+  // Navegação por teclado
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!modalOpen) return
+
+      switch (e.key) {
+        case 'Escape':
+          closeModal()
+          break
+        case 'ArrowLeft':
+          e.preventDefault()
+          goToModalPrevious()
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          goToModalNext()
+          break
+        case '+':
+        case '=':
+          e.preventDefault()
+          handleZoomIn()
+          break
+        case '-':
+          e.preventDefault()
+          handleZoomOut()
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [modalOpen, closeModal, goToModalPrevious, goToModalNext, handleZoomIn, handleZoomOut])
 
   // Sempre mostra 5 imagens: 1 principal + 4 miniaturas
   // Se tiver menos de 5, usa as que tem
@@ -320,35 +481,125 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
 
   if (allImages.length === 1) {
     return (
-      <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }}>
-        <Grid item xs={12} md={8}>
-          <Box
-            sx={{
-              position: 'relative',
-              width: '100%',
-              height: { xs: 300, sm: 400, md: 500, lg: 600 },
-              overflow: 'hidden',
-              bgcolor: '#f5f5f5',
-              borderRadius: 2,
-            }}
-          >
-            <MainImage
-              src={allImages[0] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
-              alt="Propriedade"
-              loading="eager"
-            />
-          </Box>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }}>
-            <Grid item xs={6} sm={3} md={6}>
-              <Thumbnail $isActive={true}>
-                <img src={allImages[0] || 'https://via.placeholder.com/300x300?text=Sem+Imagem'} alt="" />
-              </Thumbnail>
+      <>
+        <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }}>
+          <Grid item xs={12} md={8}>
+            <MainImageContainer onClick={() => openModal(0)}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: '100%',
+                  height: { xs: 300, sm: 400, md: 500, lg: 600 },
+                  overflow: 'hidden',
+                  bgcolor: '#f5f5f5',
+                  borderRadius: 2,
+                }}
+              >
+                <MainImage
+                  src={allImages[0] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
+                  alt="Propriedade"
+                  loading="eager"
+                />
+              </Box>
+            </MainImageContainer>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }}>
+              <Grid item xs={6} sm={3} md={6}>
+                <Thumbnail $isActive={true} onClick={() => openModal(0)}>
+                  <img src={allImages[0] || 'https://via.placeholder.com/300x300?text=Sem+Imagem'} alt="" />
+                </Thumbnail>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
-      </Grid>
+        <Dialog
+          open={modalOpen}
+          onClose={closeModal}
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              backgroundColor: 'transparent',
+              boxShadow: 'none',
+              maxWidth: '100vw',
+              maxHeight: '100vh',
+              margin: 0,
+              borderRadius: 0,
+            },
+          }}
+          BackdropProps={{
+            sx: {
+              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              backdropFilter: 'blur(10px)',
+            },
+          }}
+        >
+          <ModalContent>
+            <ModalHeader>
+              <ModalCounter>
+                {modalIndex + 1} / {allImages.length}
+              </ModalCounter>
+              <IconButton
+                onClick={closeModal}
+                sx={{
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+              >
+                <Close />
+              </IconButton>
+            </ModalHeader>
+
+            <ModalImageContainer
+              ref={containerRef}
+              onWheel={handleWheel}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              <ModalImageWrapper
+                $scale={zoom}
+                $translateX={translateX}
+                $translateY={translateY}
+                onMouseDown={handleMouseDown}
+              >
+                <ModalImage
+                  ref={imageRef}
+                  src={allImages[modalIndex] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
+                  alt={`Imagem ${modalIndex + 1}`}
+                  $isLoading={imageLoading}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                  onDoubleClick={handleImageDoubleClick}
+                  onClick={handleImageClick}
+                  draggable={false}
+                />
+              </ModalImageWrapper>
+              {zoom > 1 && (
+                <ZoomControls>
+                  <ZoomButton
+                    onClick={handleZoomOut}
+                    aria-label="Diminuir zoom"
+                    size="small"
+                  >
+                    <ZoomOut />
+                  </ZoomButton>
+                  <ZoomButton
+                    onClick={handleZoomIn}
+                    aria-label="Aumentar zoom"
+                    size="small"
+                    disabled={zoom >= 3}
+                  >
+                    <ZoomIn />
+                  </ZoomButton>
+                </ZoomControls>
+              )}
+            </ModalImageContainer>
+          </ModalContent>
+        </Dialog>
+      </>
     )
   }
 
@@ -369,64 +620,121 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
     setModalOpen(true)
   }
 
-  const closeModal = () => {
-    setModalOpen(false)
-  }
-
-  const goToModalPrevious = () => {
-    setModalIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))
-  }
-
-  const goToModalNext = () => {
-    setModalIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1))
-  }
-
   const goToModalImage = (index: number) => {
     setModalIndex(index)
+  }
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!modalOpen) return
+    e.preventDefault()
+    
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    const newZoom = Math.max(1, Math.min(3, zoom + delta))
+    setZoom(newZoom)
+    
+    if (newZoom === 1) {
+      setTranslateX(0)
+      setTranslateY(0)
+    }
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom <= 1) return
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - translateX, y: e.clientY - translateY })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || zoom <= 1) return
+    setTranslateX(e.clientX - dragStart.x)
+    setTranslateY(e.clientY - dragStart.y)
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleImageLoad = () => {
+    setImageLoading(false)
+  }
+
+  const handleImageError = () => {
+    setImageLoading(false)
+  }
+
+  const handleImageDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (zoom === 1) {
+      setZoom(2)
+    } else {
+      setZoom(1)
+      setTranslateX(0)
+      setTranslateY(0)
+    }
+  }
+
+  const handleImageClick = (e: React.MouseEvent) => {
+    // Se não estiver com zoom, não faz nada (permite fechar ao clicar no backdrop)
+    if (zoom === 1) {
+      return
+    }
+    // Se estiver com zoom, não fecha o modal
+    e.stopPropagation()
   }
 
   return (
     <>
       <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }}>
         <Grid item xs={12} md={8}>
-          <Box
-            sx={{
-              position: 'relative',
-              width: '100%',
-              height: { xs: 300, sm: 400, md: 500, lg: 600 },
-              overflow: 'hidden',
-              bgcolor: '#f5f5f5',
-              borderRadius: 2,
-            }}
+          <MainImageContainer
+            onClick={() => openModal(currentIndex)}
+            onMouseDown={(e) => e.stopPropagation()}
           >
-            <MainImage
-              src={imagesToShow[currentIndex] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
-              alt={`Propriedade ${currentIndex + 1}`}
-              loading="eager"
-            />
-            {imagesToShow.length > 1 && (
-              <>
-                <NavigationButton
-                  className="left"
-                  onClick={goToPrevious}
-                  aria-label="Imagem anterior"
-                >
-                  <ChevronLeft />
-                </NavigationButton>
-                <NavigationButton
-                  className="right"
-                  onClick={goToNext}
-                  aria-label="Próxima imagem"
-                >
-                  <ChevronRight />
-                </NavigationButton>
-                <ImageCounter>
-                  {currentIndex + 1} / {imagesToShow.length}
-                  {hasMoreImages && ` (+${remainingCount})`}
-                </ImageCounter>
-              </>
-            )}
-          </Box>
+            <Box
+              sx={{
+                position: 'relative',
+                width: '100%',
+                height: { xs: 300, sm: 400, md: 500, lg: 600 },
+                overflow: 'hidden',
+                bgcolor: '#f5f5f5',
+                borderRadius: 2,
+              }}
+            >
+              <MainImage
+                src={imagesToShow[currentIndex] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
+                alt={`Propriedade ${currentIndex + 1}`}
+                loading="eager"
+              />
+              {imagesToShow.length > 1 && (
+                <>
+                  <NavigationButton
+                    className="left"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goToPrevious()
+                    }}
+                    aria-label="Imagem anterior"
+                  >
+                    <ChevronLeft />
+                  </NavigationButton>
+                  <NavigationButton
+                    className="right"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goToNext()
+                    }}
+                    aria-label="Próxima imagem"
+                  >
+                    <ChevronRight />
+                  </NavigationButton>
+                  <ImageCounter>
+                    {currentIndex + 1} / {imagesToShow.length}
+                    {hasMoreImages && ` (+${remainingCount})`}
+                  </ImageCounter>
+                </>
+              )}
+            </Box>
+          </MainImageContainer>
         </Grid>
 
         <Grid item xs={12} md={4}>
@@ -529,11 +837,31 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
             </IconButton>
           </ModalHeader>
 
-          <ModalImageContainer>
-            <ModalImage
-              src={allImages[modalIndex] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
-              alt={`Imagem ${modalIndex + 1}`}
-            />
+          <ModalImageContainer
+            ref={containerRef}
+            onWheel={handleWheel}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
+            <ModalImageWrapper
+              $scale={zoom}
+              $translateX={translateX}
+              $translateY={translateY}
+              onMouseDown={handleMouseDown}
+            >
+              <ModalImage
+                ref={imageRef}
+                src={allImages[modalIndex] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
+                alt={`Imagem ${modalIndex + 1}`}
+                $isLoading={imageLoading}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                onDoubleClick={handleImageDoubleClick}
+                onClick={handleImageClick}
+                draggable={false}
+              />
+            </ModalImageWrapper>
             {allImages.length > 1 && (
               <>
                 <ModalNavigationButton
@@ -551,6 +879,25 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
                   <ChevronRight />
                 </ModalNavigationButton>
               </>
+            )}
+            {zoom > 1 && (
+              <ZoomControls>
+                <ZoomButton
+                  onClick={handleZoomOut}
+                  aria-label="Diminuir zoom"
+                  size="small"
+                >
+                  <ZoomOut />
+                </ZoomButton>
+                <ZoomButton
+                  onClick={handleZoomIn}
+                  aria-label="Aumentar zoom"
+                  size="small"
+                  disabled={zoom >= 3}
+                >
+                  <ZoomIn />
+                </ZoomButton>
+              </ZoomControls>
             )}
           </ModalImageContainer>
 

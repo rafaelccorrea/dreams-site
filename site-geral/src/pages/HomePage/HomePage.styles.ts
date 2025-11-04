@@ -149,20 +149,20 @@ export const LottieModalContent = styled.div`
 `
 
 export const LottieContainer = styled(Box)`
-  width: 400px;
-  height: 400px;
+  width: 100px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    width: 250px;
-    height: 250px;
+    width: 80px;
+    height: 80px;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    width: 180px;
-    height: 180px;
+    width: 70px;
+    height: 70px;
   }
 
   svg {
