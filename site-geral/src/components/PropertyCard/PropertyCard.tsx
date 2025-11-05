@@ -181,9 +181,11 @@ const StyledChip = styled(Chip)`
 interface PropertyCardProps {
   property: Property
   onClick?: () => void
+  hideCompanyInfo?: boolean // Nova prop para ocultar informações da imobiliária
+  hideCode?: boolean // Nova prop para ocultar código
 }
 
-export const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
+export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideCode = false }: PropertyCardProps) => {
   const [images, setImages] = useState<string[]>([])
   const [loadingImages, setLoadingImages] = useState(false)
 
@@ -403,14 +405,14 @@ export const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
         )}
         
         {/* Status da propriedade */}
-        {property.code && (
+        {!hideCode && property.code && (
           <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
             Código: {property.code}
           </Typography>
         )}
 
         {/* Informações da Imobiliária */}
-        {property.company && (
+        {!hideCompanyInfo && property.company && (
           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
             <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>
               {property.company.name}

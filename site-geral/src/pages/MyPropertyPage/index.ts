@@ -1,0 +1,2 @@
+export { MyPropertyPage } from './MyPropertyPage'
+

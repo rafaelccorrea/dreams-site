@@ -16,6 +16,7 @@ import { BrokerDetails } from './pages/BrokerDetails'
 import { LancamentosPage } from './pages/LancamentosPage'
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
+import { MyPropertyPage } from './pages/MyPropertyPage'
 import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
@@ -124,8 +125,16 @@ function AppContent() {
           <Route 
             path="/favorites" 
             element={
-              <MainContentWrapper $showBackground={false}>
+              <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
                 <FavoritesPage />
+              </MainContentWrapper>
+            } 
+          />
+          <Route 
+            path="/minha-propriedade" 
+            element={
+              <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
+                <MyPropertyPage />
               </MainContentWrapper>
             } 
           />

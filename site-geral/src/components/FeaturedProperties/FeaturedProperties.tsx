@@ -84,7 +84,7 @@ const SectionTitle = styled(Typography)`
 
 const SectionSubtitle = styled(Typography)`
   color: ${({ theme }) => theme.colors.textSecondary};
-  margin-bottom: ${({ theme }) => theme.spacing['2xl']};
+  margin-bottom: ${({ theme }) => theme.spacing['3xl'] || '64px'};
   margin-top: ${({ theme }) => theme.spacing.md};
   text-align: left;
   padding-left: ${({ theme }) => theme.spacing.lg};
@@ -92,6 +92,7 @@ const SectionSubtitle = styled(Typography)`
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     padding-left: ${({ theme }) => theme.spacing.md};
+    margin-bottom: ${({ theme }) => theme.spacing['2xl'] || '48px'};
   }
 `
 

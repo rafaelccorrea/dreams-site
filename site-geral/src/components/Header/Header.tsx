@@ -135,8 +135,11 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
     { label: 'Lançamentos', href: '/lancamentos' },
     { label: 'Corretores', href: '/corretores' },
     { label: 'Imobiliárias', href: '/imobiliarias' },
-    // Adicionar Favoritos apenas quando logado
-    ...(isAuthenticated ? [{ label: 'Favoritos', href: '/favorites' }] : []),
+    // Adicionar Favoritos e Minha Propriedade apenas quando logado
+    ...(isAuthenticated ? [
+      { label: 'Favoritos', href: '/favorites' },
+      { label: 'Minha Prop.', href: '/minha-propriedade' },
+    ] : []),
   ]
 
   return (
@@ -383,74 +386,83 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
           })}
           {/* Link para Favoritos no mobile quando logado */}
           {isAuthenticated && (
-            <NavLink
-              to="/favorites"
-              className={currentPath === '/favorites' ? 'active' : ''}
-              onClick={closeMobileMenu}
-            >
-              <Favorite fontSize="small" />
-              Meus Favoritos
-            </NavLink>
+            <>
+              <NavLink
+                to="/favorites"
+                className={currentPath === '/favorites' ? 'active' : ''}
+                onClick={closeMobileMenu}
+              >
+                <Favorite fontSize="small" />
+                Meus Favoritos
+              </NavLink>
+              <NavLink
+                to="/minha-propriedade"
+                className={currentPath === '/minha-propriedade' ? 'active' : ''}
+                onClick={closeMobileMenu}
+              >
+                Minha Propriedade
+              </NavLink>
+            </>
           )}
           
           {/* Botão Entrar ou Menu do Usuário no mobile */}
-                {isAuthenticated && user ? (
+          {isAuthenticated && user ? (
+            <Box sx={{
+              padding: '16px',
+              borderTop: '1px solid rgba(0,0,0,0.1)',
+              marginTop: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                flex: 1,
+                overflow: 'hidden',
+                minWidth: 0
+              }}>
+                <Box sx={{
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  color: 'text.primary',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  width: '100%'
+                }}>
+                  {getUserDisplayName()}
+                </Box>
+                {location?.city && (
                   <Box sx={{
-                    padding: '16px',
-                    borderTop: '1px solid rgba(0,0,0,0.1)',
-                    marginTop: '16px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px'
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    color: 'text.secondary',
+                    marginTop: '2px',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      color: 'primary.main'
+                    }
+                  }} onClick={() => {
+                    closeMobileMenu()
+                    setLocationModalOpen(true)
                   }}>
-                    <Box sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      flex: 1,
-                      overflow: 'hidden',
-                      minWidth: 0
-                    }}>
-                      <Box sx={{
-                        fontWeight: 600,
-                        fontSize: '0.9rem',
-                        color: 'text.primary',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%'
-                      }}>
-                        {getUserDisplayName()}
-                      </Box>
-                      {location?.city && (
-                        <Box sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          color: 'text.secondary',
-                          marginTop: '2px',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            color: 'primary.main'
-                          }
-                        }} onClick={() => {
-                          closeMobileMenu()
-                          setLocationModalOpen(true)
-                        }}>
-                          <LocationOn fontSize="small" />
-                          {location.city}, {location.state}
-                        </Box>
-                      )}
-                    </Box>
-                    <MobileLoginButton onClick={handleLogout}>
-                      <Logout />
-                      Sair
-                    </MobileLoginButton>
+                    <LocationOn fontSize="small" />
+                    {location.city}, {location.state}
                   </Box>
-                ) : (
+                )}
+              </Box>
+              <MobileLoginButton onClick={handleLogout}>
+                <Logout />
+                Sair
+              </MobileLoginButton>
+            </Box>
+          ) : (
             <MobileLoginButton
               onClick={() => {
                 closeMobileMenu()

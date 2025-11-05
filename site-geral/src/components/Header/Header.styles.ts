@@ -265,7 +265,7 @@ export const NavigationContainer = styled.nav`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
   flex-wrap: nowrap;
   height: 100%;
   width: 100%;
@@ -273,7 +273,11 @@ export const NavigationContainer = styled.nav`
   position: relative;
   
   @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
-    gap: ${({ theme }) => theme.spacing.sm};
+    gap: ${({ theme }) => theme.spacing.xs};
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.xl}) {
+    gap: ${({ theme }) => theme.spacing.xs};
   }
 `
 
@@ -281,7 +285,7 @@ export const NavLink = styled(Link)`
   color: ${({ theme }) => theme.colors.textPrimary};
   font-weight: 500;
   text-decoration: none;
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
   transition: all ${({ theme }) => theme.transitions.base};
   position: relative;
   display: flex;
@@ -291,6 +295,12 @@ export const NavLink = styled(Link)`
   white-space: nowrap;
   height: 100%;
   line-height: 1.5;
+  font-size: 0.9rem;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.xl}) {
+    font-size: 0.85rem;
+    padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
+  }
 
   &::after {
     content: '';
