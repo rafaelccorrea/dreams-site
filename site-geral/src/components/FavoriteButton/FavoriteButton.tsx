@@ -25,12 +25,14 @@ interface FavoriteButtonProps {
   propertyId: string
   size?: 'small' | 'medium' | 'large'
   showTooltip?: boolean
+  isOwnProperty?: boolean // Nova prop para indicar se é propriedade do próprio usuário
 }
 
 export const FavoriteButton = ({
   propertyId,
   size = 'medium',
   showTooltip = true,
+  isOwnProperty = false,
 }: FavoriteButtonProps) => {
   const { isAuthenticated } = useAuth()
   const { checkFavorite, toggleFavorite } = useFavorites()
@@ -38,8 +40,9 @@ export const FavoriteButton = ({
   const [loading, setLoading] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
 
+  // Se é propriedade do próprio usuário, não verifica favorito
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isOwnProperty) {
       const loadFavoriteStatus = async () => {
         try {
           const result = await checkFavorite(propertyId)
@@ -52,10 +55,16 @@ export const FavoriteButton = ({
     } else {
       setIsFavorite(false)
     }
-  }, [propertyId, isAuthenticated, checkFavorite])
+  }, [propertyId, isAuthenticated, checkFavorite, isOwnProperty])
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    
+    // Não permite favoritar própria propriedade
+    if (isOwnProperty) {
+      return
+    }
+    
     if (!isAuthenticated) {
       setLoginModalOpen(true)
       return
@@ -82,10 +91,11 @@ export const FavoriteButton = ({
   const button = (
     <StyledIconButton
       onClick={handleToggle}
-      disabled={loading}
+      disabled={loading || isOwnProperty}
       size={size}
       className={isFavorite ? 'favorite-active' : ''}
-      aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+      aria-label={isOwnProperty ? 'Não é possível favoritar sua própria propriedade' : (isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos')}
+      sx={isOwnProperty ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
     >
       {loading ? (
         <CircularProgress size={24} />
@@ -97,12 +107,15 @@ export const FavoriteButton = ({
     </StyledIconButton>
   )
 
+  // Se é propriedade do próprio usuário, mostra tooltip explicativo
   if (showTooltip) {
     return (
       <>
         <Tooltip
           title={
-            isAuthenticated
+            isOwnProperty
+              ? 'Não é possível favoritar sua própria propriedade'
+              : isAuthenticated
               ? isFavorite
                 ? 'Remover dos favoritos'
                 : 'Adicionar aos favoritos'

@@ -19,6 +19,8 @@ import {
   CircularProgress,
   Chip,
   InputAdornment,
+  Divider,
+  Stack,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
@@ -29,13 +31,23 @@ import {
   Agriculture,
   Save,
   ArrowBack,
+  CloudUpload,
+  Image as ImageIcon,
+  LocationOn,
+  Bed,
+  Bathtub,
+  SquareFoot,
+  LocalParking,
 } from '@mui/icons-material'
 import { usePublicProperty } from '../../hooks/usePublicProperty'
 import { useAuth } from '../../hooks/useAuth'
 import { useLocation } from '../../contexts/LocationContext'
 import { PageContainer, PageHeader, PageContent } from '../../components/PageContainer'
 import { CreatePropertyRequest } from '../../services/publicPropertyService'
+import { getPublicPropertyImages } from '../../services/publicPropertyService'
 import { formatCEP, isValidCEP, formatArea } from '../../utils/masks'
+import { ImageCarousel } from '../../components/ImageCarousel'
+import { formatPrice } from '../../utils/formatPrice'
 
 const PropertyTypeIcon = ({ type }: { type: string }) => {
   const iconProps = { fontSize: 'small' as const, sx: { mr: 1 } }
@@ -54,6 +66,17 @@ const PropertyTypeIcon = ({ type }: { type: string }) => {
       return <Home {...iconProps} />
   }
 }
+
+const getTypeLabel = (type: string) => {
+  const types: Record<string, string> = {
+    house: "Casa",
+    apartment: "Apartamento",
+    commercial: "Comercial",
+    land: "Terreno",
+    rural: "Rural",
+  };
+  return types[type] || type;
+};
 
 const COMMON_FEATURES = [
   'Piscina',
@@ -77,10 +100,15 @@ export const MyPropertyPage = () => {
   const navigate = useNavigate()
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { location } = useLocation()
-  const { property, loading, error, createProperty, deleteProperty } = usePublicProperty()
+  const { property, loading, error, createProperty, deleteProperty, uploadImages } = usePublicProperty()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [propertyImages, setPropertyImages] = useState<string[]>([])
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [previewImages, setPreviewImages] = useState<string[]>([])
   
   // Form state
   const [formData, setFormData] = useState<CreatePropertyRequest>({
@@ -111,6 +139,29 @@ export const MyPropertyPage = () => {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loadingCEP, setLoadingCEP] = useState(false)
+
+  // Debug: verificar se propriedade está sendo carregada
+  useEffect(() => {
+    console.log('Property state:', property)
+    console.log('Loading state:', loading)
+  }, [property, loading])
+
+  // Carregar imagens da propriedade quando ela existir
+  useEffect(() => {
+    if (property && property.id) {
+      getPublicPropertyImages(property.id)
+        .then((images: string[]) => {
+          console.log('Imagens carregadas:', images)
+          setPropertyImages(images || [])
+        })
+        .catch((err: unknown) => {
+          console.error('Erro ao carregar imagens:', err)
+          setPropertyImages([])
+        })
+    } else {
+      setPropertyImages([])
+    }
+  }, [property])
 
   // Preencher formulário com dados da propriedade existente
   useEffect(() => {
@@ -297,6 +348,10 @@ export const MyPropertyPage = () => {
     if (!formData.totalArea || formData.totalArea <= 0) {
       errors.totalArea = 'Área total deve ser maior que zero'
     }
+    // Validação de imagens: exatamente 5 imagens
+    if (selectedImages.length !== 5) {
+      errors._images = 'É obrigatório adicionar exatamente 5 imagens'
+    }
 
     setFormErrors(errors)
     return Object.keys(errors).length === 0
@@ -323,7 +378,18 @@ export const MyPropertyPage = () => {
         address: `${formData.street}, ${formData.number}${formData.complement ? `, ${formData.complement}` : ''} - ${formData.neighborhood}, ${formData.city} - ${formData.state}`,
       }
       
-      await createProperty(dataToSubmit)
+      const newProperty = await createProperty(dataToSubmit)
+      
+      // Após criar a propriedade, fazer upload das imagens
+      if (selectedImages.length > 0 && newProperty.id) {
+        try {
+          await uploadImages(newProperty.id, selectedImages)
+        } catch (uploadErr) {
+          console.error('Erro ao fazer upload de imagens:', uploadErr)
+          setFormErrors({ _general: 'Propriedade criada, mas houve erro ao fazer upload das imagens. Você pode adicioná-las depois.' })
+        }
+      }
+      
       navigate('/minha-propriedade')
     } catch (err: unknown) {
       if (err instanceof Error && (err.message?.includes('409') || err.message?.includes('já possui'))) {
@@ -352,6 +418,88 @@ export const MyPropertyPage = () => {
     } finally {
       setDeleteLoading(false)
     }
+  }
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) return
+
+    const files = Array.from(event.target.files)
+    
+    // Validar formato de arquivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    const invalidFiles = files.filter(file => !allowedTypes.includes(file.type))
+    if (invalidFiles.length > 0) {
+      setUploadError('Formato de arquivo não suportado. Use apenas JPEG, PNG ou WebP.')
+      return
+    }
+
+    // Se já tem propriedade, fazer upload imediatamente
+    if (property) {
+      const totalFiles = propertyImages.length + files.length
+      
+      // Validar limite de 5 imagens
+      if (totalFiles > 5) {
+        setUploadError(`Limite de 5 imagens excedido. Você já tem ${propertyImages.length} imagem(ns) e está tentando adicionar ${files.length}.`)
+        return
+      }
+
+      setUploadingImages(true)
+      setUploadError(null)
+
+      try {
+        await uploadImages(property.id, files)
+        // Limpar input
+        event.target.value = ''
+        // Recarregar imagens
+        const images = await getPublicPropertyImages(property.id)
+        setPropertyImages(images || [])
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : 'Erro ao fazer upload de imagens')
+      } finally {
+        setUploadingImages(false)
+      }
+    } else {
+      // Se ainda não tem propriedade, apenas adicionar aos selecionados
+      const newFiles = [...selectedImages, ...files]
+      
+      // Validar limite de 5 imagens
+      if (newFiles.length > 5) {
+        setUploadError(`Limite de 5 imagens. Você está tentando adicionar ${newFiles.length} imagens. Máximo permitido: 5.`)
+        return
+      }
+      
+      setSelectedImages(newFiles)
+      
+      // Criar previews
+      files.forEach(file => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            const preview = e.target.result as string
+            setPreviewImages(prev => [...prev, preview])
+          }
+        }
+        reader.readAsDataURL(file)
+      })
+      
+      setUploadError(null)
+      event.target.value = ''
+    }
+  }
+
+  const handleRemoveImage = (index: number) => {
+    if (property) {
+      // Se já tem propriedade, não permite remover (seria necessário endpoint de delete)
+      return
+    }
+    
+    // Remover da lista de selecionados
+    const newFiles = selectedImages.filter((_, i) => i !== index)
+    setSelectedImages(newFiles)
+    
+    // Remover preview
+    const newPreviews = previewImages.filter((_, i) => i !== index)
+    setPreviewImages(newPreviews)
   }
 
   if (authLoading) {
@@ -406,7 +554,7 @@ export const MyPropertyPage = () => {
             </Typography>
         </PageHeader>
 
-        <PageContent>
+        <PageContent sx={{ px: 0 }}>
             {/* Erro geral */}
             {error && (
               <Alert severity="error" sx={{ mb: 3 }}>
@@ -425,16 +573,561 @@ export const MyPropertyPage = () => {
                 <CircularProgress />
               </Box>
             ) : property ? (
-              // Visualização da propriedade existente - apenas botão de deletar
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={handleDeleteClick}
+              // Visualização da propriedade existente - visualização igual à página de detalhes
+              <Box>
+                {/* Galeria de imagens igual à página de detalhes */}
+                {propertyImages.length > 0 && (
+                  <Box
+                    sx={{
+                      width: "100%",
+                      margin: "0",
+                      pt: 2,
+                      pb: 3,
+                      px: { xs: 0, sm: 0, md: 0 },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        borderRadius: 4,
+                        overflow: "hidden",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <ImageCarousel images={propertyImages} />
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Informações da propriedade */}
+                <Box
+                  sx={{
+                      width: "100%",
+                      margin: "0",
+                      pb: 4,
+                      px: { xs: 0, sm: 0, md: 0 },
+                  }}
                 >
-                  Deletar Propriedade
-                </Button>
+                  <Grid container spacing={4}>
+                    <Grid item xs={12} md={8}>
+                      {/* Seção: Título e Informações Principais */}
+                      <Box sx={{ mb: 5 }}>
+                        <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                          <Chip
+                            label={getTypeLabel(property.type)}
+                            sx={{
+                              bgcolor: "#e3f2fd",
+                              color: "#1976d2",
+                              fontWeight: 600,
+                              fontSize: "0.875rem",
+                              height: 28,
+                            }}
+                          />
+                          {property.code && (
+                            <Chip
+                              label={`#${property.code}`}
+                              sx={{
+                                bgcolor: "#f5f5f5",
+                                color: "#757575",
+                                fontWeight: 600,
+                                fontSize: "0.875rem",
+                                height: 28,
+                              }}
+                            />
+                          )}
+                        </Box>
+
+                        <Typography
+                          variant="h4"
+                          sx={{
+                            fontWeight: 700,
+                            color: "#212121",
+                            mb: 2,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {property.title}
+                        </Typography>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            color: "text.secondary",
+                            mb: 3,
+                          }}
+                        >
+                          <LocationOn sx={{ color: "#1976d2", fontSize: 20 }} />
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {property.address || `${property.street || ''}${property.number ? `, ${property.number}` : ''}${property.complement ? ` - ${property.complement}` : ''}`}, {property.neighborhood}, {property.city} - {property.state}
+                          </Typography>
+                        </Box>
+
+                        {/* Preços */}
+                        <Box sx={{ mb: 4 }}>
+                          {property.salePrice && Number(property.salePrice) > 0 && (
+                            <Box sx={{ mb: 2 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "text.secondary",
+                                  fontWeight: 600,
+                                  textTransform: "uppercase",
+                                  fontSize: "0.75rem",
+                                  display: "block",
+                                  mb: 0.5,
+                                }}
+                              >
+                                Preço de Venda
+                              </Typography>
+                              <Typography
+                                variant="h3"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: "#1976d2",
+                                }}
+                              >
+                                {formatPrice(property.salePrice)}
+                              </Typography>
+                            </Box>
+                          )}
+                          {property.rentPrice && Number(property.rentPrice) > 0 && (
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "text.secondary",
+                                  fontWeight: 600,
+                                  textTransform: "uppercase",
+                                  fontSize: "0.75rem",
+                                  display: "block",
+                                  mb: 0.5,
+                                }}
+                              >
+                                Aluguel Mensal
+                              </Typography>
+                              <Typography
+                                variant="h3"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: "#4caf50",
+                                }}
+                              >
+                                {formatPrice(property.rentPrice)}
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+
+                        {/* Condomínio e IPTU */}
+                        {(property.condominiumFee || property.iptu) && (
+                          <Box sx={{ display: "flex", gap: 3, mb: 4 }}>
+                            {property.condominiumFee &&
+                              Number(property.condominiumFee) > 0 && (
+                                <Box>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "text.secondary",
+                                      display: "block",
+                                      mb: 0.5,
+                                      fontWeight: 600,
+                                      textTransform: "uppercase",
+                                      fontSize: "0.7rem",
+                                    }}
+                                  >
+                                    Condomínio
+                                  </Typography>
+                                  <Typography
+                                    variant="h6"
+                                    sx={{
+                                      color: "#212121",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {formatPrice(property.condominiumFee)}
+                                  </Typography>
+                                </Box>
+                              )}
+                            {property.iptu && Number(property.iptu) > 0 && (
+                              <Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: "text.secondary",
+                                    display: "block",
+                                    mb: 0.5,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    fontSize: "0.7rem",
+                                  }}
+                                >
+                                  IPTU
+                                </Typography>
+                                <Typography
+                                  variant="h6"
+                                  sx={{
+                                    color: "#212121",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {formatPrice(property.iptu)}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                        )}
+
+                        {/* Características do Imóvel */}
+                        <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 4 }}>
+                          {property.bedrooms > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Bed sx={{ fontSize: 28, color: "#1976d2" }} />
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                  {property.bedrooms}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {property.bedrooms === 1 ? "Quarto" : "Quartos"}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                          {property.bathrooms > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Bathtub sx={{ fontSize: 28, color: "#1976d2" }} />
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                  {property.bathrooms}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {property.bathrooms === 1 ? "Banheiro" : "Banheiros"}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                          {property.parkingSpaces > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <LocalParking sx={{ fontSize: 28, color: "#1976d2" }} />
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                  {property.parkingSpaces}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {property.parkingSpaces === 1 ? "Vaga" : "Vagas"}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                          {property.totalArea > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <SquareFoot sx={{ fontSize: 28, color: "#1976d2" }} />
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                  {formatArea(property.totalArea)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  Área Total
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                          {property.builtArea > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <SquareFoot sx={{ fontSize: 28, color: "#1976d2" }} />
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                  {formatArea(property.builtArea)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  Área Construída
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                        </Box>
+
+                        {/* Descrição */}
+                        <Divider sx={{ my: 4 }} />
+                        <Box sx={{ mb: 5 }}>
+                          <Typography
+                            variant="h5"
+                            sx={{
+                              fontWeight: 700,
+                              color: "#212121",
+                              mb: 2,
+                            }}
+                          >
+                            Descrição
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              whiteSpace: "pre-line",
+                              lineHeight: 1.8,
+                              color: "#424242",
+                              fontSize: "1rem",
+                            }}
+                          >
+                            {property.description || "Sem descrição disponível."}
+                          </Typography>
+                        </Box>
+
+                        {/* Features */}
+                        {property.features && property.features.length > 0 && (
+                          <>
+                            <Divider sx={{ my: 4 }} />
+                            <Box sx={{ mb: 5 }}>
+                              <Typography
+                                variant="h5"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: "#212121",
+                                  mb: 2,
+                                }}
+                              >
+                                Características
+                              </Typography>
+                              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                                {property.features.map((feature: string, index: number) => (
+                                  <Chip
+                                    key={index}
+                                    label={feature}
+                                    sx={{
+                                      bgcolor: "white",
+                                      border: "1px solid #e0e0e0",
+                                      color: "#212121",
+                                      fontWeight: 500,
+                                      fontSize: "0.875rem",
+                                      height: 32,
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                            </Box>
+                          </>
+                        )}
+
+                        <Divider sx={{ my: 4 }} />
+
+                        {/* Informações Adicionais */}
+                        <Box>
+                          <Typography
+                            variant="h5"
+                            sx={{
+                              fontWeight: 700,
+                              color: "#212121",
+                              mb: 3,
+                            }}
+                          >
+                            Informações Adicionais
+                          </Typography>
+                          <Stack spacing={2}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 2,
+                                py: 1,
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: "text.secondary",
+                                  fontWeight: 600,
+                                  minWidth: 120,
+                                }}
+                              >
+                                Status:
+                              </Typography>
+                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                {property.status === "available"
+                                  ? "Disponível"
+                                  : property.status === "rented"
+                                  ? "Alugado"
+                                  : property.status === "sold"
+                                  ? "Vendido"
+                                  : property.status}
+                              </Typography>
+                            </Box>
+                            {property.totalArea > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 2,
+                                  py: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "text.secondary",
+                                    fontWeight: 600,
+                                    minWidth: 120,
+                                  }}
+                                >
+                                  Área Total:
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                  {formatArea(property.totalArea)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {property.builtArea > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 2,
+                                  py: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "text.secondary",
+                                    fontWeight: 600,
+                                    minWidth: 120,
+                                  }}
+                                >
+                                  Área Construída:
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                  {formatArea(property.builtArea)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {property.bedrooms > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 2,
+                                  py: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "text.secondary",
+                                    fontWeight: 600,
+                                    minWidth: 120,
+                                  }}
+                                >
+                                  Quartos:
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                  {property.bedrooms}
+                                </Typography>
+                              </Box>
+                            )}
+                            {property.bathrooms > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 2,
+                                  py: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "text.secondary",
+                                    fontWeight: 600,
+                                    minWidth: 120,
+                                  }}
+                                >
+                                  Banheiros:
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                  {property.bathrooms}
+                                </Typography>
+                              </Box>
+                            )}
+                            {property.parkingSpaces > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 2,
+                                  py: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "text.secondary",
+                                    fontWeight: 600,
+                                    minWidth: 120,
+                                  }}
+                                >
+                                  Vagas:
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                  {property.parkingSpaces}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Stack>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Upload de imagens */}
+                {propertyImages.length < 5 && (
+                  <Box sx={{ mb: 3, px: { xs: 0, sm: 0, md: 0 }, width: "100%", margin: "0" }}>
+                    {uploadError && (
+                      <Alert severity="error" sx={{ mb: 2 }}>
+                        {uploadError}
+                      </Alert>
+                    )}
+                    <input
+                      accept="image/jpeg,image/png,image/webp"
+                      style={{ display: 'none' }}
+                      id="image-upload"
+                      type="file"
+                      multiple
+                      onChange={handleImageUpload}
+                      disabled={uploadingImages || (propertyImages.length >= 5)}
+                    />
+                    <label htmlFor="image-upload">
+                      <Button
+                        component="span"
+                        variant="outlined"
+                        startIcon={uploadingImages ? <CircularProgress size={20} /> : <CloudUpload />}
+                        disabled={uploadingImages || (propertyImages.length >= 5)}
+                        sx={{ mb: 2 }}
+                      >
+                        {uploadingImages ? 'Enviando...' : 'Adicionar Imagens'}
+                      </Button>
+                    </label>
+                    <Typography variant="caption" display="block" color="text.secondary">
+                      {propertyImages.length} de 5 imagens adicionadas. É obrigatório ter exatamente 5 imagens. Formatos aceitos: JPEG, PNG, WebP
+                    </Typography>
+                  </Box>
+                )}
+                {propertyImages.length > 0 && propertyImages.length < 5 && (
+                  <Alert severity="warning" sx={{ mb: 2, mx: { xs: 0, sm: 0, md: 0 }, width: "100%", margin: "0" }}>
+                    Você precisa adicionar mais {5 - propertyImages.length} imagem(ns) para completar o mínimo de 5 imagens.
+                  </Alert>
+                )}
+
+                {/* Botão de deletar */}
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', px: { xs: 0, sm: 0, md: 0 }, width: "100%", margin: "0" }}>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={handleDeleteClick}
+                  >
+                    Deletar Propriedade
+                  </Button>
+                </Box>
               </Box>
             ) : (
               // Formulário de criação
@@ -803,7 +1496,7 @@ export const MyPropertyPage = () => {
                       Características da Propriedade
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {COMMON_FEATURES.map((feature) => (
+                      {COMMON_FEATURES.map((feature: string) => (
                         <Chip
                           key={feature}
                           label={feature}
@@ -813,6 +1506,148 @@ export const MyPropertyPage = () => {
                         />
                       ))}
                     </Box>
+                  </Grid>
+
+                  {/* Imagens */}
+                  <Grid item xs={12}>
+                    <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600 }}>
+                      Imagens da Propriedade *
+                    </Typography>
+                    
+                    {formErrors._images && (
+                      <Alert severity="error" sx={{ mb: 2 }}>
+                        {formErrors._images}
+                      </Alert>
+                    )}
+
+                    {uploadError && (
+                      <Alert severity="error" sx={{ mb: 2 }}>
+                        {uploadError}
+                      </Alert>
+                    )}
+
+                    {/* Preview das imagens selecionadas */}
+                    {previewImages.length > 0 && (
+                      <Grid container spacing={2} sx={{ mb: 3 }}>
+                        {previewImages.map((previewUrl, index) => (
+                          <Grid item xs={12} sm={6} md={4} key={index}>
+                            <Box
+                              sx={{
+                                position: 'relative',
+                                width: '100%',
+                                paddingTop: '75%', // Aspect ratio 4:3
+                                overflow: 'hidden',
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                bgcolor: 'background.paper',
+                              }}
+                            >
+                              <img
+                                src={previewUrl}
+                                alt={`Preview ${index + 1}`}
+                                style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                }}
+                              />
+                              <Button
+                                size="small"
+                                color="error"
+                                onClick={() => handleRemoveImage(index)}
+                                sx={{
+                                  position: 'absolute',
+                                  top: 8,
+                                  right: 8,
+                                  minWidth: 'auto',
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: '50%',
+                                  bgcolor: 'error.main',
+                                  color: 'white',
+                                  '&:hover': {
+                                    bgcolor: 'error.dark',
+                                  },
+                                }}
+                              >
+                                ×
+                              </Button>
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    )}
+
+                    {/* Upload de imagens */}
+                    {selectedImages.length === 0 ? (
+                      // Área de drop quando não há imagens
+                      <Box
+                        sx={{
+                          textAlign: 'center',
+                          py: 4,
+                          border: '2px dashed',
+                          borderColor: 'divider',
+                          borderRadius: 2,
+                          mb: 3,
+                        }}
+                      >
+                        <ImageIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          Nenhuma imagem adicionada ainda
+                        </Typography>
+                        <input
+                          accept="image/jpeg,image/png,image/webp"
+                          style={{ display: 'none' }}
+                          id="image-upload-create-empty"
+                          type="file"
+                          multiple
+                          onChange={handleImageUpload}
+                        />
+                        <label htmlFor="image-upload-create-empty">
+                          <Button
+                            component="span"
+                            variant="outlined"
+                            startIcon={<CloudUpload />}
+                          >
+                            Adicionar Imagens
+                          </Button>
+                        </label>
+                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 2 }}>
+                          É obrigatório adicionar exatamente 5 imagens. Formatos aceitos: JPEG, PNG, WebP
+                        </Typography>
+                      </Box>
+                    ) : selectedImages.length < 5 ? (
+                      // Botão para adicionar mais quando já tem algumas mas não completou
+                      <Box>
+                        <input
+                          accept="image/jpeg,image/png,image/webp"
+                          style={{ display: 'none' }}
+                          id="image-upload-create"
+                          type="file"
+                          multiple
+                          onChange={handleImageUpload}
+                          disabled={selectedImages.length >= 5}
+                        />
+                        <label htmlFor="image-upload-create">
+                          <Button
+                            component="span"
+                            variant="outlined"
+                            startIcon={<CloudUpload />}
+                            disabled={selectedImages.length >= 5}
+                            sx={{ mb: 2 }}
+                          >
+                            Adicionar Mais Imagens
+                          </Button>
+                        </label>
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          {selectedImages.length} de 5 imagens adicionadas. É obrigatório adicionar exatamente 5 imagens. Formatos aceitos: JPEG, PNG, WebP
+                        </Typography>
+                      </Box>
+                    ) : null}
                   </Grid>
 
                   {/* Botões */}

@@ -3,6 +3,7 @@ import {
   createProperty as createPropertyService,
   getMyProperty as getMyPropertyService,
   deleteProperty as deletePropertyService,
+  uploadPropertyImages as uploadPropertyImagesService,
   CreatePropertyRequest,
   Property,
 } from '../services/publicPropertyService'
@@ -15,6 +16,7 @@ interface UsePublicPropertyReturn {
   loadProperty: () => Promise<void>
   createProperty: (data: CreatePropertyRequest) => Promise<Property>
   deleteProperty: (propertyId: string) => Promise<void>
+  uploadImages: (propertyId: string, files: File[]) => Promise<void>
   hasProperty: boolean
 }
 
@@ -92,6 +94,26 @@ export function usePublicProperty(): UsePublicPropertyReturn {
     []
   )
 
+  const uploadImages = useCallback(
+    async (propertyId: string, files: File[]): Promise<void> => {
+      setLoading(true)
+      setError(null)
+      try {
+        await uploadPropertyImagesService(propertyId, files)
+        // Recarregar a propriedade para atualizar as imagens
+        await loadProperty()
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Erro ao fazer upload de imagens'
+        setError(errorMessage)
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [loadProperty]
+  )
+
   return {
     property,
     loading,
@@ -99,6 +121,7 @@ export function usePublicProperty(): UsePublicPropertyReturn {
     loadProperty,
     createProperty,
     deleteProperty,
+    uploadImages,
     hasProperty: property !== null,
   }
 }

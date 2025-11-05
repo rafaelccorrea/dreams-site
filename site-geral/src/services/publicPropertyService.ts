@@ -84,6 +84,25 @@ export interface DeletePropertyResponse {
   message: string
 }
 
+export interface GalleryImage {
+  id: string
+  fileName?: string
+  fileUrl?: string
+  url?: string
+  thumbnailUrl?: string
+  filePath?: string
+  fileSize?: number
+  mimeType?: string
+  category?: string
+  altText?: string
+  description?: string
+  status?: string
+  tags?: string[]
+  createdAt?: string
+}
+
+export interface UploadImagesResponse extends Array<GalleryImage> {}
+
 /**
  * Cria uma nova propriedade para o usuário público autenticado
  */
@@ -138,20 +157,188 @@ export async function getMyProperty(): Promise<GetMyPropertyResponse> {
   const contentType = response.headers.get('content-type')
   const text = await response.text()
   
+  console.log('Resposta getMyProperty - Status:', response.status)
+  console.log('Resposta getMyProperty - Content-Type:', contentType)
+  console.log('Resposta getMyProperty - Text:', text)
+  
   // Se não houver conteúdo ou não for JSON, retornar null
   if (!text || text.trim().length === 0) {
+    console.warn('Resposta vazia do servidor')
     return null
   }
   
   if (!contentType || !contentType.includes('application/json')) {
+    console.warn('Content-Type não é JSON:', contentType)
     return null
   }
   
   try {
-    return JSON.parse(text) as GetMyPropertyResponse
+    const parsed = JSON.parse(text) as GetMyPropertyResponse
+    console.log('Propriedade parseada:', parsed)
+    return parsed
   } catch (error) {
+    console.error('Erro ao fazer parse da resposta JSON:', error)
     // Se não conseguir fazer parse, retornar null
     return null
+  }
+}
+
+/**
+ * Busca uma propriedade pública por ID
+ * @param propertyId - ID da propriedade
+ */
+export async function getPublicPropertyById(propertyId: string): Promise<Property> {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    throw new Error('Usuário não autenticado')
+  }
+
+  const response = await fetch(`${API_BASE_URL}/public/properties/${propertyId}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Propriedade não encontrada')
+    }
+    const error = await response.json().catch(() => ({
+      message: `Erro ${response.status}: ${response.statusText}`,
+    }))
+    throw new Error(error.message || 'Erro ao buscar propriedade')
+  }
+
+  return handleResponse<Property>(response)
+}
+
+/**
+ * Busca todas as imagens de uma propriedade pública
+ * @param propertyId - ID da propriedade
+ */
+export async function getPublicPropertyImages(propertyId: string): Promise<string[]> {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    throw new Error('Usuário não autenticado')
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/public/properties/${propertyId}/images`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return []
+      }
+      throw new Error(`Erro ${response.status}: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    
+    console.log('Resposta da API de imagens:', data)
+    
+    // A API retorna um objeto com { images: [...], total: number } ou um array direto
+    let imageObjects: GalleryImage[] = []
+    
+    if (Array.isArray(data)) {
+      imageObjects = data
+    } else if (data.images && Array.isArray(data.images)) {
+      imageObjects = data.images
+    } else {
+      console.warn('Formato de resposta não reconhecido:', data)
+      return []
+    }
+    
+    // Extrair URLs das imagens (prioriza url sobre thumbnailUrl)
+    const imageUrls = imageObjects.map((img: GalleryImage) => {
+      const url = img.url || img.thumbnailUrl || img.fileUrl
+      return url
+    }).filter((url: string) => url && url.trim() !== '')
+    
+    console.log('URLs extraídas:', imageUrls)
+    
+    return imageUrls
+  } catch (error) {
+    console.error('Erro ao buscar imagens:', error)
+    return []
+  }
+}
+
+/**
+ * Faz upload de imagens para uma propriedade do usuário público
+ * @param propertyId - ID da propriedade
+ * @param files - Array de arquivos de imagem (máximo 5 por requisição)
+ */
+export async function uploadPropertyImages(
+  propertyId: string,
+  files: File[]
+): Promise<UploadImagesResponse> {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    throw new Error('Usuário não autenticado')
+  }
+
+  if (!files || files.length === 0) {
+    throw new Error('Nenhum arquivo enviado')
+  }
+
+  // Validar tipos de arquivo
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  for (const file of files) {
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`Formato de arquivo não suportado: ${file.type}. Use JPEG, PNG ou WebP.`)
+    }
+  }
+
+  const formData = new FormData()
+  files.forEach((file) => {
+    formData.append('images', file)
+  })
+
+  const response = await fetch(`${API_BASE_URL}/public/properties/${propertyId}/images`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    let errorMessage = `Erro ${response.status}: ${response.statusText}`
+    
+    try {
+      if (errorText && errorText.trim().length > 0) {
+        const error = JSON.parse(errorText)
+        errorMessage = error.message || errorMessage
+      }
+    } catch {
+      // Usar mensagem padrão se não conseguir fazer parse
+    }
+    
+    throw new Error(errorMessage)
+  }
+
+  const contentType = response.headers.get('content-type')
+  const text = await response.text()
+  
+  if (!text || text.trim().length === 0) {
+    throw new Error('Resposta vazia do servidor')
+  }
+  
+  if (!contentType || !contentType.includes('application/json')) {
+    throw new Error('Resposta não é JSON válido')
+  }
+  
+  try {
+    return JSON.parse(text) as UploadImagesResponse
+  } catch (error) {
+    throw new Error('Erro ao fazer parse da resposta JSON')
   }
 }
 

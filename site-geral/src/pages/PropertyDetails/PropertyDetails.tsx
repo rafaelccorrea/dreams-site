@@ -23,9 +23,6 @@ import {
   LocationOn,
   Phone,
   Email,
-  Share,
-  Favorite,
-  FavoriteBorder,
   WhatsApp,
   VerifiedUser,
 } from "@mui/icons-material";
@@ -34,18 +31,28 @@ import {
   type Property,
   getPropertyImages,
 } from "../../services/propertyService";
+import { getPublicPropertyById, getPublicPropertyImages } from "../../services/publicPropertyService";
 import { formatPrice, formatArea } from "../../utils/formatPrice";
 import { PropertyDetailsShimmer } from "../../components/Shimmer";
 import { ImageCarousel } from "../../components/ImageCarousel";
+import { useAuth } from "../../hooks/useAuth";
+import { usePublicProperty } from "../../hooks/usePublicProperty";
+import { FavoriteButton } from "../../components/FavoriteButton";
+import { ShareButton } from "../../components/ShareButton";
 
 export const PropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { property: myProperty } = usePublicProperty();
   const [property, setProperty] = useState<Property | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isPublicProperty, setIsPublicProperty] = useState(false);
+  
+  // Verifica se a propriedade é do próprio usuário
+  const isOwnProperty = isAuthenticated && myProperty && property && myProperty.id === property.id;
 
   useEffect(() => {
     if (id) {
@@ -57,7 +64,27 @@ export const PropertyDetails = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getPropertyById(propertyId);
+      // Tenta primeiro buscar da API privada
+      let data: Property | null = null;
+      let isPublicProperty = false;
+      
+      try {
+        data = await getPropertyById(propertyId);
+      } catch (privateErr) {
+        // Se não encontrar na API privada, tenta na API pública
+        try {
+          data = await getPublicPropertyById(propertyId);
+          isPublicProperty = true;
+          setIsPublicProperty(true);
+        } catch (publicErr) {
+          throw new Error("Propriedade não encontrada");
+        }
+      }
+
+      if (!data) {
+        throw new Error("Propriedade não encontrada");
+      }
+
       setProperty(data);
 
       // Sempre busca todas as imagens se houver mais de uma
@@ -66,7 +93,10 @@ export const PropertyDetails = () => {
         
         if (data.imageCount > 1) {
           try {
-            const propertyImages = await getPropertyImages(propertyId);
+            // Usa a função apropriada baseado no tipo de propriedade
+            const propertyImages = isPublicProperty 
+              ? await getPublicPropertyImages(propertyId)
+              : await getPropertyImages(propertyId);
             
             // Garante que todas as imagens sejam incluídas
             // Mantém TODAS as imagens, mesmo que URLs sejam iguais
@@ -118,7 +148,25 @@ export const PropertyDetails = () => {
           setImages([]);
         }
       } else {
-        setImages([]);
+        // Se não tem imageCount, tenta buscar imagens mesmo assim
+        try {
+          const propertyImages = isPublicProperty 
+            ? await getPublicPropertyImages(propertyId)
+            : await getPropertyImages(propertyId);
+          
+          if (propertyImages && propertyImages.length > 0) {
+            const imageUrls = propertyImages.map((img) => {
+              if (typeof img === 'string') return img;
+              return (img as { url?: string; thumbnailUrl?: string }).url || 
+                     (img as { url?: string; thumbnailUrl?: string }).thumbnailUrl || '';
+            }).filter(url => url && url.trim() !== '');
+            
+            setImages(imageUrls);
+          }
+        } catch (imgErr) {
+          console.error('Erro ao carregar imagens:', imgErr);
+          setImages([]);
+        }
       }
     } catch (err) {
       setError("Propriedade não encontrada");
@@ -219,29 +267,18 @@ export const PropertyDetails = () => {
           </Button>
 
           <Box sx={{ display: "flex", gap: 1 }}>
-            <IconButton
-              onClick={() => setIsFavorite(!isFavorite)}
-              sx={{
-                bgcolor: isFavorite ? "#ffebee" : "white",
-                border: "1px solid #e0e0e0",
-                "&:hover": { bgcolor: "#ffebee" },
-              }}
-            >
-              {isFavorite ? (
-                <Favorite sx={{ color: "#f44336" }} />
-              ) : (
-                <FavoriteBorder />
-              )}
-            </IconButton>
-            <IconButton
-              sx={{
-                bgcolor: "white",
-                border: "1px solid #e0e0e0",
-                "&:hover": { bgcolor: "#f5f5f5" },
-              }}
-            >
-              <Share />
-            </IconButton>
+            <FavoriteButton
+              propertyId={property.id}
+              size="medium"
+              showTooltip={true}
+              isOwnProperty={isOwnProperty || false}
+            />
+            <ShareButton
+              propertyId={property.id}
+              propertyTitle={property.title}
+              size="medium"
+              showTooltip={true}
+            />
           </Box>
         </Box>
       </Box>

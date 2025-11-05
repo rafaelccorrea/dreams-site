@@ -3,6 +3,7 @@ import { Card, CardContent, Typography, Box, Chip } from '@mui/material'
 import styled from 'styled-components'
 import { Bed, Bathtub, SquareFoot } from '@mui/icons-material'
 import { Property, getPropertyImages } from '../../services/propertyService'
+import { getPublicPropertyImages } from '../../services/publicPropertyService'
 import { formatPrice, formatArea } from '../../utils/formatPrice'
 import { PropertyCardCarousel } from './PropertyCardCarousel'
 import { FavoriteButton } from '../FavoriteButton'
@@ -183,9 +184,10 @@ interface PropertyCardProps {
   onClick?: () => void
   hideCompanyInfo?: boolean // Nova prop para ocultar informações da imobiliária
   hideCode?: boolean // Nova prop para ocultar código
+  isOwnProperty?: boolean // Nova prop para indicar se é propriedade do próprio usuário
 }
 
-export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideCode = false }: PropertyCardProps) => {
+export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideCode = false, isOwnProperty = false }: PropertyCardProps) => {
   const [images, setImages] = useState<string[]>([])
   const [loadingImages, setLoadingImages] = useState(false)
 
@@ -210,9 +212,49 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
     setImages([])
     setLoadingImages(false)
 
-    if (property.imageCount > 0) {
-      const mainImageUrl = property.mainImage?.url || property.mainImage?.thumbnailUrl
+    const mainImageUrl = property.mainImage?.url || property.mainImage?.thumbnailUrl
+    
+    // Se é propriedade própria, sempre tenta buscar imagens mesmo sem imageCount
+    if (isOwnProperty) {
+      setLoadingImages(true)
+      const timeoutId = setTimeout(() => {
+        getPublicPropertyImages(property.id)
+          .then((allImages) => {
+            const combinedImages: string[] = []
+            
+            if (allImages && allImages.length > 0) {
+              combinedImages.push(...allImages)
+            }
+            
+            if (mainImageUrl && !combinedImages.includes(mainImageUrl)) {
+              combinedImages.unshift(mainImageUrl)
+            }
+            
+            if (combinedImages.length === 0 && mainImageUrl) {
+              combinedImages.push(mainImageUrl)
+            }
+            
+            console.log(`Property ${property.id}: API retornou ${allImages?.length || 0} URLs, ${combinedImages.length} após adicionar mainImage`)
+            setImages(combinedImages)
+          })
+          .catch((error) => {
+            console.error('Erro ao carregar imagens:', error)
+            if (mainImageUrl) {
+              setImages([mainImageUrl])
+            }
+          })
+          .finally(() => {
+            setLoadingImages(false)
+          })
+      }, 100)
       
+      return () => {
+        clearTimeout(timeoutId)
+      }
+    }
+
+    // Para propriedades normais, usa a lógica original
+    if (property.imageCount > 0) {
       // SEMPRE busca todas as imagens da API quando há imagens
       setLoadingImages(true)
       
@@ -258,7 +300,7 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
         clearTimeout(timeoutId)
       }
     }
-  }, [property.id, property.imageCount])
+  }, [property.id, property.imageCount, property.mainImage, isOwnProperty])
 
   return (
     <StyledCard onClick={onClick}>
@@ -276,6 +318,7 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
               propertyId={property.id}
               size="small"
               showTooltip={true}
+              isOwnProperty={isOwnProperty}
             />
           </ActionButtonWrapper>
           <ActionButtonWrapper>
