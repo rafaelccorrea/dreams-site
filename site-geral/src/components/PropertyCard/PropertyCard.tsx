@@ -5,6 +5,8 @@ import { Bed, Bathtub, SquareFoot } from '@mui/icons-material'
 import { Property, getPropertyImages } from '../../services/propertyService'
 import { formatPrice, formatArea } from '../../utils/formatPrice'
 import { PropertyCardCarousel } from './PropertyCardCarousel'
+import { FavoriteButton } from '../FavoriteButton'
+import { ShareButton } from '../ShareButton'
 
 const StyledCard = styled(Card)`
   height: 100%;
@@ -29,6 +31,38 @@ const ImageContainer = styled.div`
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     height: 200px;
+  }
+`
+
+const ActionButtonsContainer = styled.div`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.md};
+  left: ${({ theme }) => theme.spacing.md};
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+  z-index: 4;
+  pointer-events: auto;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    top: ${({ theme }) => theme.spacing.sm};
+    left: ${({ theme }) => theme.spacing.sm};
+    gap: ${({ theme }) => theme.spacing.xs};
+  }
+`
+
+const ActionButtonWrapper = styled.div`
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  transition: all 0.3s ease;
+  pointer-events: auto;
+
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
   }
 `
 
@@ -228,6 +262,30 @@ export const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
     <StyledCard onClick={onClick}>
       <ImageContainer>
         <PropertyCardCarousel images={images} />
+        {/* Botões de ação - Favoritar e Compartilhar */}
+        <ActionButtonsContainer
+          onClick={(e) => {
+            // Prevenir propagação do clique nos botões de ação
+            e.stopPropagation()
+          }}
+        >
+          <ActionButtonWrapper>
+            <FavoriteButton
+              propertyId={property.id}
+              size="small"
+              showTooltip={true}
+            />
+          </ActionButtonWrapper>
+          <ActionButtonWrapper>
+            <ShareButton
+              propertyId={property.id}
+              propertyTitle={property.title}
+              size="small"
+              showTooltip={true}
+            />
+          </ActionButtonWrapper>
+        </ActionButtonsContainer>
+        {/* Preço */}
         {hasSalePrice && hasRentPrice ? (
           <PriceContainer>
             <PriceBadgeItem>{formatPrice(property.salePrice)}</PriceBadgeItem>

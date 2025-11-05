@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -30,20 +30,39 @@ import {
   StyledDivider,
 } from './LoginModal.styles'
 import { useGoogleAuth } from '../../hooks/useGoogleAuth'
+import { useAuth } from '../../hooks/useAuth'
 import { GoogleUser } from '../../services/authService'
+import { formatEmail, isValidEmail } from '../../utils/masks'
 
 interface LoginModalProps {
   open: boolean
   onClose: () => void
+  onRegisterClick?: () => void
+  onLoginSuccess?: () => void
+  prefillEmail?: string
 }
 
-export const LoginModal = ({ open, onClose }: LoginModalProps) => {
-  const [email, setEmail] = useState('')
+export const LoginModal = ({ 
+  open, 
+  onClose, 
+  onRegisterClick,
+  onLoginSuccess,
+  prefillEmail 
+}: LoginModalProps) => {
+  const [email, setEmail] = useState(prefillEmail || '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const { login } = useAuth()
+
+  // Atualizar email quando prefillEmail mudar
+  useEffect(() => {
+    if (prefillEmail) {
+      setEmail(prefillEmail)
+    }
+  }, [prefillEmail])
 
   const handleGoogleLoginSuccess = (user: GoogleUser) => {
     console.log('Login com Google realizado:', user)
@@ -76,24 +95,57 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
     await googleLogin()
   }
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatEmail(e.target.value)
+    setEmail(formatted)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setErrorMessage(null)
-    
-    // TODO: Implementar lógica de login com email/senha
-    console.log('Login:', { email, password })
-    
-    setTimeout(() => {
+    setSuccessMessage(null)
+
+    // Validação de email
+    if (!isValidEmail(email)) {
+      setErrorMessage('Digite um email válido')
       setLoading(false)
-      // onClose() // Descomentar quando login for implementado
-    }, 1000)
+      return
+    }
+    
+    try {
+      await login(email, password)
+      setSuccessMessage('Login realizado com sucesso!')
+      
+      // Disparar evento para atualizar componentes que usam useAuth
+      window.dispatchEvent(new CustomEvent('auth-change'))
+      
+      setTimeout(() => {
+        onClose()
+        setSuccessMessage(null)
+        
+        // Se tiver callback de sucesso, chamar
+        if (onLoginSuccess) {
+          onLoginSuccess()
+        } else {
+          // Senão, recarregar a página para atualizar estado de autenticação
+          window.location.reload()
+        }
+      }, 1500)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Erro ao fazer login'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleRegister = () => {
-    // TODO: Implementar navegação para página de cadastro
-    console.log('Cadastrar')
     onClose()
+    if (onRegisterClick) {
+      onRegisterClick()
+    }
   }
 
   const handleForgotPassword = () => {
@@ -105,7 +157,12 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
     <>
       <Dialog
         open={open}
-        onClose={onClose}
+        onClose={(event, reason) => {
+          // Só fechar se clicar no backdrop ou pressionar ESC
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+            onClose()
+          }
+        }}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -117,6 +174,14 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
             maxWidth: { xs: 'calc(100% - 32px)', sm: '520px' },
             boxShadow: { xs: '0 8px 32px rgba(0, 0, 0, 0.2)', sm: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1)' },
             overflow: 'hidden',
+          },
+          onClick: (e) => {
+            // Prevenir propagação do clique dentro do Paper
+            e.stopPropagation()
+          },
+          onMouseDown: (e) => {
+            // Prevenir propagação do mousedown dentro do Paper
+            e.stopPropagation()
           },
         }}
         sx={{
@@ -130,7 +195,16 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
           },
         }}
       >
-        <LoginModalContainer>
+        <LoginModalContainer
+          onClick={(e) => {
+            // Prevenir propagação do clique dentro do container
+            e.stopPropagation()
+          }}
+          onMouseDown={(e) => {
+            // Prevenir propagação do mousedown dentro do container
+            e.stopPropagation()
+          }}
+        >
           <LogoContainer>
             <img 
               src="/logo-dream.png" 
@@ -173,7 +247,8 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
 
           <DialogContent sx={{ p: 0, overflow: 'visible' }}>
             <LoginForm onSubmit={handleSubmit}>
-              <GoogleButton
+              {/* Botão de login com Google temporariamente oculto */}
+              {/* <GoogleButton
                 variant="outlined"
                 fullWidth
                 onClick={handleGoogleLogin}
@@ -211,15 +286,17 @@ export const LoginModal = ({ open, onClose }: LoginModalProps) => {
                 <Typography variant="body2" component="span">
                   ou
                 </Typography>
-              </StyledDivider>
+              </StyledDivider> */}
 
               <StyledTextField
                 fullWidth
                 label="E-mail"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 required
+                error={email !== '' && !isValidEmail(email)}
+                helperText={email !== '' && !isValidEmail(email) ? 'Email inválido' : ''}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

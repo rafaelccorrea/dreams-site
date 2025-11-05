@@ -1,7 +1,15 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Menu as MenuIcon, Close as CloseIcon, KeyboardArrowDown, Login as LoginIcon, LocationOn } from '@mui/icons-material'
-import { Box } from '@mui/material'
+import { 
+  Menu as MenuIcon, 
+  Close as CloseIcon, 
+  KeyboardArrowDown, 
+  Login as LoginIcon, 
+  LocationOn,
+  Favorite,
+  Logout
+} from '@mui/icons-material'
+import { Box, Typography } from '@mui/material'
 import {
   StyledAppBar,
   HeaderContainer,
@@ -21,12 +29,19 @@ import {
   ChevronIcon,
   MobileLocationIcon,
   MobileLoginButton,
+  UserMenuContainer,
+  UserName,
+  LogoutButton,
+  UserLocationText,
 } from './Header.styles'
 import { StyledButton } from './HeaderButton'
 import { NavItem } from './Header.types'
 import { LocationIndicator } from '../LocationIndicator'
 import { LocationModal } from '../LocationModal'
 import { LoginModal } from '../LoginModal'
+import { RegisterModal } from '../RegisterModal'
+import { useAuth } from '../../hooks/useAuth'
+import { useLocation } from '../../contexts/LocationContext'
 
 interface HeaderProps {
   currentPath?: string
@@ -34,11 +49,14 @@ interface HeaderProps {
 
 export const Header = ({ currentPath = '/' }: HeaderProps) => {
   const navigate = useNavigate()
+  const { isAuthenticated, user, logout } = useAuth()
+  const { location } = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
   const navItemRefs = useRef<{ [key: string]: HTMLElement | null }>({})
 
@@ -53,6 +71,19 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false)
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+    window.location.reload()
+  }
+
+  const getUserDisplayName = () => {
+    if (!user) return ''
+    // Extrair nome do email (antes do @) ou usar email completo
+    const emailParts = user.email.split('@')
+    return emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1)
   }
 
   const handleDropdownEnter = (href: string, element: HTMLElement | null) => {
@@ -104,6 +135,8 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
     { label: 'Lançamentos', href: '/lancamentos' },
     { label: 'Corretores', href: '/corretores' },
     { label: 'Imobiliárias', href: '/imobiliarias' },
+    // Adicionar Favoritos apenas quando logado
+    ...(isAuthenticated ? [{ label: 'Favoritos', href: '/favorites' }] : []),
   ]
 
   return (
@@ -231,28 +264,50 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
             </NavigationContainer>
           </CenterSection>
 
-          {/* Seção Direita - Localização e Botão Entrar */}
+          {/* Seção Direita - Localização e Botão Entrar/Usuário */}
           <RightSection>
-            {/* LocationIndicator - apenas desktop */}
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <LocationIndicator />
-            </Box>
+            {/* LocationIndicator - apenas desktop quando não logado */}
+            {!isAuthenticated && (
+              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <LocationIndicator />
+              </Box>
+            )}
             
-            {/* Ícone de localização - apenas mobile */}
-            <MobileLocationIcon onClick={() => setLocationModalOpen(true)}>
-              <LocationOn />
-            </MobileLocationIcon>
+            {/* Ícone de localização - apenas mobile quando não logado */}
+            {!isAuthenticated && (
+              <MobileLocationIcon onClick={() => setLocationModalOpen(true)}>
+                <LocationOn />
+              </MobileLocationIcon>
+            )}
             
-            {/* Botão Entrar - apenas desktop */}
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <StyledButton 
-                variant="contained" 
-                color="primary" 
-                startIcon={<LoginIcon />}
-                onClick={() => setLoginModalOpen(true)}
-              >
-                Entrar
-              </StyledButton>
+            {/* Menu do Usuário ou Botão Entrar - apenas desktop */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+              {isAuthenticated && user ? (
+                <UserMenuContainer>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <UserName>{getUserDisplayName()}</UserName>
+                    {location?.city && (
+                      <UserLocationText onClick={() => setLocationModalOpen(true)}>
+                        <LocationOn fontSize="small" />
+                        {location.city}, {location.state}
+                      </UserLocationText>
+                    )}
+                  </Box>
+                  <LogoutButton onClick={handleLogout}>
+                    <Logout fontSize="small" />
+                    Sair
+                  </LogoutButton>
+                </UserMenuContainer>
+              ) : (
+                <StyledButton 
+                  variant="contained" 
+                  color="primary" 
+                  startIcon={<LoginIcon />}
+                  onClick={() => setLoginModalOpen(true)}
+                >
+                  Entrar
+                </StyledButton>
+              )}
             </Box>
             
             <MobileMenuToggle onClick={toggleMobileMenu}>
@@ -326,21 +381,111 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               </NavLink>
             )
           })}
-          <MobileLoginButton
-            onClick={() => {
-              closeMobileMenu()
-              setLoginModalOpen(true)
-            }}
-          >
-            <LoginIcon />
-            Entrar
-          </MobileLoginButton>
+          {/* Link para Favoritos no mobile quando logado */}
+          {isAuthenticated && (
+            <NavLink
+              to="/favorites"
+              className={currentPath === '/favorites' ? 'active' : ''}
+              onClick={closeMobileMenu}
+            >
+              <Favorite fontSize="small" />
+              Meus Favoritos
+            </NavLink>
+          )}
+          
+          {/* Botão Entrar ou Menu do Usuário no mobile */}
+                {isAuthenticated && user ? (
+                  <Box sx={{
+                    padding: '16px',
+                    borderTop: '1px solid rgba(0,0,0,0.1)',
+                    marginTop: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px'
+                  }}>
+                    <Box sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      flex: 1,
+                      overflow: 'hidden',
+                      minWidth: 0
+                    }}>
+                      <Box sx={{
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        color: 'text.primary',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%'
+                      }}>
+                        {getUserDisplayName()}
+                      </Box>
+                      {location?.city && (
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          color: 'text.secondary',
+                          marginTop: '2px',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            color: 'primary.main'
+                          }
+                        }} onClick={() => {
+                          closeMobileMenu()
+                          setLocationModalOpen(true)
+                        }}>
+                          <LocationOn fontSize="small" />
+                          {location.city}, {location.state}
+                        </Box>
+                      )}
+                    </Box>
+                    <MobileLoginButton onClick={handleLogout}>
+                      <Logout />
+                      Sair
+                    </MobileLoginButton>
+                  </Box>
+                ) : (
+            <MobileLoginButton
+              onClick={() => {
+                closeMobileMenu()
+                setLoginModalOpen(true)
+              }}
+            >
+              <LoginIcon />
+              Entrar
+            </MobileLoginButton>
+          )}
         </MobileMenu>
       </StyledAppBar>
 
       <Overlay $isOpen={mobileMenuOpen} onClick={closeMobileMenu} />
       <LocationModal open={locationModalOpen} onClose={() => setLocationModalOpen(false)} />
-      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <LoginModal 
+        open={loginModalOpen} 
+        onClose={() => setLoginModalOpen(false)} 
+        onRegisterClick={() => {
+          setLoginModalOpen(false)
+          setRegisterModalOpen(true)
+        }}
+        onLoginSuccess={() => {
+          // Recarregar página para atualizar estado de autenticação
+          window.location.reload()
+        }}
+      />
+      <RegisterModal 
+        open={registerModalOpen} 
+        onClose={() => setRegisterModalOpen(false)}
+        onLoginClick={() => {
+          setRegisterModalOpen(false)
+          setLoginModalOpen(true)
+        }}
+      />
     </>
   )
 }

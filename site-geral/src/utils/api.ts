@@ -2,20 +2,33 @@ import { config } from '../config'
 import { useLocation } from '../contexts/LocationContext'
 
 /**
- * Função para fazer chamadas à API incluindo a localização do usuário
+ * Obtém headers padrão incluindo autenticação JWT e localização
  */
-export const apiCall = async (
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<Response> => {
+export const getDefaultHeaders = (): HeadersInit => {
   const location = getLocationFromStorage()
+  const token = localStorage.getItem('authToken')
   
-  const headers = {
+  return {
     'Content-Type': 'application/json',
     ...(location && {
       'X-User-City': location.city,
       'X-User-State': location.state,
     }),
+    ...(token && {
+      Authorization: `Bearer ${token}`,
+    }),
+  }
+}
+
+/**
+ * Função para fazer chamadas à API incluindo a localização do usuário e autenticação
+ */
+export const apiCall = async (
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> => {
+  const headers = {
+    ...getDefaultHeaders(),
     ...options.headers,
   }
 

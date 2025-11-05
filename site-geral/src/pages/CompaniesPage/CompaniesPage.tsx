@@ -99,30 +99,23 @@ export const CompaniesPage = () => {
         width: "100%",
         minHeight: "calc(100vh - 200px)",
         bgcolor: "background.default",
-        py: { xs: 3, sm: 4, md: 5 },
+        pt: { xs: 7, sm: 8, md: 11 },
+        pb: { xs: 3, sm: 4, md: 5 },
       }}
     >
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          px: { xs: 2, sm: 3, md: "25px" },
-        }}
-      >
-        {/* Título e Badge de Localização */}
-        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 700,
-                color: "text.primary",
-                fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
-              }}
-            >
-              Imobiliárias
-            </Typography>
+      {/* Título e Badge de Localização - fora do container com padding */}
+      <Box sx={{ mb: { xs: 2, sm: 3 }, px: { xs: 3, sm: 4, md: "40px" } }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
+            }}
+          >
+            Imobiliárias
+          </Typography>
             {location?.city && (
               <Chip
                 icon={<LocationOnIcon />}
@@ -152,7 +145,16 @@ export const CompaniesPage = () => {
                 : `${companies.length} ${companies.length === 1 ? "imobiliária disponível" : "imobiliárias disponíveis"} em ${location.city}, ${location.state}`
               : "Encontre as melhores imobiliárias"}
           </Typography>
-        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "1400px",
+          margin: "0 auto",
+          px: { xs: 2, sm: 3, md: "25px" },
+        }}
+      >
 
         {/* Filtros e Busca */}
         {location?.city && companies.length > 0 && (
@@ -276,10 +278,6 @@ export const CompaniesPage = () => {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "background.paper",
-              borderRadius: 3,
-              border: "2px dashed",
-              borderColor: "divider",
             }}
           >
             <Box
@@ -331,10 +329,6 @@ export const CompaniesPage = () => {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "background.paper",
-              borderRadius: 3,
-              border: "2px dashed",
-              borderColor: "divider",
             }}
           >
             <Box

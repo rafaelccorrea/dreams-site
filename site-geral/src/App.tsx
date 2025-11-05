@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, useLocation as useRouterLocation } from 'react-router-dom'
+import { Routes, Route, useLocation as useRouterLocation, Navigate } from 'react-router-dom'
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material'
 import { ThemeProvider as StyledThemeProvider } from 'styled-components'
 import { muiTheme } from './theme/muiTheme'
@@ -14,6 +14,8 @@ import { CompaniesPage } from './pages/CompaniesPage'
 import { CompanyDetails } from './pages/CompanyDetails'
 import { BrokerDetails } from './pages/BrokerDetails'
 import { LancamentosPage } from './pages/LancamentosPage'
+import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
+import { FavoritesPage } from './pages/FavoritesPage'
 import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
@@ -88,7 +90,7 @@ function AppContent() {
           <Route 
             path="/corretores" 
             element={
-              <MainContentWrapper $showBackground={false}>
+              <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
                 <BrokersPage />
               </MainContentWrapper>
             } 
@@ -111,6 +113,24 @@ function AppContent() {
               </MainContentWrapper>
             } 
           />
+          <Route 
+            path="/confirm-email" 
+            element={<ConfirmEmailPage />} 
+          />
+          <Route 
+            path="/confirmar-email" 
+            element={<ConfirmEmailPage />} 
+          />
+          <Route 
+            path="/favorites" 
+            element={
+              <MainContentWrapper $showBackground={false}>
+                <FavoritesPage />
+              </MainContentWrapper>
+            } 
+          />
+          {/* Rota catch-all: redireciona qualquer rota inexistente para a home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Box>
       <Footer />
