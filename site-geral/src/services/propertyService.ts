@@ -513,9 +513,14 @@ export async function getPropertyImages(propertyId: string): Promise<string[]> {
             imageUrls.push(img)
           }
         } else {
-          // Prioriza url sobre thumbnailUrl
-          const imgUrl = img.url || img.thumbnailUrl || ''
+          // Prioriza: url (original) > thumbnailUrl (versão comprimida)
+          // Isso garante que sempre usemos a melhor qualidade disponível
+          const imgUrl = img.url || img.fileUrl || img.thumbnailUrl || ''
           if (imgUrl && imgUrl.trim() !== '') {
+            // Log para debug: verificar qual URL está sendo usada
+            if (img.thumbnailUrl && !img.url && !img.fileUrl) {
+              console.warn(`⚠️ [getPropertyImages] Usando thumbnailUrl (baixa qualidade) para propriedade ${propertyId}`)
+            }
             // Adiciona TODAS as URLs, mesmo que sejam iguais
             imageUrls.push(imgUrl)
           }

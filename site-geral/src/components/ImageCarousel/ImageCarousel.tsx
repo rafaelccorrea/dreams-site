@@ -13,10 +13,18 @@ const MainImage = styled.img`
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   image-rendering: high-quality;
+  image-rendering: auto;
+  image-rendering: -moz-crisp-edges;
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform: translateZ(0);
   cursor: pointer;
   transition: transform 0.3s ease;
+  /* Melhora a qualidade da renderização */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Força renderização de alta qualidade */
+  will-change: transform;
 
   &:hover {
     transform: scale(1.02);
@@ -58,8 +66,16 @@ const Thumbnail = styled.div<{ $isActive: boolean; $hasBlur?: boolean }>`
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
     image-rendering: high-quality;
+    image-rendering: auto;
+    image-rendering: -moz-crisp-edges;
+    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     transform: translateZ(0);
+    /* Melhora a qualidade da renderização */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Força renderização de alta qualidade */
+    will-change: transform;
     filter: ${({ $hasBlur }) => ($hasBlur ? 'blur(4px)' : 'none')};
   }
 `
@@ -188,9 +204,19 @@ const ModalImage = styled.img<{ $isLoading?: boolean }>`
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   image-rendering: high-quality;
+  image-rendering: auto;
+  image-rendering: -moz-crisp-edges;
   animation: ${fadeIn} 0.3s ease-out;
   opacity: ${({ $isLoading }) => ($isLoading ? 0.5 : 1)};
   transition: opacity 0.2s ease;
+  /* Melhora a qualidade da renderização */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Força renderização de alta qualidade */
+  will-change: transform;
+  /* Garante que a imagem seja renderizada em alta resolução */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 `
 
 const ModalNavigationButton = styled(IconButton)`
@@ -499,6 +525,8 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
                   src={allImages[0] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
                   alt="Propriedade"
                   loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </Box>
             </MainImageContainer>
@@ -575,6 +603,9 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
                   onDoubleClick={handleImageDoubleClick}
                   onClick={handleImageClick}
                   draggable={false}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </ModalImageWrapper>
               {zoom > 1 && (
@@ -700,11 +731,13 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
                 borderRadius: 2,
               }}
             >
-              <MainImage
-                src={imagesToShow[currentIndex] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
-                alt={`Propriedade ${currentIndex + 1}`}
-                loading="eager"
-              />
+                <MainImage
+                  src={imagesToShow[currentIndex] || 'https://via.placeholder.com/1200x600?text=Sem+Imagem'}
+                  alt={`Propriedade ${currentIndex + 1}`}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                />
               {imagesToShow.length > 1 && (
                 <>
                   <NavigationButton
@@ -860,6 +893,9 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
                 onDoubleClick={handleImageDoubleClick}
                 onClick={handleImageClick}
                 draggable={false}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
             </ModalImageWrapper>
             {allImages.length > 1 && (

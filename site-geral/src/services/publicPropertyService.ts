@@ -254,13 +254,24 @@ export async function getPublicPropertyImages(propertyId: string): Promise<strin
       return []
     }
     
-    // Extrair URLs das imagens (prioriza url sobre thumbnailUrl)
+    // Extrair URLs das imagens
+    // Prioriza: url (original) > fileUrl (arquivo original) > thumbnailUrl (versão comprimida)
+    // Isso garante que sempre usemos a melhor qualidade disponível
     const imageUrls = imageObjects.map((img: GalleryImage) => {
-      const url = img.url || img.thumbnailUrl || img.fileUrl
+      // Primeiro tenta url (URL completa da imagem)
+      // Depois fileUrl (caminho do arquivo original)
+      // Por último thumbnailUrl (versão comprimida/miniatura)
+      const url = img.url || img.fileUrl || img.thumbnailUrl
+      
+      // Log para debug: verificar qual URL está sendo usada
+      if (img.thumbnailUrl && !img.url && !img.fileUrl) {
+        console.warn('⚠️ Usando thumbnailUrl (baixa qualidade) para imagem:', img.id || 'unknown')
+      }
+      
       return url
     }).filter((url: string) => url && url.trim() !== '')
     
-    console.log('URLs extraídas:', imageUrls)
+    console.log('URLs extraídas (priorizando qualidade):', imageUrls)
     
     return imageUrls
   } catch (error) {

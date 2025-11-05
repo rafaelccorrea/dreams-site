@@ -167,13 +167,15 @@ export const LoginModal = ({
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: { xs: 3, sm: 4 },
-            maxHeight: { xs: '95vh', sm: '90vh' },
-            margin: { xs: '16px', sm: 'auto' },
-            width: { xs: 'calc(100% - 32px)', sm: '100%' },
-            maxWidth: { xs: 'calc(100% - 32px)', sm: '520px' },
+            borderRadius: { xs: 2, sm: 4 },
+            maxHeight: { xs: '100vh', sm: '90vh' },
+            margin: { xs: '8px', sm: 'auto' },
+            width: { xs: 'calc(100% - 16px)', sm: '100%' },
+            maxWidth: { xs: 'calc(100% - 16px)', sm: '520px' },
             boxShadow: { xs: '0 8px 32px rgba(0, 0, 0, 0.2)', sm: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1)' },
             overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           },
           onClick: (e) => {
             // Prevenir propagação do clique dentro do Paper
@@ -190,8 +192,11 @@ export const LoginModal = ({
             backdropFilter: { xs: 'blur(4px)', sm: 'blur(8px)' },
           },
           '& .MuiDialog-container': {
-            alignItems: { xs: 'center', sm: 'center' },
-            padding: { xs: '16px', sm: '24px' },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            padding: { xs: '8px', sm: '24px' },
+          },
+          '& .MuiDialog-paper': {
+            margin: { xs: '8px', sm: '24px' },
           },
         }}
       >
@@ -210,7 +215,7 @@ export const LoginModal = ({
               src="/logo-dream.png" 
               alt="Dream Keys Logo" 
               style={{ 
-                height: '120px',
+                height: '100px',
                 width: 'auto',
                 maxWidth: '100%',
                 objectFit: 'contain',
@@ -224,28 +229,32 @@ export const LoginModal = ({
               fontWeight={700} 
               color="primary"
               sx={{
-                fontSize: { xs: '1.25rem', sm: '1.75rem' },
+                fontSize: { xs: '1.125rem', sm: '1.5rem' },
+                lineHeight: { xs: '1.3', sm: '1.4' },
               }}
             >
-              Bem-vindo de volta
+              Que bom te ver novamente!
             </Typography>
             <IconButton
               onClick={onClose}
               sx={{
                 color: 'text.secondary',
                 transition: 'all 0.2s ease',
-                padding: { xs: '8px', sm: '12px' },
+                padding: { xs: '6px', sm: '10px' },
+                minWidth: { xs: '32px', sm: '40px' },
+                width: { xs: '32px', sm: '40px' },
+                height: { xs: '32px', sm: '40px' },
                 '&:hover': { 
                   backgroundColor: 'rgba(0, 0, 0, 0.06)',
                   transform: { xs: 'none', sm: 'rotate(90deg)' },
                 },
               }}
             >
-              <Close sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
+              <Close sx={{ fontSize: { xs: '1.125rem', sm: '1.375rem' } }} />
             </IconButton>
           </LoginModalHeader>
 
-          <DialogContent sx={{ p: 0, overflow: 'visible' }}>
+          <DialogContent sx={{ p: 0, overflow: 'visible', '&.MuiDialogContent-root': { paddingTop: 0 } }}>
             <LoginForm onSubmit={handleSubmit}>
               {/* Botão de login com Google temporariamente oculto */}
               {/* <GoogleButton
@@ -338,7 +347,7 @@ export const LoginModal = ({
                 }}
               />
 
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: { xs: 0, sm: 0.5 }, mt: { xs: -0.5, sm: 0 } }}>
                 <ForgotPasswordLink onClick={handleForgotPassword}>
                   Esqueceu sua senha?
                 </ForgotPasswordLink>
@@ -365,6 +374,24 @@ export const LoginModal = ({
                 fullWidth
                 onClick={handleRegister}
                 size="large"
+                sx={{
+                  color: 'primary.main',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    borderColor: '#667eea',
+                    '& .MuiButton-label': {
+                      color: '#ffffff !important',
+                    },
+                    '& span': {
+                      color: '#ffffff !important',
+                    },
+                    '& *': {
+                      color: '#ffffff !important',
+                    },
+                    color: '#ffffff !important',
+                  },
+                }}
               >
                 Criar conta
               </RegisterButton>

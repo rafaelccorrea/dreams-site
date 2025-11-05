@@ -2,11 +2,10 @@ import styled from 'styled-components'
 import { Button, Box, Link, TextField } from '@mui/material'
 
 export const LoginModalContainer = styled(Box)`
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: ${({ theme }) => theme.spacing.lg};
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   position: relative;
   overflow-x: hidden;
-  max-height: calc(90vh - 64px);
   overflow-y: auto;
   
   /* Esconde a barra de scroll */
@@ -18,10 +17,9 @@ export const LoginModalContainer = styled(Box)`
   }
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.md}`};
-    max-height: calc(95vh - 64px);
-    padding-top: ${({ theme }) => theme.spacing.lg};
-    padding-bottom: ${({ theme }) => theme.spacing.lg};
+    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
+    padding-top: ${({ theme }) => theme.spacing.md};
+    padding-bottom: ${({ theme }) => theme.spacing.md};
   }
 `
 
@@ -29,9 +27,9 @@ export const LogoContainer = styled(Box)`
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.md} 0;
+  padding: ${({ theme }) => theme.spacing.xs} 0;
 
   img {
     filter: drop-shadow(0px 4px 12px rgba(0, 0, 0, 0.1));
@@ -43,12 +41,12 @@ export const LogoContainer = styled(Box)`
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    margin-bottom: ${({ theme }) => theme.spacing.md};
-    padding: ${({ theme }) => theme.spacing.sm} 0;
+    margin-bottom: ${({ theme }) => theme.spacing.sm};
+    padding: 0;
     
     img {
-      height: 90px !important;
-      max-height: 90px !important;
+      height: 60px !important;
+      max-height: 60px !important;
     }
   }
 `
@@ -57,24 +55,25 @@ export const LoginModalHeader = styled(Box)`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-  padding-bottom: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  padding-bottom: ${({ theme }) => theme.spacing.xs};
   
   h5 {
     background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary} 0%, ${({ theme }) => theme.colors.primaryDark || theme.colors.primary} 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-size: 1.75rem !important;
+    font-size: 1.5rem !important;
     letter-spacing: -0.5px;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    margin-bottom: ${({ theme }) => theme.spacing.md};
-    padding-bottom: ${({ theme }) => theme.spacing.sm};
+    margin-bottom: ${({ theme }) => theme.spacing.sm};
+    padding-bottom: 0;
     
     h5 {
-      font-size: 1.25rem !important;
+      font-size: 1.125rem !important;
+      line-height: 1.3 !important;
     }
   }
 `
@@ -82,10 +81,10 @@ export const LoginModalHeader = styled(Box)`
 export const LoginForm = styled.form`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    gap: ${({ theme }) => theme.spacing.sm};
+    gap: ${({ theme }) => theme.spacing.xs};
   }
 `
 
@@ -106,6 +105,26 @@ export const StyledTextField = styled(TextField)`
 
   .MuiInputLabel-root {
     font-weight: 500;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    .MuiOutlinedInput-root {
+      font-size: 0.9375rem !important;
+      padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`} !important;
+      min-height: 44px !important;
+    }
+
+    .MuiInputLabel-root {
+      font-size: 0.875rem !important;
+    }
+
+    .MuiInputAdornment-root {
+      margin-right: ${({ theme }) => theme.spacing.xs} !important;
+      
+      svg {
+        font-size: 1.125rem !important;
+      }
+    }
   }
 `
 
@@ -206,9 +225,10 @@ export const LoginButton = styled(Button)`
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`} !important;
-    font-size: 0.9rem !important;
-    min-height: 44px !important;
+    padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`} !important;
+    font-size: 0.875rem !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
     
     &:hover {
       transform: none;
@@ -229,37 +249,40 @@ export const RegisterButton = styled(Button)`
   overflow: hidden;
   font-size: 1rem !important;
 
-  & .MuiButton-label {
-    position: relative;
-    z-index: 2 !important;
+  /* Força cor do texto inicial - azul */
+  &,
+  & *,
+  & .MuiButton-root,
+  & .MuiButton-label,
+  & .MuiButton-text,
+  & span,
+  & .MuiButtonBase-root {
     color: ${({ theme }) => theme.colors.primary} !important;
-    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1;
   }
 
   &:hover {
     border-color: #667eea !important;
+    background: #667eea !important;
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25), 0 4px 8px rgba(118, 75, 162, 0.15) !important;
 
-    &::before {
-      width: 100%;
-    }
-
+    /* Força texto branco no hover - IMPORTANTE: usar !important e seletores específicos */
+    color: #ffffff !important;
+    
     & .MuiButton-label {
-      color: white !important;
-      z-index: 2 !important;
+      color: #ffffff !important;
+    }
+    
+    & .MuiButton-text {
+      color: #ffffff !important;
+    }
+    
+    & span {
+      color: #ffffff !important;
+    }
+    
+    & * {
+      color: #ffffff !important;
     }
   }
 
@@ -269,9 +292,10 @@ export const RegisterButton = styled(Button)`
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`} !important;
-    font-size: 0.9rem !important;
-    min-height: 44px !important;
+    padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`} !important;
+    font-size: 0.875rem !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
     
     &:hover {
       transform: none;
@@ -282,7 +306,7 @@ export const RegisterButton = styled(Button)`
 export const ForgotPasswordLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primary} !important;
   text-decoration: none !important;
-  font-size: 0.875rem !important;
+  font-size: 0.8125rem !important;
   font-weight: 500 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
@@ -307,13 +331,17 @@ export const ForgotPasswordLink = styled(Link)`
       width: 100%;
     }
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 0.75rem !important;
+  }
 `
 
 export const StyledDivider = styled(Box)`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  margin: ${({ theme }) => theme.spacing.lg} 0;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin: ${({ theme }) => theme.spacing.sm} 0;
   
   &::before,
   &::after {
@@ -330,16 +358,16 @@ export const StyledDivider = styled(Box)`
 
   span {
     color: ${({ theme }) => theme.colors.textSecondary};
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    margin: ${({ theme }) => theme.spacing.md} 0;
-    gap: ${({ theme }) => theme.spacing.sm};
+    margin: ${({ theme }) => theme.spacing.xs} 0;
+    gap: ${({ theme }) => theme.spacing.xs};
     
     span {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
     }
   }
 `

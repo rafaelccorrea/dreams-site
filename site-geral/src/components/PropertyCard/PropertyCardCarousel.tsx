@@ -49,6 +49,18 @@ const CarouselImage = styled.img<{ $isActive: boolean }>`
   top: 0;
   left: 0;
   transition: opacity 0.3s ease;
+  /* Melhora a qualidade da renderização */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: high-quality;
+  image-rendering: auto;
+  image-rendering: -moz-crisp-edges;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  will-change: transform;
 `
 
 const NavigationButton = styled(IconButton)`
@@ -171,6 +183,9 @@ export const PropertyCardCarousel = ({ images }: PropertyCardCarouselProps) => {
           src="https://via.placeholder.com/400x250?text=Sem+Imagem"
           alt="Sem imagem"
           $isActive={true}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
         />
       </CarouselContainer>
     )
@@ -184,6 +199,9 @@ export const PropertyCardCarousel = ({ images }: PropertyCardCarouselProps) => {
           src={allImages[0] || 'https://via.placeholder.com/400x250?text=Sem+Imagem'}
           alt="Propriedade"
           $isActive={true}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
         />
       </CarouselContainer>
     )
@@ -213,6 +231,9 @@ export const PropertyCardCarousel = ({ images }: PropertyCardCarouselProps) => {
             src={image || 'https://via.placeholder.com/400x250?text=Sem+Imagem'}
             alt={`Propriedade ${index + 1}`}
             $isActive={index === currentIndex}
+            loading={index === currentIndex ? "eager" : "lazy"}
+            fetchPriority={index === currentIndex ? "high" : "low"}
+            decoding="async"
           />
         ))}
       </ImageWrapper>
