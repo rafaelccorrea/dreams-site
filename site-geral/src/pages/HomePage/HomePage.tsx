@@ -124,6 +124,20 @@ export const HomePage = () => {
     }
   }
 
+  // Verificar se há filtros ativos
+  const hasActiveFilters = () => {
+    if (!searchFilters) return false
+    
+    // Verificar se há pelo menos um filtro válido (não undefined)
+    return Object.values(searchFilters).some(value => {
+      // Ignorar valores undefined, null, strings vazias e arrays vazios
+      if (value === undefined || value === null) return false
+      if (typeof value === 'string' && value.trim() === '') return false
+      if (Array.isArray(value) && value.length === 0) return false
+      return true
+    })
+  }
+
   return (
     <PageContainer>
       <LottieModal $isOpen={showLottieModal && homeAnimation}>
@@ -166,7 +180,7 @@ export const HomePage = () => {
           </Grid>
         </Grid>
       </HomeContainer>
-      <FeaturedProperties />
+      {!hasActiveFilters() && <FeaturedProperties />}
       <PropertyList filters={searchFilters} onClearFilters={handleClearFilters} />
       <ScrollToTop />
     </PageContainer>
