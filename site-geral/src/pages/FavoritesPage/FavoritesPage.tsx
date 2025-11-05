@@ -15,7 +15,7 @@ import { useFavorites } from '../../hooks/useFavorites'
 import { useAuth } from '../../hooks/useAuth'
 import { PropertyCard } from '../../components/PropertyCard'
 import { PropertyCardShimmer } from '../../components/Shimmer'
-import { MainContentWrapper } from '../../components/MainContentWrapper'
+import { PageContainer, PageHeader, PageContent } from '../../components/PageContainer'
 import { LoginModal } from '../../components/LoginModal'
 import { Property } from '../../services/propertyService'
 
@@ -64,129 +64,80 @@ export const FavoritesPage = () => {
 
   if (authLoading) {
     return (
-      <MainContentWrapper $showBackground={false}>
-        <Box
-          sx={{
-            width: "100%",
-            minHeight: "calc(100vh - 200px)",
-            bgcolor: "background.default",
-            py: { xs: 3, sm: 4, md: 5 },
-          }}
-        >
+      <PageContainer>
+        <PageContent>
           <Box
             sx={{
-              width: "100%",
-              maxWidth: "1400px",
-              margin: "0 auto",
-              px: { xs: 2, sm: 3, md: "25px" },
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '60vh',
             }}
           >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '60vh',
-              }}
-            >
-              <CircularProgress />
-            </Box>
+            <CircularProgress />
           </Box>
-        </Box>
-      </MainContentWrapper>
+        </PageContent>
+      </PageContainer>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <MainContentWrapper $showBackground={false}>
-        <Box
-          sx={{
-            width: "100%",
-            minHeight: "calc(100vh - 200px)",
-            bgcolor: "background.default",
-            py: { xs: 3, sm: 4, md: 5 },
-          }}
-        >
-          <Box
-            sx={{
-              width: "100%",
-              maxWidth: "1400px",
-              margin: "0 auto",
-              px: { xs: 2, sm: 3, md: "25px" },
-            }}
-          >
-            <EmptyState>
-              <Typography variant="h4" gutterBottom fontWeight={700}>
-                Acesso Restrito
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                Faça login para visualizar suas propriedades favoritas
-              </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<LoginIcon />}
-                onClick={() => setLoginModalOpen(true)}
-              >
-                Fazer Login
-              </Button>
-            </EmptyState>
-            <LoginModal
-              open={loginModalOpen}
-              onClose={() => setLoginModalOpen(false)}
-            />
-          </Box>
-        </Box>
-      </MainContentWrapper>
+      <PageContainer>
+        <PageContent>
+          <EmptyState>
+            <Typography variant="h4" gutterBottom fontWeight={700}>
+              Acesso Restrito
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Faça login para visualizar suas propriedades favoritas
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<LoginIcon />}
+              onClick={() => setLoginModalOpen(true)}
+            >
+              Fazer Login
+            </Button>
+          </EmptyState>
+          <LoginModal
+            open={loginModalOpen}
+            onClose={() => setLoginModalOpen(false)}
+          />
+        </PageContent>
+      </PageContainer>
     )
   }
 
   return (
-    <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
-      <Box
-        sx={{
-          width: "100%",
-          minHeight: "calc(100vh - 200px)",
-          bgcolor: "background.default",
-          pt: 0,
-          pb: { xs: 3, sm: 4, md: 5 },
-        }}
-      >
-        {/* Título - fora do container com padding */}
-        <Box sx={{ mb: { xs: 2, sm: 3 }, px: { xs: 3, sm: 4, md: "40px" } }}>
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 700,
-              color: "text.primary",
-              fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
-              mb: 1,
-            }}
-            >
-            Meus Favoritos
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: "text.secondary",
-              fontSize: { xs: "0.9rem", sm: "1rem" },
-            }}
-          >
-            {total > 0
-              ? `${total} ${total === 1 ? 'propriedade favoritada' : 'propriedades favoritadas'}`
-              : 'Você ainda não tem propriedades favoritadas'}
-          </Typography>
-        </Box>
-
-        <Box
+    <PageContainer>
+      <PageHeader>
+        <Typography
+          variant="h3"
           sx={{
-            width: "100%",
-            maxWidth: "1400px",
-            margin: "0 auto",
-            px: { xs: 2, sm: 3, md: "25px" },
+            fontWeight: 700,
+            color: "text.primary",
+            fontSize: { xs: "1.75rem", sm: "2rem", md: "2.5rem" },
+            mb: 1,
+          }}
+          >
+          Meus Favoritos
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            color: "text.secondary",
+            fontSize: { xs: "0.9rem", sm: "1rem" },
           }}
         >
+          {total > 0
+            ? `${total} ${total === 1 ? 'propriedade favoritada' : 'propriedades favoritadas'}`
+            : 'Você ainda não tem propriedades favoritadas'}
+        </Typography>
+      </PageHeader>
+
+      <PageContent>
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
@@ -253,8 +204,7 @@ export const FavoritesPage = () => {
               )}
             </>
           )}
-        </Box>
-      </Box>
-    </MainContentWrapper>
+      </PageContent>
+    </PageContainer>
   )
 }

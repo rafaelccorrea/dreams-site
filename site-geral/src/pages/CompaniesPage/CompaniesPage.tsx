@@ -18,9 +18,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import BusinessIcon from "@mui/icons-material/Business";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import SortIcon from "@mui/icons-material/Sort";
 import { CompanyCard } from "../../components/CompanyCard";
 import { CompanyCardShimmer } from "../../components/Shimmer";
 import { ScrollToTop } from "../../components/ScrollToTop";
+import { PageContainer, PageHeader, PageContent } from "../../components/PageContainer";
 import {
   getAvailableCompanies,
   type Company,
@@ -94,18 +96,9 @@ export const CompaniesPage = () => {
   });
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        minHeight: "calc(100vh - 200px)",
-        bgcolor: "background.default",
-        pt: { xs: 7, sm: 8, md: 11 },
-        pb: { xs: 3, sm: 4, md: 5 },
-      }}
-    >
-      {/* Título e Badge de Localização - fora do container com padding */}
-      <Box sx={{ mb: { xs: 2, sm: 3 }, px: { xs: 3, sm: 4, md: "40px" } }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
+    <PageContainer pt={{ xs: 0, sm: 0, md: 0 }}>
+      <PageHeader>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap", mt: { xs: -2, sm: -2, md: -3 } }}>
           <Typography
             variant="h3"
             sx={{
@@ -116,56 +109,49 @@ export const CompaniesPage = () => {
           >
             Imobiliárias
           </Typography>
-            {location?.city && (
-              <Chip
-                icon={<LocationOnIcon />}
-                label={`${location.city}, ${location.state}`}
-                sx={{
-                  bgcolor: "primary.main",
+          {location?.city && (
+            <Chip
+              icon={<LocationOnIcon />}
+              label={`${location.city}, ${location.state}`}
+              sx={{
+                bgcolor: "primary.main",
+                color: "white",
+                fontWeight: 600,
+                height: 32,
+                "& .MuiChip-icon": {
                   color: "white",
-                  fontWeight: 600,
-                  height: 32,
-                  "& .MuiChip-icon": {
-                    color: "white",
-                  },
-                }}
-              />
-            )}
-          </Box>
-          <Typography
-            variant="body1"
-            sx={{
-              color: "text.secondary",
-              fontSize: { xs: "0.9rem", sm: "1rem" },
-            }}
-          >
-            {location?.city
-              ? searchTerm || filterVerified || sortBy !== "name"
-                ? `${filteredCompanies.length} ${filteredCompanies.length === 1 ? "imobiliária encontrada" : "imobiliárias encontradas"} de ${companies.length} ${companies.length === 1 ? "disponível" : "disponíveis"} em ${location.city}, ${location.state}`
-                : `${companies.length} ${companies.length === 1 ? "imobiliária disponível" : "imobiliárias disponíveis"} em ${location.city}, ${location.state}`
-              : "Encontre as melhores imobiliárias"}
-          </Typography>
-      </Box>
+                },
+              }}
+            />
+          )}
+        </Box>
+        <Typography
+          variant="body1"
+          sx={{
+            color: "text.secondary",
+            fontSize: { xs: "0.9rem", sm: "1rem" },
+          }}
+        >
+          {location?.city
+            ? searchTerm || filterVerified || sortBy !== "name"
+              ? `${filteredCompanies.length} ${filteredCompanies.length === 1 ? "imobiliária encontrada" : "imobiliárias encontradas"} de ${companies.length} ${companies.length === 1 ? "disponível" : "disponíveis"} em ${location.city}, ${location.state}`
+              : `${companies.length} ${companies.length === 1 ? "imobiliária disponível" : "imobiliárias disponíveis"} em ${location.city}, ${location.state}`
+            : "Encontre as melhores imobiliárias"}
+        </Typography>
+      </PageHeader>
 
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          px: { xs: 2, sm: 3, md: "25px" },
-        }}
-      >
-
+      <PageContent>
         {/* Filtros e Busca */}
         {location?.city && companies.length > 0 && (
-          <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-            <TextField
+          <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+            {/* Barra de Busca */}
+            <Box sx={{ mb: 2, maxWidth: "500px" }}>
+              <TextField
                 fullWidth
                 placeholder="Buscar imobiliária por nome..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 sx={{
-                  mt: 3,
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "background.paper",
                     borderRadius: 2,
@@ -190,79 +176,89 @@ export const CompaniesPage = () => {
                   ),
                 }}
               />
-
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                sx={{ mt: 2 }}
-                alignItems={{ xs: "stretch", sm: "center" }}
-              >
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{ flexWrap: "wrap", gap: 1 }}
-                  flex={1}
-                >
-                  <Chip
-                    label="Todas"
-                    onClick={() => setFilterVerified(false)}
-                    sx={{
-                      bgcolor: !filterVerified ? "#3370A6" : "transparent",
-                      color: !filterVerified ? "white" : "text.primary",
-                      fontWeight: 600,
-                      border: !filterVerified ? "none" : "1px solid",
-                      borderColor: !filterVerified ? "transparent" : "#3370A6",
-                      cursor: "pointer",
-                      "&:hover": {
-                        bgcolor: !filterVerified ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
-                      },
-                    }}
-                  />
-                  <Chip
-                    label="Verificadas"
-                    icon={<VerifiedIcon sx={{ fontSize: 18 }} />}
-                    onClick={() => setFilterVerified(true)}
-                    sx={{
-                      bgcolor: filterVerified ? "#3370A6" : "transparent",
-                      color: filterVerified ? "white" : "#3370A6",
-                      border: filterVerified ? "none" : "1px solid",
-                      borderColor: "#3370A6",
-                      fontWeight: filterVerified ? 600 : 500,
-                      cursor: "pointer",
-                      "&:hover": {
-                        bgcolor: filterVerified ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
-                      },
-                    }}
-                  />
-                </Stack>
-
-                <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
-                  <InputLabel>Ordenar por</InputLabel>
-                  <Select
-                    value={sortBy}
-                    label="Ordenar por"
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    sx={{
-                      bgcolor: "background.paper",
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#3370A6",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2a5a85",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#3370A6",
-                      },
-                    }}
-                  >
-                    <MenuItem value="name">Nome (A-Z)</MenuItem>
-                    <MenuItem value="properties">Mais Propriedades</MenuItem>
-                    <MenuItem value="brokers">Mais Corretores</MenuItem>
-                  </Select>
-                </FormControl>
-              </Stack>
             </Box>
-          )}
+
+            {/* Filtros e Ordenação */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 2,
+                alignItems: { xs: "stretch", sm: "center" },
+                flexWrap: "wrap",
+              }}
+            >
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ flexWrap: "wrap", gap: 1, flex: 1 }}
+              >
+                <Chip
+                  label="Todas"
+                  onClick={() => setFilterVerified(false)}
+                  sx={{
+                    bgcolor: !filterVerified ? "#3370A6" : "transparent",
+                    color: !filterVerified ? "white" : "#3370A6",
+                    border: !filterVerified ? "none" : "1px solid #3370A6",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: !filterVerified ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
+                    },
+                  }}
+                />
+                <Chip
+                  label="Verificadas"
+                  icon={<VerifiedIcon sx={{ fontSize: 18 }} />}
+                  onClick={() => setFilterVerified(true)}
+                  sx={{
+                    bgcolor: filterVerified ? "#3370A6" : "transparent",
+                    color: filterVerified ? "white" : "#3370A6",
+                    border: filterVerified ? "none" : "1px solid #3370A6",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: filterVerified ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
+                    },
+                    "& .MuiChip-icon": {
+                      color: filterVerified ? "white" : "#3370A6",
+                    },
+                  }}
+                />
+              </Stack>
+
+              {/* Seletor de Ordenação */}
+              <FormControl
+                size="small"
+                sx={{
+                  minWidth: { xs: "100%", sm: 200 },
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                }}
+              >
+                <InputLabel id="sort-select-label">Ordenar por</InputLabel>
+                <Select
+                  labelId="sort-select-label"
+                  id="sort-select"
+                  value={sortBy}
+                  label="Ordenar por"
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  startAdornment={<SortIcon sx={{ mr: 1, color: "text.secondary" }} />}
+                  sx={{
+                    borderRadius: 2,
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#3370A6",
+                    },
+                  }}
+                >
+                  <MenuItem value="name">Nome (A-Z)</MenuItem>
+                  <MenuItem value="properties">Mais Propriedades</MenuItem>
+                  <MenuItem value="brokers">Mais Corretores</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        )}
 
         {loading ? (
           <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
@@ -394,8 +390,8 @@ export const CompaniesPage = () => {
             ))}
           </Grid>
         )}
-      </Box>
+      </PageContent>
       <ScrollToTop />
-    </Box>
+    </PageContainer>
   );
 };

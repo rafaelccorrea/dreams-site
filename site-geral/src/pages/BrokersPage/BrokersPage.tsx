@@ -21,6 +21,7 @@ import SortIcon from "@mui/icons-material/Sort";
 import { BrokerCard } from "../../components/BrokerCard";
 import { BrokerCardShimmer } from "../../components/Shimmer";
 import { ScrollToTop } from "../../components/ScrollToTop";
+import { PageContainer, PageHeader, PageContent } from "../../components/PageContainer";
 import {
   getAvailableBrokers,
   type Broker,
@@ -92,17 +93,8 @@ export const BrokersPage = () => {
   const displayedCount = filteredAndSortedBrokers.length;
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        minHeight: "calc(100vh - 200px)",
-        bgcolor: "background.default",
-        pt: { xs: 7, sm: 8, md: 11 },
-        pb: { xs: 3, sm: 4, md: 5 },
-      }}
-    >
-      {/* Título e Badge de Localização - fora do container com padding */}
-      <Box sx={{ mb: { xs: 2, sm: 3 }, px: { xs: 3, sm: 4, md: "40px" } }}>
+    <PageContainer>
+      <PageHeader>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
           <Typography
             variant="h3"
@@ -114,46 +106,38 @@ export const BrokersPage = () => {
           >
             Corretores
           </Typography>
-            {location?.city && (
-              <Chip
-                icon={<LocationOnIcon />}
-                label={`${location.city}, ${location.state}`}
-                sx={{
-                  bgcolor: "primary.main",
+          {location?.city && (
+            <Chip
+              icon={<LocationOnIcon />}
+              label={`${location.city}, ${location.state}`}
+              sx={{
+                bgcolor: "primary.main",
+                color: "white",
+                fontWeight: 600,
+                height: 32,
+                "& .MuiChip-icon": {
                   color: "white",
-                  fontWeight: 600,
-                  height: 32,
-                  "& .MuiChip-icon": {
-                    color: "white",
-                  },
-                }}
-              />
-            )}
-          </Box>
-          <Typography
-            variant="body1"
-            sx={{
-              color: "text.secondary",
-              fontSize: { xs: "0.9rem", sm: "1rem" },
-            }}
-          >
-            {location?.city
-              ? searchTerm || filterBy !== "all" || sortBy !== "name"
-                ? `${displayedCount} ${displayedCount === 1 ? "corretor encontrado" : "corretores encontrados"} de ${totalBrokers} ${totalBrokers === 1 ? "disponível" : "disponíveis"} em ${location.city}, ${location.state}`
-                : `${totalBrokers} ${totalBrokers === 1 ? "corretor disponível" : "corretores disponíveis"} em ${location.city}, ${location.state}`
-              : "Encontre os melhores profissionais"}
-          </Typography>
-      </Box>
+                },
+              }}
+            />
+          )}
+        </Box>
+        <Typography
+          variant="body1"
+          sx={{
+            color: "text.secondary",
+            fontSize: { xs: "0.9rem", sm: "1rem" },
+          }}
+        >
+          {location?.city
+            ? searchTerm || filterBy !== "all" || sortBy !== "name"
+              ? `${displayedCount} ${displayedCount === 1 ? "corretor encontrado" : "corretores encontrados"} de ${totalBrokers} ${totalBrokers === 1 ? "disponível" : "disponíveis"} em ${location.city}, ${location.state}`
+              : `${totalBrokers} ${totalBrokers === 1 ? "corretor disponível" : "corretores disponíveis"} em ${location.city}, ${location.state}`
+            : "Encontre os melhores profissionais"}
+        </Typography>
+      </PageHeader>
 
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          px: { xs: 2, sm: 3, md: "25px" },
-        }}
-      >
-
+      <PageContent>
         {/* Filtros e Busca */}
         {location?.city && brokers.length > 0 && (
           <Box sx={{ mb: { xs: 3, sm: 4 } }}>
@@ -421,8 +405,8 @@ export const BrokersPage = () => {
             ))}
           </Grid>
         )}
-      </Box>
+      </PageContent>
       <ScrollToTop />
-    </Box>
+    </PageContainer>
   );
 };
