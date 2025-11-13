@@ -15,7 +15,7 @@ export const BrokerCard = ({ broker, onClick }: BrokerCardProps) => {
     if (onClick) {
       onClick()
     } else {
-      navigate(`/broker/${broker.id}`)
+      navigate(`/corretor/${broker.id}`)
     }
   }
 

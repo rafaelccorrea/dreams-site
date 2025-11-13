@@ -43,6 +43,7 @@ import {
 } from "../../services/propertyService";
 import { PropertyCard } from "../../components/PropertyCard";
 import { PropertyCardShimmer, BrokerDetailsShimmer } from "../../components/Shimmer";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 export const BrokerDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -124,6 +125,12 @@ export const BrokerDetails = () => {
     !email.includes("@teste.") &&
     !email.includes("master.") &&
     !email.includes("user");
+
+  // Atualizar título da página dinamicamente
+  usePageTitle(
+    broker ? `${broker.name} - Corretor - Dream Keys` : undefined,
+    broker ? `Perfil do corretor ${broker.name}${broker.company ? ` da ${broker.company.name}` : ''}${broker.city ? ` em ${broker.city}` : ''}. Veja imóveis disponíveis e entre em contato.` : undefined
+  )
 
   const handleShare = async () => {
     if (navigator.share) {

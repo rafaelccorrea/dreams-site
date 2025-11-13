@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, useLocation as useRouterLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, useLocation as useRouterLocation, Navigate, useParams } from 'react-router-dom'
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material'
 import { ThemeProvider as StyledThemeProvider } from 'styled-components'
 import { muiTheme } from './theme/muiTheme'
@@ -22,10 +22,30 @@ import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { usePageTitle } from './hooks/usePageTitle'
 import { Box } from '@mui/material'
+
+// Componente para redirecionar rotas com parâmetros
+const RedirectToRoute = ({ template, paramKey }: { template: string; paramKey: string }) => {
+  const params = useParams<{ [key: string]: string }>()
+  const paramValue = params[paramKey]
+  
+  if (!paramValue) {
+    return <Navigate to="/" replace />
+  }
+  
+  const newPath = template.replace(`:${paramKey}`, paramValue)
+  
+  return <Navigate to={newPath} replace />
+}
 
 function AppContent() {
   const { hasLocation, isLocationConfirmed } = useLocation()
+  const routerLocation = useRouterLocation()
+  
+  // Atualizar título da página dinamicamente
+  usePageTitle()
+  
   // Verificar localStorage diretamente antes de renderizar para evitar flash
   const [showModal, setShowModal] = useState(() => {
     // Verificar se já existe localização salva no localStorage
@@ -65,8 +85,6 @@ function AppContent() {
     setShowModal(false)
   }
 
-  const routerLocation = useRouterLocation()
-
   // Scroll automático ao topo quando mudar de rota
   useEffect(() => {
     window.scrollTo({
@@ -89,7 +107,8 @@ function AppContent() {
               </MainContentWrapper>
             }
           />
-          <Route path="/property/:id" element={<PropertyDetails />} />
+          {/* Rotas principais com URLs descritivas */}
+          <Route path="/imovel/:id" element={<PropertyDetails />} />
           <Route 
             path="/corretores" 
             element={
@@ -98,7 +117,7 @@ function AppContent() {
               </MainContentWrapper>
             } 
           />
-          <Route path="/broker/:id" element={<BrokerDetails />} />
+          <Route path="/corretor/:id" element={<BrokerDetails />} />
           <Route 
             path="/imobiliarias" 
             element={
@@ -107,7 +126,7 @@ function AppContent() {
               </MainContentWrapper>
             } 
           />
-          <Route path="/company/:id" element={<CompanyDetails />} />
+          <Route path="/imobiliaria/:id" element={<CompanyDetails />} />
           <Route 
             path="/lancamentos" 
             element={
@@ -125,7 +144,7 @@ function AppContent() {
             element={<ConfirmEmailPage />} 
           />
           <Route 
-            path="/favorites" 
+            path="/favoritos" 
             element={
               <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
                 <FavoritesPage />
@@ -141,7 +160,7 @@ function AppContent() {
             } 
           />
           <Route 
-            path="/mcmv" 
+            path="/minha-casa-minha-vida" 
             element={
               <ProtectedRoute>
                 <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
@@ -150,6 +169,22 @@ function AppContent() {
               </ProtectedRoute>
             } 
           />
+          {/* Rotas de redirecionamento para manter compatibilidade com URLs antigas */}
+          <Route 
+            path="/property/:id" 
+            element={<RedirectToRoute template="/imovel/:id" paramKey="id" />} 
+          />
+          <Route 
+            path="/broker/:id" 
+            element={<RedirectToRoute template="/corretor/:id" paramKey="id" />} 
+          />
+          <Route 
+            path="/company/:id" 
+            element={<RedirectToRoute template="/imobiliaria/:id" paramKey="id" />} 
+          />
+          <Route path="/favorites" element={<Navigate to="/favoritos" replace />} />
+          <Route path="/mcmv" element={<Navigate to="/minha-casa-minha-vida" replace />} />
+          
           {/* Rota catch-all: redireciona qualquer rota inexistente para a home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

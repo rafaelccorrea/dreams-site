@@ -406,7 +406,7 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters }: Pro
   }, [hasMore, loadingMore, loading, loadMore])
 
   const handlePropertyClick = (property: Property) => {
-    navigate(`/property/${property.id}`)
+    navigate(`/imovel/${property.id}`)
   }
 
   // Verificar se há filtros aplicados

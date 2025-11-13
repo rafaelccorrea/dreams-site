@@ -131,7 +131,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
       ],
     },
     { label: 'Lançamentos', href: '/lancamentos' },
-    { label: 'Minha Casa Minha Vida', href: '/mcmv' },
+    { label: 'Minha Casa Minha Vida', href: '/minha-casa-minha-vida' },
     { label: 'Corretores', href: '/corretores' },
     { label: 'Imobiliárias', href: '/imobiliarias' },
   ]
@@ -139,9 +139,9 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
   // Menu "Meu Perfil" separado para a direita
   const meuPerfilMenu = isAuthenticated ? {
     label: 'Meu Perfil',
-    href: '/favorites',
+    href: '/favoritos',
     submenu: [
-      { label: 'Favoritos', href: '/favorites' },
+      { label: 'Favoritos', href: '/favoritos' },
       { label: 'Minha Prop.', href: '/minha-propriedade' },
     ],
   } : null
@@ -297,7 +297,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                 }
                 
                 // Usar McmvNavLink para o link Minha Casa Minha Vida
-                const isMcmv = item.href === '/mcmv'
+                const isMcmv = item.href === '/minha-casa-minha-vida'
                 const LinkComponent = isMcmv ? McmvNavLink : NavLink
                 
                 // Se for MCMV e não estiver autenticado, abrir modal de login
@@ -551,7 +551,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
             
             // Itens sem submenu aparecem normalmente
             // Usar McmvNavLink para o link Minha Casa Minha Vida
-            const isMcmv = item.href === '/mcmv'
+            const isMcmv = item.href === '/minha-casa-minha-vida'
             const LinkComponent = isMcmv ? McmvNavLink : NavLink
             
             // Se for MCMV e não estiver autenticado, abrir modal de login

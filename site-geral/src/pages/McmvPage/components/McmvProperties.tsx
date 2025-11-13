@@ -93,7 +93,7 @@ export const McmvProperties = ({ defaultCity, defaultState, incomeRange }: McmvP
   }
 
   const handlePropertyClick = (property: McmvProperty) => {
-    navigate(`/property/${property.id}`)
+    navigate(`/imovel/${property.id}`)
   }
 
   if (!defaultCity) {

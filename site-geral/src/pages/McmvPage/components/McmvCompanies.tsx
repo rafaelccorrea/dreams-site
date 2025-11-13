@@ -61,7 +61,7 @@ export const McmvCompanies = ({ defaultCity, defaultState, incomeRange }: McmvCo
   }, [defaultCity, defaultState, incomeRange])
 
   const handleCompanyClick = (company: McmvCompany) => {
-    navigate(`/company/${company.id}`)
+    navigate(`/imobiliaria/${company.id}`)
   }
 
   return (

@@ -33,7 +33,7 @@ export const ShareButton = ({
   const [snackbarMessage, setSnackbarMessage] = useState('')
 
   const handleShare = async () => {
-    const url = propertyUrl || `${window.location.origin}/property/${propertyId}`
+    const url = propertyUrl || `${window.location.origin}/imovel/${propertyId}`
     const text = `Confira esta propriedade: ${propertyTitle}`
 
     try {

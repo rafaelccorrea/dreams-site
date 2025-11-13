@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Grid, Box } from '@mui/material'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { Grid, Box, Container, Typography, Stack } from '@mui/material'
 import Lottie from 'lottie-react'
 import { AnimatedText } from '../../components/AnimatedText'
 import { HeroCard } from '../../components/HeroCard'
@@ -180,6 +180,204 @@ export const HomePage = () => {
           </Grid>
         </Grid>
       </HomeContainer>
+      
+      {/* Seção de Navegação Rápida para SEO e Sitelinks */}
+      {!hasActiveFilters() && (
+        <Container maxWidth="xl" sx={{ py: 4, mt: 4 }}>
+          <nav aria-label="Navegação rápida do site">
+            <Box
+              component="ul"
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 2,
+                justifyContent: 'center',
+                listStyle: 'none',
+                p: 0,
+                m: 0,
+              }}
+            >
+              <Box component="li">
+                <Link
+                  to="/casas-a-venda"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Casas à Venda
+                </Link>
+              </Box>
+              <Box component="li">
+                <Link
+                  to="/apartamentos-a-venda"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Apartamentos à Venda
+                </Link>
+              </Box>
+              <Box component="li">
+                <Link
+                  to="/casas-para-alugar"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Casas para Locação
+                </Link>
+              </Box>
+              <Box component="li">
+                <Link
+                  to="/apartamentos-para-alugar"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Apartamentos para Locação
+                </Link>
+              </Box>
+              <Box component="li">
+                <Link
+                  to="/lancamentos"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Lançamentos
+                </Link>
+              </Box>
+              <Box component="li">
+                <Link
+                  to="/corretores"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Corretores
+                </Link>
+              </Box>
+              <Box component="li">
+                <Link
+                  to="/imobiliarias"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Imobiliárias
+                </Link>
+              </Box>
+              <Box component="li">
+                <Link
+                  to="/minha-casa-minha-vida"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(51, 112, 166, 0.1)',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(51, 112, 166, 0.1)'
+                  }}
+                >
+                  Minha Casa Minha Vida
+                </Link>
+              </Box>
+            </Box>
+          </nav>
+        </Container>
+      )}
+      
       {!hasActiveFilters() && <FeaturedProperties />}
       <PropertyList filters={searchFilters} onClearFilters={handleClearFilters} />
       <ScrollToTop />

@@ -1,0 +1,32 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://dreamskeys.com.br/sitemap.xml
+
+# Nota: Substitua 'dreamskeys.com.br' pelo domínio real do site em produção
+
+# Não indexar páginas de desenvolvimento
+Disallow: /dev/
+Disallow: /test/
+
+# Permitir todas as páginas principais
+Allow: /imoveis-para-comprar
+Allow: /casas-a-venda
+Allow: /apartamentos-a-venda
+Allow: /imoveis-comerciais-a-venda
+Allow: /alugar
+Allow: /casas-para-alugar
+Allow: /apartamentos-para-alugar
+Allow: /imoveis-comerciais-para-alugar
+Allow: /lancamentos
+Allow: /corretores
+Allow: /imobiliarias
+Allow: /minha-casa-minha-vida
+Allow: /imovel/
+Allow: /corretor/
+Allow: /imobiliaria/
+
+# Crawl-delay
+Crawl-delay: 1
+

@@ -15,7 +15,7 @@ export const CompanyCard = ({ company, onClick }: CompanyCardProps) => {
     if (onClick) {
       onClick()
     } else {
-      navigate(`/company/${company.id}`)
+      navigate(`/imobiliaria/${company.id}`)
     }
   }
 

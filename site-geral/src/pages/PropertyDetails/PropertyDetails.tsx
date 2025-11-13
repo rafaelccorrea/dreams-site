@@ -37,6 +37,7 @@ import { PropertyDetailsShimmer } from "../../components/Shimmer";
 import { ImageCarousel } from "../../components/ImageCarousel";
 import { useAuth } from "../../hooks/useAuth";
 import { usePublicProperty } from "../../hooks/usePublicProperty";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import { FavoriteButton } from "../../components/FavoriteButton";
 import { ShareButton } from "../../components/ShareButton";
 
@@ -186,6 +187,19 @@ export const PropertyDetails = () => {
     };
     return types[type] || type;
   };
+
+  // Atualizar título da página dinamicamente
+  usePageTitle(
+    property ? `${property.title || `${getTypeLabel(property.type)} em ${property.city || ''}`} - Dream Keys` : undefined,
+    property ? (() => {
+      const priceText = property.salePrice && Number(property.salePrice) > 0
+        ? formatPrice(property.salePrice)
+        : property.rentPrice && Number(property.rentPrice) > 0
+        ? formatPrice(property.rentPrice)
+        : 'Preço sob consulta'
+      return `${property.title || `${getTypeLabel(property.type)} em ${property.city || ''}`} - ${priceText}`
+    })() : undefined
+  )
 
   if (loading) {
     return <PropertyDetailsShimmer />;

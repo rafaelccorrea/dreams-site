@@ -27,6 +27,94 @@
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
+    <!-- Dados Estruturados (Schema.org) para SEO e Sitelinks -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Dream Keys",
+      "alternateName": "Dreams Keys",
+      "url": "https://dreamskeys.com.br",
+      "logo": "https://dreamskeys.com.br/logo-dream.png",
+      "description": "Encontre casas, apartamentos e imóveis comerciais para compra e locação. Sua plataforma completa de imóveis.",
+      "sameAs": [],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Atendimento ao Cliente",
+        "availableLanguage": ["Portuguese"]
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Dream Keys",
+      "url": "https://dreamskeys.com.br",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://dreamskeys.com.br/imoveis-para-comprar?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      },
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Casas à Venda",
+            "url": "https://dreamskeys.com.br/casas-a-venda"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Apartamentos à Venda",
+            "url": "https://dreamskeys.com.br/apartamentos-a-venda"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Casas para Locação",
+            "url": "https://dreamskeys.com.br/casas-para-alugar"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Apartamentos para Locação",
+            "url": "https://dreamskeys.com.br/apartamentos-para-alugar"
+          },
+          {
+            "@type": "ListItem",
+            "position": 5,
+            "name": "Lançamentos",
+            "url": "https://dreamskeys.com.br/lancamentos"
+          },
+          {
+            "@type": "ListItem",
+            "position": 6,
+            "name": "Corretores",
+            "url": "https://dreamskeys.com.br/corretores"
+          },
+          {
+            "@type": "ListItem",
+            "position": 7,
+            "name": "Imobiliárias",
+            "url": "https://dreamskeys.com.br/imobiliarias"
+          },
+          {
+            "@type": "ListItem",
+            "position": 8,
+            "name": "Minha Casa Minha Vida",
+            "url": "https://dreamskeys.com.br/minha-casa-minha-vida"
+          }
+        ]
+      }
+    }
+    </script>
+    
     <title>Dreams Keys</title>
   </head>
   <body>

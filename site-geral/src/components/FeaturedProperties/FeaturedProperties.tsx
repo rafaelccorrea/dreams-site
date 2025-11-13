@@ -380,7 +380,7 @@ export const FeaturedProperties = () => {
   }
 
   const handlePropertyClick = (property: Property) => {
-    navigate(`/property/${property.id}`)
+    navigate(`/imovel/${property.id}`)
   }
 
   const checkScrollButtons = useCallback(() => {

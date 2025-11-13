@@ -47,6 +47,7 @@ import { PropertyCard } from "../../components/PropertyCard";
 import { PropertyCardShimmer, CompanyDetailsShimmer } from "../../components/Shimmer";
 import { BrokerCard } from "../../components/BrokerCard";
 import { useLocation } from "../../contexts/LocationContext";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 export const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -167,6 +168,12 @@ export const CompanyDetails = () => {
       address
     )}`;
   };
+
+  // Atualizar título da página dinamicamente
+  usePageTitle(
+    company ? `${company.name} - Imobiliária - Dream Keys` : undefined,
+    company ? `Perfil da imobiliária ${company.name}${company.city ? ` em ${company.city}` : ''}${company.state ? `, ${company.state}` : ''}. Veja imóveis disponíveis e entre em contato.` : undefined
+  )
 
   if (loading) return <CompanyDetailsShimmer />;
 
@@ -467,7 +474,7 @@ export const CompanyDetails = () => {
               <Grid item xs={12} sm={6} md={4} lg={3} key={property.id}>
                 <PropertyCard
                   property={property}
-                  onClick={() => navigate(`/property/${property.id}`)}
+                  onClick={() => navigate(`/imovel/${property.id}`)}
                     />
                   </Grid>
                 ))}
@@ -507,7 +514,7 @@ export const CompanyDetails = () => {
                 <Grid item xs={12} sm={6} md={4} lg={3} key={broker.id}>
                   <BrokerCard
                     broker={broker}
-                    onClick={() => navigate(`/broker/${broker.id}`)}
+                    onClick={() => navigate(`/corretor/${broker.id}`)}
                   />
                 </Grid>
               ))}
