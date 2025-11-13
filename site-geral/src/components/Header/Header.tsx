@@ -405,7 +405,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                           >
                             {getUserDisplayName()}
                           </Typography>
-                          {location?.city && (
+                    {location?.city && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <LocationOn fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
                               <Typography
@@ -415,7 +415,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                                   fontSize: '0.75rem',
                                 }}
                               >
-                                {location.city}, {location.state}
+                        {location.city}, {location.state}
                               </Typography>
                             </Box>
                           )}
@@ -468,8 +468,8 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                         },
                       }}
                     >
-                      <Logout fontSize="small" />
-                      Sair
+                    <Logout fontSize="small" />
+                    Sair
                     </Box>
                   </DropdownMenu>
                 </NavLinkWithDropdown>

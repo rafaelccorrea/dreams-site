@@ -14,9 +14,6 @@ export const config = {
   google: {
     clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
   },
-  managementSystem: {
-    url: import.meta.env.VITE_MANAGEMENT_SYSTEM_URL || 'https://sistema.dreamskeys.com.br',
-  },
   pagination: {
     defaultPage: 1,
     defaultLimit: 20,

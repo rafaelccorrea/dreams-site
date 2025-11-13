@@ -13,7 +13,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import BusinessIcon from "@mui/icons-material/Business";
