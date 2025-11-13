@@ -183,3 +183,37 @@ export const isValidCEP = (cep: string): boolean => {
   return numericValue.length === 8
 }
 
+/**
+ * Formata CPF brasileiro (XXX.XXX.XXX-XX)
+ */
+export const formatCPF = (value: string): string => {
+  const numericValue = value.replace(/\D/g, '').slice(0, 11)
+  
+  if (!numericValue) return ''
+  
+  if (numericValue.length <= 3) {
+    return numericValue
+  } else if (numericValue.length <= 6) {
+    return numericValue.replace(/(\d{3})(\d)/, '$1.$2')
+  } else if (numericValue.length <= 9) {
+    return numericValue.replace(/(\d{3})(\d{3})(\d)/, '$1.$2.$3')
+  } else {
+    return numericValue.replace(/(\d{3})(\d{3})(\d{3})(\d)/, '$1.$2.$3-$4')
+  }
+}
+
+/**
+ * Remove a formatação do CPF e retorna apenas números
+ */
+export const unformatCPF = (value: string): string => {
+  return value.replace(/\D/g, '')
+}
+
+/**
+ * Valida formato de CPF brasileiro (11 dígitos)
+ */
+export const isValidCPF = (cpf: string): boolean => {
+  const numericValue = cpf.replace(/\D/g, '')
+  return numericValue.length === 11
+}
+

@@ -20,6 +20,7 @@ import {
   ShootingStar,
   NavigationContainer,
   NavLink,
+  McmvNavLink,
   MobileMenuToggle,
   MobileMenu,
   Overlay,
@@ -29,10 +30,6 @@ import {
   ChevronIcon,
   MobileLocationIcon,
   MobileLoginButton,
-  UserMenuContainer,
-  UserName,
-  LogoutButton,
-  UserLocationText,
 } from './Header.styles'
 import { StyledButton } from './HeaderButton'
 import { NavItem } from './Header.types'
@@ -58,6 +55,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
+  const [openMobileSubmenu, setOpenMobileSubmenu] = useState<string | null>(null)
   const navItemRefs = useRef<{ [key: string]: HTMLElement | null }>({})
 
   const handleLogoClick = () => {
@@ -133,14 +131,20 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
       ],
     },
     { label: 'Lançamentos', href: '/lancamentos' },
+    { label: 'Minha Casa Minha Vida', href: '/mcmv' },
     { label: 'Corretores', href: '/corretores' },
     { label: 'Imobiliárias', href: '/imobiliarias' },
-    // Adicionar Favoritos e Minha Propriedade apenas quando logado
-    ...(isAuthenticated ? [
+  ]
+
+  // Menu "Meu Perfil" separado para a direita
+  const meuPerfilMenu = isAuthenticated ? {
+    label: 'Meu Perfil',
+    href: '/favorites',
+    submenu: [
       { label: 'Favoritos', href: '/favorites' },
       { label: 'Minha Prop.', href: '/minha-propriedade' },
-    ] : []),
-  ]
+    ],
+  } : null
 
   return (
     <>
@@ -171,6 +175,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               {navItems.map((item) => {
                 if (item.submenu && item.submenu.length > 0) {
                   const isDropdownOpen = openDropdown === item.href
+                  // Verificar href principal ou submenu
                   const isActive = currentPath === item.href || item.submenu.some(sub => currentPath === sub.href)
                   
                   return (
@@ -198,8 +203,46 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                         onMouseEnter={() => handleDropdownEnter(item.href, navItemRefs.current[item.href])}
                         onMouseLeave={handleDropdownLeave}
                       >
+                        {item.label === 'Meu Perfil' && user && (
+                          <>
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 1.5,
+                                borderBottom: '1px solid',
+                                borderColor: 'divider',
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: 'text.primary',
+                                  mb: 0.5,
+                                }}
+                              >
+                                {getUserDisplayName()}
+                              </Typography>
+                              {location?.city && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <LocationOn fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: 'text.secondary',
+                                      fontSize: '0.75rem',
+                                    }}
+                                  >
+                                    {location.city}, {location.state}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          </>
+                        )}
                         {item.submenu.map((subItem) => {
-                          // Mapear sub-itens para filtros
+                          // Mapear sub-itens para filtros (Comprar/Alugar)
                           const getFilters = (href: string) => {
                             const params = new URLSearchParams()
                             
@@ -253,21 +296,36 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                   )
                 }
                 
+                // Usar McmvNavLink para o link Minha Casa Minha Vida
+                const isMcmv = item.href === '/mcmv'
+                const LinkComponent = isMcmv ? McmvNavLink : NavLink
+                
+                // Se for MCMV e não estiver autenticado, abrir modal de login
+                const handleMcmvClick = (e: React.MouseEvent) => {
+                  if (isMcmv && !isAuthenticated) {
+                    e.preventDefault()
+                    closeMobileMenu()
+                    setLoginModalOpen(true)
+                  } else {
+                    closeMobileMenu()
+                  }
+                }
+                
                 return (
-                  <NavLink
+                  <LinkComponent
                     key={item.href}
                     to={item.href}
                     className={currentPath === item.href ? 'active' : ''}
-                    onClick={closeMobileMenu}
+                    onClick={handleMcmvClick}
                   >
                     {item.label}
-                  </NavLink>
+                  </LinkComponent>
                 )
               })}
             </NavigationContainer>
           </CenterSection>
 
-          {/* Seção Direita - Localização e Botão Entrar/Usuário */}
+          {/* Seção Direita - Localização, Meu Perfil e Botão Entrar/Usuário */}
           <RightSection>
             {/* LocationIndicator - apenas desktop quando não logado */}
             {!isAuthenticated && (
@@ -283,25 +341,144 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               </MobileLocationIcon>
             )}
             
-            {/* Menu do Usuário ou Botão Entrar - apenas desktop */}
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-              {isAuthenticated && user ? (
-                <UserMenuContainer>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <UserName>{getUserDisplayName()}</UserName>
-                    {location?.city && (
-                      <UserLocationText onClick={() => setLocationModalOpen(true)}>
-                        <LocationOn fontSize="small" />
-                        {location.city}, {location.state}
-                      </UserLocationText>
+            {/* Menu "Meu Perfil" - apenas desktop quando logado */}
+            {isAuthenticated && meuPerfilMenu && (
+              <Box sx={{ display: { xs: 'none', md: 'block' }, position: 'relative' }}>
+                <NavLinkWithDropdown
+                  ref={(el) => {
+                    if (meuPerfilMenu) {
+                      navItemRefs.current[meuPerfilMenu.href] = el
+                    }
+                  }}
+                  onMouseEnter={() => {
+                    if (meuPerfilMenu) {
+                      handleDropdownEnter(meuPerfilMenu.href, navItemRefs.current[meuPerfilMenu.href])
+                    }
+                  }}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <NavLink
+                    to={meuPerfilMenu.href}
+                    className={meuPerfilMenu.submenu?.some(sub => currentPath === sub.href) ? 'active' : ''}
+                    onClick={(e) => {
+                      e.preventDefault()
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                    }}
+                  >
+                    {meuPerfilMenu.label}
+                    <ChevronIcon className={openDropdown === meuPerfilMenu.href ? 'open' : ''}>
+                      <KeyboardArrowDown fontSize="small" />
+                    </ChevronIcon>
+                  </NavLink>
+                  <DropdownMenu 
+                    $isOpen={openDropdown === meuPerfilMenu.href}
+                    $position={dropdownPosition}
+                    onMouseEnter={() => {
+                      if (meuPerfilMenu) {
+                        handleDropdownEnter(meuPerfilMenu.href, navItemRefs.current[meuPerfilMenu.href])
+                      }
+                    }}
+                    onMouseLeave={handleDropdownLeave}
+                  >
+                    {user && (
+                      <>
+                        <Box
+                          sx={{
+                            px: 2,
+                            py: 1.5,
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            mb: 0.5,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              color: 'text.primary',
+                              mb: 0.5,
+                            }}
+                          >
+                            {getUserDisplayName()}
+                          </Typography>
+                          {location?.city && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <LocationOn fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'text.secondary',
+                                  fontSize: '0.75rem',
+                                }}
+                              >
+                                {location.city}, {location.state}
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </>
                     )}
-                  </Box>
-                  <LogoutButton onClick={handleLogout}>
-                    <Logout fontSize="small" />
-                    Sair
-                  </LogoutButton>
-                </UserMenuContainer>
-              ) : (
+                    {meuPerfilMenu.submenu?.map((subItem) => (
+                      <DropdownItem
+                        key={subItem.href}
+                        to={subItem.href}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          navigate(subItem.href)
+                        }}
+                      >
+                        {subItem.label}
+                      </DropdownItem>
+                    ))}
+                    <Box
+                      sx={{
+                        height: '1px',
+                        backgroundColor: 'divider',
+                        my: 0.5,
+                        mx: 1,
+                      }}
+                    />
+                    <Box
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleLogout()
+                      }}
+                      sx={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: 1,
+                        borderRadius: 1,
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'text.primary',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                          color: 'error.main',
+                        },
+                      }}
+                    >
+                      <Logout fontSize="small" />
+                      Sair
+                    </Box>
+                  </DropdownMenu>
+                </NavLinkWithDropdown>
+              </Box>
+            )}
+            
+            {/* Botão Entrar - apenas desktop quando não logado */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+              {!isAuthenticated && (
                 <StyledButton 
                   variant="contained" 
                   color="primary" 
@@ -373,96 +550,35 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
             }
             
             // Itens sem submenu aparecem normalmente
+            // Usar McmvNavLink para o link Minha Casa Minha Vida
+            const isMcmv = item.href === '/mcmv'
+            const LinkComponent = isMcmv ? McmvNavLink : NavLink
+            
+            // Se for MCMV e não estiver autenticado, abrir modal de login
+            const handleMcmvClick = (e: React.MouseEvent) => {
+              if (isMcmv && !isAuthenticated) {
+                e.preventDefault()
+                closeMobileMenu()
+                setLoginModalOpen(true)
+              } else {
+                closeMobileMenu()
+              }
+            }
+            
             return (
-              <NavLink
+              <LinkComponent
                 key={item.href}
                 to={item.href}
                 className={currentPath === item.href ? 'active' : ''}
-                onClick={closeMobileMenu}
+                onClick={handleMcmvClick}
               >
                 {item.label}
-              </NavLink>
+              </LinkComponent>
             )
           })}
-          {/* Link para Favoritos no mobile quando logado */}
-          {isAuthenticated && (
-            <>
-              <NavLink
-                to="/favorites"
-                className={currentPath === '/favorites' ? 'active' : ''}
-                onClick={closeMobileMenu}
-              >
-                <Favorite fontSize="small" />
-                Meus Favoritos
-              </NavLink>
-              <NavLink
-                to="/minha-propriedade"
-                className={currentPath === '/minha-propriedade' ? 'active' : ''}
-                onClick={closeMobileMenu}
-              >
-                Minha Propriedade
-              </NavLink>
-            </>
-          )}
           
-          {/* Botão Entrar ou Menu do Usuário no mobile */}
-          {isAuthenticated && user ? (
-            <Box sx={{
-              padding: '16px',
-              borderTop: '1px solid rgba(0,0,0,0.1)',
-              marginTop: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px'
-            }}>
-              <Box sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                flex: 1,
-                overflow: 'hidden',
-                minWidth: 0
-              }}>
-                <Box sx={{
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  color: 'text.primary',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  width: '100%'
-                }}>
-                  {getUserDisplayName()}
-                </Box>
-                {location?.city && (
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'text.secondary',
-                    marginTop: '2px',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      color: 'primary.main'
-                    }
-                  }} onClick={() => {
-                    closeMobileMenu()
-                    setLocationModalOpen(true)
-                  }}>
-                    <LocationOn fontSize="small" />
-                    {location.city}, {location.state}
-                  </Box>
-                )}
-              </Box>
-              <MobileLoginButton onClick={handleLogout}>
-                <Logout />
-                Sair
-              </MobileLoginButton>
-            </Box>
-          ) : (
+          {/* Botão Entrar no mobile quando não logado */}
+          {!isAuthenticated && (
             <MobileLoginButton
               onClick={() => {
                 closeMobileMenu()

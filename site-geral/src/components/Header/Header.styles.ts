@@ -76,7 +76,7 @@ export const LeftSection = styled.div`
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start;
-  flex: 0 0 auto;
+  flex: 1 1 0;
   height: 100% !important;
   min-width: 0;
   overflow: visible;
@@ -97,7 +97,7 @@ export const CenterSection = styled.div`
   display: flex !important;
   justify-content: center;
   align-items: center !important;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   height: 100% !important;
   padding: 0 ${({ theme }) => theme.spacing.lg};
   overflow: hidden !important;
@@ -112,7 +112,7 @@ export const RightSection = styled.div`
   display: flex !important;
   justify-content: flex-end;
   align-items: center !important;
-  flex: 0 0 auto;
+  flex: 1 1 0;
   gap: ${({ theme }) => theme.spacing.md};
   height: 100% !important;
   flex-wrap: wrap;
@@ -331,6 +331,51 @@ export const NavLink = styled(Link)`
       width: 100%;
       left: 0;
     }
+  }
+`
+
+export const McmvNavLink = styled(NavLink)`
+  color: #3370A6 !important;
+  font-weight: 600;
+  animation: heartbeat 1.5s ease-in-out infinite;
+
+  @keyframes heartbeat {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    5% {
+      transform: scale(1.1);
+      opacity: 0.9;
+    }
+    10% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    15% {
+      transform: scale(1.1);
+      opacity: 0.9;
+    }
+    20% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  &:hover {
+    color: #508BBF !important;
+    animation: none;
+    transform: scale(1.05);
+  }
+
+  &.active {
+    color: #3370A6 !important;
+    animation: none !important;
+    transform: none !important;
   }
 `
 

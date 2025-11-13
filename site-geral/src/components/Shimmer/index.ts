@@ -5,4 +5,5 @@ export { CompanyCardShimmer } from './CompanyCardShimmer'
 export { BrokerCardShimmer } from './BrokerCardShimmer'
 export { CompanyDetailsShimmer } from './CompanyDetailsShimmer'
 export { BrokerDetailsShimmer } from './BrokerDetailsShimmer'
+export { McmvPageShimmer } from './McmvPageShimmer'
 

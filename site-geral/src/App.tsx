@@ -17,9 +17,11 @@ import { LancamentosPage } from './pages/LancamentosPage'
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { MyPropertyPage } from './pages/MyPropertyPage'
+import { McmvPage } from './pages/McmvPage'
 import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import { Box } from '@mui/material'
 
 function AppContent() {
@@ -136,6 +138,16 @@ function AppContent() {
               <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
                 <MyPropertyPage />
               </MainContentWrapper>
+            } 
+          />
+          <Route 
+            path="/mcmv" 
+            element={
+              <ProtectedRoute>
+                <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
+                  <McmvPage />
+                </MainContentWrapper>
+              </ProtectedRoute>
             } 
           />
           {/* Rota catch-all: redireciona qualquer rota inexistente para a home */}

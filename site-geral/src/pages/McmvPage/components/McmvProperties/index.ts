@@ -1,0 +1,2 @@
+export { McmvProperties } from './McmvProperties'
+

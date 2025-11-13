@@ -78,7 +78,7 @@ export interface CreatePropertyRequest {
 
 export interface CreatePropertyResponse extends Property {}
 
-export interface GetMyPropertyResponse extends Property | null {}
+export type GetMyPropertyResponse = Property | null
 
 export interface DeletePropertyResponse {
   message: string

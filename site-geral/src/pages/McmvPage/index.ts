@@ -1,0 +1,2 @@
+export { McmvPage } from './McmvPage'
+
