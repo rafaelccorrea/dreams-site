@@ -27,61 +27,184 @@ import {
 import { 
   simulateFinancing, 
   SimulateFinancingResponse,
-  getBankInterestRates,
-  BankInterestRate,
-  BankInterestRatesResponse,
+  // getBankInterestRates,
+  // BankInterestRate,
+  // BankInterestRatesResponse,
 } from '../../../services/mcmvService'
-import { formatCurrency, unformatCurrency } from '../../../utils/masks'
+import { fetchCepData } from '../../../services/viaCepService'
+import { getStates, getCitiesByState, BrazilianState, City } from '../../../services/locationService'
+import { 
+  formatCurrency, 
+  unformatCurrency,
+  formatCEP,
+  unformatCEP,
+  isValidCEP,
+} from '../../../utils/masks'
 
 interface FinancingSimulationProps {
   defaultCity: string
   defaultState: string
 }
 
-export const FinancingSimulation = (_props: FinancingSimulationProps) => {
+export const FinancingSimulation = ({ defaultCity, defaultState }: FinancingSimulationProps) => {
   const [propertyValue, setPropertyValue] = useState('')
   const [monthlyIncome, setMonthlyIncome] = useState('')
   const [familySize, setFamilySize] = useState('')
   const [loanTerm, setLoanTerm] = useState('30')
   const [interestRate, setInterestRate] = useState('4.5')
-  const [selectedBank, setSelectedBank] = useState<BankInterestRate | null>(null)
-  const [bankRates, setBankRates] = useState<BankInterestRate[]>([])
-  const [loadingRates, setLoadingRates] = useState(false)
+  const [cep, setCep] = useState('')
+  const [city, setCity] = useState(defaultCity)
+  const [state, setState] = useState(defaultState)
+  const [states, setStates] = useState<BrazilianState[]>([])
+  const [cities, setCities] = useState<City[]>([])
+  const [selectedState, setSelectedState] = useState<BrazilianState | null>(null)
+  const [selectedCity, setSelectedCity] = useState<City | null>(null)
+  const [loadingStates, setLoadingStates] = useState(false)
+  const [loadingCities, setLoadingCities] = useState(false)
+  const [loadingCep, setLoadingCep] = useState(false)
+  // const [selectedBank, setSelectedBank] = useState<BankInterestRate | null>(null)
+  // const [bankRates, setBankRates] = useState<BankInterestRate[]>([])
+  // const [loadingRates, setLoadingRates] = useState(false)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<SimulateFinancingResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Carregar taxas de juros dos bancos
+  // Carregar taxas de juros dos bancos - COMENTADO
+  // useEffect(() => {
+  //   const loadBankRates = async () => {
+  //     setLoadingRates(true)
+  //     try {
+  //       const response = await getBankInterestRates()
+  //       setBankRates(response.rates)
+  //       // Se houver taxas disponíveis, definir a primeira como padrão
+  //       if (response.rates.length > 0 && !selectedBank) {
+  //         const defaultBank = response.rates[0]
+  //         setSelectedBank(defaultBank)
+  //         setInterestRate(defaultBank.interestRate.toString())
+  //       }
+  //     } catch (err) {
+  //       console.error('Erro ao carregar taxas de juros dos bancos:', err)
+  //       // Se falhar, continua com a taxa padrão manual
+  //     } finally {
+  //       setLoadingRates(false)
+  //     }
+  //   }
+
+  //   loadBankRates()
+  // }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Carregar estados ao montar o componente
   useEffect(() => {
-    const loadBankRates = async () => {
-      setLoadingRates(true)
+    const loadStates = async () => {
+      setLoadingStates(true)
       try {
-        const response = await getBankInterestRates()
-        setBankRates(response.rates)
-        // Se houver taxas disponíveis, definir a primeira como padrão
-        if (response.rates.length > 0 && !selectedBank) {
-          const defaultBank = response.rates[0]
-          setSelectedBank(defaultBank)
-          setInterestRate(defaultBank.interestRate.toString())
+        const data = await getStates()
+        setStates(data)
+        // Se houver estado padrão, selecionar
+        if (defaultState) {
+          const defaultStateObj = data.find(s => s.sigla === defaultState.toUpperCase())
+          if (defaultStateObj) {
+            setSelectedState(defaultStateObj)
+          }
         }
       } catch (err) {
-        console.error('Erro ao carregar taxas de juros dos bancos:', err)
-        // Se falhar, continua com a taxa padrão manual
+        console.error('Erro ao carregar estados:', err)
       } finally {
-        setLoadingRates(false)
+        setLoadingStates(false)
       }
     }
+    loadStates()
+  }, [defaultState])
 
-    loadBankRates()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Atualizar taxa de juros quando banco for selecionado
+  // Carregar cidades quando um estado for selecionado
   useEffect(() => {
-    if (selectedBank) {
-      setInterestRate(selectedBank.interestRate.toString().replace('.', ','))
+    if (selectedState) {
+      const loadCities = async () => {
+        setLoadingCities(true)
+        try {
+          const data = await getCitiesByState(selectedState.id)
+          setCities(data)
+          // Se houver cidade padrão, selecionar
+          if (defaultCity) {
+            const defaultCityObj = data.find(c => c.nome === defaultCity)
+            if (defaultCityObj) {
+              setSelectedCity(defaultCityObj)
+              setCity(defaultCityObj.nome)
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao carregar cidades:', err)
+        } finally {
+          setLoadingCities(false)
+        }
+      }
+      loadCities()
+    } else {
+      setCities([])
+      setSelectedCity(null)
     }
-  }, [selectedBank])
+  }, [selectedState, defaultCity])
+
+  // Função para buscar dados do CEP
+  const handleCepSearch = async (cepValue: string) => {
+    setLoadingCep(true)
+    try {
+      const cepData = await fetchCepData(cepValue)
+      if (cepData) {
+        // Se estados ainda não foram carregados, carregar primeiro
+        let statesList = states
+        if (statesList.length === 0) {
+          statesList = await getStates()
+          setStates(statesList)
+        }
+        
+        // Encontrar e selecionar o estado correspondente
+        const stateObj = statesList.find(s => s.sigla === cepData.uf.toUpperCase())
+        if (stateObj) {
+          setSelectedState(stateObj)
+          setState(cepData.uf.toUpperCase())
+          
+          // Aguardar carregar as cidades do estado
+          const citiesData = await getCitiesByState(stateObj.id)
+          setCities(citiesData)
+          
+          // Encontrar e selecionar a cidade correspondente
+          const cityObj = citiesData.find(c => c.nome === cepData.localidade)
+          if (cityObj) {
+            setSelectedCity(cityObj)
+            setCity(cityObj.nome)
+          } else {
+            setCity(cepData.localidade)
+          }
+        } else {
+          setState(cepData.uf.toUpperCase())
+          setCity(cepData.localidade)
+        }
+        
+        // Limpar erros dos campos preenchidos
+        setErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors.state
+          delete newErrors.city
+          delete newErrors.cep
+          return newErrors
+        })
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          cep: 'CEP não encontrado',
+        }))
+      }
+    } catch (err) {
+      setErrors((prev) => ({
+        ...prev,
+        cep: 'Erro ao buscar CEP. Tente novamente.',
+      }))
+    } finally {
+      setLoadingCep(false)
+    }
+  }
 
   const validateField = (field: string, value: string): string => {
     switch (field) {
@@ -111,6 +234,19 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
         if (!value) return ''
         const rate = parseFloat(value.replace(',', '.'))
         if (isNaN(rate) || rate < 0 || rate > 100) return 'Taxa de juros deve ser entre 0% e 100%'
+        return ''
+      case 'cep':
+        if (!value) return 'CEP é obrigatório'
+        const cepDigits = unformatCEP(value)
+        if (!isValidCEP(value)) return 'CEP inválido (deve ter 8 dígitos)'
+        return ''
+      case 'city':
+        if (!value || value.trim().length < 2) return 'Cidade deve ter pelo menos 2 caracteres'
+        if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(value)) return 'Cidade deve conter apenas letras'
+        return ''
+      case 'state':
+        if (!value || value.length !== 2) return 'Estado deve ter 2 letras (ex: SP, RJ)'
+        if (!/^[A-Z]{2}$/.test(value.toUpperCase())) return 'Estado deve conter apenas letras maiúsculas'
         return ''
       default:
         return ''
@@ -145,6 +281,37 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
           formattedValue = parts[0] + '.' + parts[1].slice(0, 1)
         }
         setInterestRate(formattedValue || '4.5')
+        break
+      case 'cep':
+        formattedValue = formatCEP(value)
+        setCep(formattedValue)
+        // Limpar erro se houver
+        setErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors.cep
+          return newErrors
+        })
+        // Buscar CEP quando estiver completo (8 dígitos)
+        const cepDigits = unformatCEP(formattedValue)
+        if (cepDigits.length === 8) {
+          handleCepSearch(cepDigits)
+        }
+        return // Não validar ainda, aguardar busca
+      case 'city':
+        // Não permitir edição manual quando há cidade selecionada
+        if (selectedCity) {
+          return
+        }
+        formattedValue = value.trim()
+        setCity(formattedValue)
+        break
+      case 'state':
+        // Não permitir edição manual quando há estado selecionado
+        if (selectedState) {
+          return
+        }
+        formattedValue = value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2)
+        setState(formattedValue)
         break
       default:
         return
@@ -182,8 +349,13 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
       if (isNaN(rate) || rate < 0 || rate > 100) return false
     }
 
+    // Verificar CEP, Estado e Cidade
+    if (!cep || !isValidCEP(cep)) return false
+    if (!state || state.length !== 2) return false
+    if (!city || city.trim().length < 2) return false
+
     return true
-  }, [propertyValue, monthlyIncome, familySize, loanTerm, interestRate])
+  }, [propertyValue, monthlyIncome, familySize, loanTerm, interestRate, cep, state, city])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -196,6 +368,9 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
       { field: 'propertyValue', value: propertyValue },
       { field: 'monthlyIncome', value: monthlyIncome },
       { field: 'familySize', value: familySize },
+      { field: 'cep', value: cep },
+      { field: 'state', value: state },
+      { field: 'city', value: city },
     ]
 
     requiredFields.forEach(({ field, value }) => {
@@ -235,7 +410,7 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
         familySize: familySizeValue,
         loanTerm: loanTermValue,
         interestRate: interestRateValue,
-        bankCode: selectedBank?.bankCode,
+        // bankCode: selectedBank?.bankCode,
       })
 
       setResult(response)
@@ -270,7 +445,7 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Valor do Imóvel (R$)"
+              label="Valor do Imóvel"
               value={propertyValue}
               onChange={(e) => handleFieldChange('propertyValue', e.target.value)}
               onBlur={(e) => handleFieldChange('propertyValue', e.target.value)}
@@ -278,16 +453,13 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
               placeholder="R$ 0,00"
               error={!!errors.propertyValue}
               helperText={errors.propertyValue || 'Informe o valor do imóvel'}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-              }}
             />
           </Grid>
 
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Renda Familiar Mensal (R$)"
+              label="Renda Familiar Mensal"
               value={monthlyIncome}
               onChange={(e) => handleFieldChange('monthlyIncome', e.target.value)}
               onBlur={(e) => handleFieldChange('monthlyIncome', e.target.value)}
@@ -295,9 +467,6 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
               placeholder="R$ 0,00"
               error={!!errors.monthlyIncome}
               helperText={errors.monthlyIncome || 'Informe a renda familiar mensal'}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-              }}
             />
           </Grid>
 
@@ -329,6 +498,119 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
           </Grid>
 
           <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="CEP"
+              value={cep}
+              onChange={(e) => handleFieldChange('cep', e.target.value)}
+              onBlur={(e) => {
+                const cepDigits = unformatCEP(e.target.value)
+                if (cepDigits.length === 8) {
+                  handleCepSearch(cepDigits)
+                }
+              }}
+              required
+              placeholder="00000-000"
+              error={!!errors.cep}
+              helperText={errors.cep || (loadingCep ? 'Buscando endereço...' : 'Digite o CEP para preencher automaticamente')}
+              InputProps={{
+                endAdornment: loadingCep && (
+                  <InputAdornment position="end">
+                    <CircularProgress size={20} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth required error={!!errors.state} disabled={loadingCep || loadingStates}>
+              <InputLabel>Estado (UF)</InputLabel>
+              <Select
+                value={selectedState?.sigla || state || ''}
+                label="Estado (UF)"
+                onChange={(e) => {
+                  const stateObj = states.find(s => s.sigla === e.target.value)
+                  if (stateObj) {
+                    setSelectedState(stateObj)
+                    setState(stateObj.sigla)
+                    setSelectedCity(null)
+                    setCity('')
+                    setErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.state
+                      return newErrors
+                    })
+                  }
+                }}
+              >
+                {loadingStates ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={16} sx={{ mr: 1 }} />
+                    Carregando estados...
+                  </MenuItem>
+                ) : (
+                  states.map((stateOption) => (
+                    <MenuItem key={stateOption.id} value={stateOption.sigla}>
+                      {stateOption.sigla} - {stateOption.nome}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+              {errors.state && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {errors.state}
+                </Typography>
+              )}
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth required error={!!errors.city} disabled={loadingCep || loadingCities || !selectedState}>
+              <InputLabel>Cidade</InputLabel>
+              <Select
+                value={selectedCity?.nome || city || ''}
+                label="Cidade"
+                onChange={(e) => {
+                  const cityObj = cities.find(c => c.nome === e.target.value)
+                  if (cityObj) {
+                    setSelectedCity(cityObj)
+                    setCity(cityObj.nome)
+                    setErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.city
+                      return newErrors
+                    })
+                  }
+                }}
+              >
+                {loadingCities ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={16} sx={{ mr: 1 }} />
+                    Carregando cidades...
+                  </MenuItem>
+                ) : cities.length === 0 ? (
+                  <MenuItem disabled>
+                    {selectedState ? 'Nenhuma cidade encontrada' : 'Selecione um estado primeiro'}
+                  </MenuItem>
+                ) : (
+                  cities.map((cityOption) => (
+                    <MenuItem key={cityOption.id} value={cityOption.nome}>
+                      {cityOption.nome}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+              {errors.city && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {errors.city}
+                </Typography>
+              )}
+            </FormControl>
+          </Grid>
+
+          {/* Select de banco - COMENTADO */}
+          {/* <Grid item xs={12} md={6}>
             <FormControl fullWidth>
               <InputLabel id="bank-select-label">Banco (opcional)</InputLabel>
               <Select
@@ -371,7 +653,7 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
                 Taxas de bancos não disponíveis. Use a taxa manual abaixo.
               </Typography>
             )}
-          </Grid>
+          </Grid> */}
 
           <Grid item xs={12} md={6}>
             <TextField
@@ -380,23 +662,20 @@ export const FinancingSimulation = (_props: FinancingSimulationProps) => {
               value={interestRate}
               onChange={(e) => {
                 handleFieldChange('interestRate', e.target.value)
-                // Limpar seleção de banco se usuário editar manualmente
-                if (selectedBank) {
-                  setSelectedBank(null)
-                }
+                // Limpar seleção de banco se usuário editar manualmente - COMENTADO
+                // if (selectedBank) {
+                //   setSelectedBank(null)
+                // }
               }}
               onBlur={(e) => handleFieldChange('interestRate', e.target.value)}
               error={!!errors.interestRate}
               helperText={
                 errors.interestRate || 
-                selectedBank 
-                  ? `Taxa do ${selectedBank.bank} (atualizada em ${new Date(selectedBank.lastUpdated).toLocaleDateString('pt-BR')})`
-                  : 'Informe a taxa de juros ou selecione um banco acima'
+                'Informe a taxa de juros anual (ex: 4.5 para 4,5%)'
               }
               InputProps={{
                 endAdornment: <InputAdornment position="end">%</InputAdornment>,
               }}
-              disabled={!!selectedBank && !loadingRates}
             />
           </Grid>
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Box,
   TextField,
@@ -14,6 +14,10 @@ import {
   Divider,
   Chip,
   InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import {
   CheckCircle,
@@ -22,6 +26,7 @@ import {
 } from '@mui/icons-material'
 import { checkEligibility, CheckEligibilityResponse } from '../../../services/mcmvService'
 import { fetchCepData } from '../../../services/viaCepService'
+import { getStates, getCitiesByState, BrazilianState, City } from '../../../services/locationService'
 import { 
   formatCurrency, 
   unformatCurrency, 
@@ -48,6 +53,12 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
   const [cep, setCep] = useState('')
   const [city, setCity] = useState(defaultCity)
   const [state, setState] = useState(defaultState)
+  const [states, setStates] = useState<BrazilianState[]>([])
+  const [cities, setCities] = useState<City[]>([])
+  const [selectedState, setSelectedState] = useState<BrazilianState | null>(null)
+  const [selectedCity, setSelectedCity] = useState<City | null>(null)
+  const [loadingStates, setLoadingStates] = useState(false)
+  const [loadingCities, setLoadingCities] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -59,15 +70,94 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
   const [error, setError] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Carregar estados ao montar o componente
+  useEffect(() => {
+    const loadStates = async () => {
+      setLoadingStates(true)
+      try {
+        const data = await getStates()
+        setStates(data)
+        // Se houver estado padrão, selecionar
+        if (defaultState) {
+          const defaultStateObj = data.find(s => s.sigla === defaultState.toUpperCase())
+          if (defaultStateObj) {
+            setSelectedState(defaultStateObj)
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar estados:', err)
+      } finally {
+        setLoadingStates(false)
+      }
+    }
+    loadStates()
+  }, [defaultState])
+
+  // Carregar cidades quando um estado for selecionado
+  useEffect(() => {
+    if (selectedState) {
+      const loadCities = async () => {
+        setLoadingCities(true)
+        try {
+          const data = await getCitiesByState(selectedState.id)
+          setCities(data)
+          // Se houver cidade padrão, selecionar
+          if (defaultCity) {
+            const defaultCityObj = data.find(c => c.nome === defaultCity)
+            if (defaultCityObj) {
+              setSelectedCity(defaultCityObj)
+              setCity(defaultCityObj.nome)
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao carregar cidades:', err)
+        } finally {
+          setLoadingCities(false)
+        }
+      }
+      loadCities()
+    } else {
+      setCities([])
+      setSelectedCity(null)
+    }
+  }, [selectedState, defaultCity])
+
   // Função para buscar dados do CEP
   const handleCepSearch = async (cepValue: string) => {
     setLoadingCep(true)
     try {
       const cepData = await fetchCepData(cepValue)
       if (cepData) {
-        // Preencher estado primeiro, depois cidade
-        setState(cepData.uf.toUpperCase())
-        setCity(cepData.localidade)
+        // Se estados ainda não foram carregados, carregar primeiro
+        let statesList = states
+        if (statesList.length === 0) {
+          statesList = await getStates()
+          setStates(statesList)
+        }
+        
+        // Encontrar e selecionar o estado correspondente
+        const stateObj = statesList.find(s => s.sigla === cepData.uf.toUpperCase())
+        if (stateObj) {
+          setSelectedState(stateObj)
+          setState(cepData.uf.toUpperCase())
+          
+          // Aguardar carregar as cidades do estado
+          const citiesData = await getCitiesByState(stateObj.id)
+          setCities(citiesData)
+          
+          // Encontrar e selecionar a cidade correspondente
+          const cityObj = citiesData.find(c => c.nome === cepData.localidade)
+          if (cityObj) {
+            setSelectedCity(cityObj)
+            setCity(cityObj.nome)
+          } else {
+            setCity(cepData.localidade)
+          }
+        } else {
+          setState(cepData.uf.toUpperCase())
+          setCity(cepData.localidade)
+        }
+        
         // Limpar erros dos campos preenchidos
         setErrors((prev) => {
           const newErrors = { ...prev }
@@ -205,11 +295,13 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
     const size = parseInt(familySize)
     if (isNaN(size) || size < 1 || size > 10) return false
 
-    // Verificar cidade
-    if (!city || city.trim().length < 2 || !/^[a-zA-ZÀ-ÿ\s]+$/.test(city)) return false
+    // Verificar cidade (pode ser do select ou manual)
+    const finalCity = selectedCity?.nome || city
+    if (!finalCity || finalCity.trim().length < 2) return false
 
-    // Verificar estado
-    if (!state || state.length !== 2 || !/^[A-Z]{2}$/.test(state.toUpperCase())) return false
+    // Verificar estado (pode ser do select ou manual)
+    const finalState = selectedState?.sigla || state
+    if (!finalState || finalState.length !== 2) return false
 
     // Verificar nome
     if (!name || name.trim().length < 3 || !/^[a-zA-ZÀ-ÿ\s]+$/.test(name)) return false
@@ -311,7 +403,7 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Renda Familiar Mensal (R$)"
+              label="Renda Familiar Mensal"
               value={monthlyIncome}
               onChange={(e) => handleFieldChange('monthlyIncome', e.target.value)}
               onBlur={(e) => handleFieldChange('monthlyIncome', e.target.value)}
@@ -319,9 +411,6 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
               placeholder="R$ 0,00"
               error={!!errors.monthlyIncome}
               helperText={errors.monthlyIncome || 'Informe a renda familiar mensal'}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-              }}
             />
           </Grid>
 
@@ -366,32 +455,89 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Estado (UF)"
-              value={state}
-              onChange={(e) => handleFieldChange('state', e.target.value)}
-              onBlur={(e) => handleFieldChange('state', e.target.value)}
-              required
-              inputProps={{ maxLength: 2 }}
-              error={!!errors.state}
-              helperText={errors.state || 'Ex: SP, RJ, MG'}
-              disabled={loadingCep}
-            />
+            <FormControl fullWidth required error={!!errors.state} disabled={loadingCep || loadingStates}>
+              <InputLabel>Estado (UF)</InputLabel>
+              <Select
+                value={selectedState?.sigla || state || ''}
+                label="Estado (UF)"
+                onChange={(e) => {
+                  const stateObj = states.find(s => s.sigla === e.target.value)
+                  if (stateObj) {
+                    setSelectedState(stateObj)
+                    setState(stateObj.sigla)
+                    setSelectedCity(null)
+                    setCity('')
+                    setErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.state
+                      return newErrors
+                    })
+                  }
+                }}
+              >
+                {loadingStates ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={16} sx={{ mr: 1 }} />
+                    Carregando estados...
+                  </MenuItem>
+                ) : (
+                  states.map((stateOption) => (
+                    <MenuItem key={stateOption.id} value={stateOption.sigla}>
+                      {stateOption.sigla} - {stateOption.nome}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+              {errors.state && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {errors.state}
+                </Typography>
+              )}
+            </FormControl>
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Cidade"
-              value={city}
-              onChange={(e) => handleFieldChange('city', e.target.value)}
-              onBlur={(e) => handleFieldChange('city', e.target.value)}
-              required
-              error={!!errors.city}
-              helperText={errors.city || 'Informe a cidade'}
-              disabled={loadingCep}
-            />
+            <FormControl fullWidth required error={!!errors.city} disabled={loadingCep || loadingCities || !selectedState}>
+              <InputLabel>Cidade</InputLabel>
+              <Select
+                value={selectedCity?.nome || city || ''}
+                label="Cidade"
+                onChange={(e) => {
+                  const cityObj = cities.find(c => c.nome === e.target.value)
+                  if (cityObj) {
+                    setSelectedCity(cityObj)
+                    setCity(cityObj.nome)
+                    setErrors((prev) => {
+                      const newErrors = { ...prev }
+                      delete newErrors.city
+                      return newErrors
+                    })
+                  }
+                }}
+              >
+                {loadingCities ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={16} sx={{ mr: 1 }} />
+                    Carregando cidades...
+                  </MenuItem>
+                ) : cities.length === 0 ? (
+                  <MenuItem disabled>
+                    {selectedState ? 'Nenhuma cidade encontrada' : 'Selecione um estado primeiro'}
+                  </MenuItem>
+                ) : (
+                  cities.map((cityOption) => (
+                    <MenuItem key={cityOption.id} value={cityOption.nome}>
+                      {cityOption.nome}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+              {errors.city && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {errors.city}
+                </Typography>
+              )}
+            </FormControl>
           </Grid>
 
           <Grid item xs={12}>
