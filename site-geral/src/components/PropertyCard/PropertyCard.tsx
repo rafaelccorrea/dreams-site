@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, Typography, Box, Chip } from '@mui/material'
+import { Card, CardContent, Typography, Box, Chip, Tooltip } from '@mui/material'
 import styled from 'styled-components'
-import { Bed, Bathtub, SquareFoot } from '@mui/icons-material'
+import { Bed, Bathtub, SquareFoot, Home } from '@mui/icons-material'
 import { Property, getPropertyImages } from '../../services/propertyService'
 import { getPublicPropertyImages } from '../../services/publicPropertyService'
 import { formatPrice, formatArea } from '../../utils/formatPrice'
@@ -32,6 +32,43 @@ const ImageContainer = styled.div`
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     height: 200px;
+  }
+`
+
+const McmvFlag = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white !important;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  font-weight: 700;
+  font-size: 0.75rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 85%);
+  cursor: help;
+  
+  svg,
+  svg * {
+    color: white !important;
+    fill: white !important;
+  }
+  
+  span {
+    color: white !important;
+  }
+  
+  * {
+    color: white !important;
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 0.65rem;
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   }
 `
 
@@ -306,6 +343,39 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
     <StyledCard onClick={onClick}>
       <ImageContainer>
         <PropertyCardCarousel images={images} />
+        {/* Flag MCMV */}
+        {property.isAvailableForMCMV && (
+          <Tooltip
+            title="Minha Casa Minha Vida - Financiamento disponível para esta propriedade"
+            arrow
+            placement="top"
+          >
+            <Box
+              component={McmvFlag}
+              sx={{
+                '& svg': {
+                  color: 'white !important',
+                  fill: 'white !important',
+                },
+                '& path': {
+                  fill: 'white !important',
+                },
+                '& span': {
+                  color: 'white !important',
+                },
+              }}
+            >
+              <Home 
+                sx={{ 
+                  fontSize: 14, 
+                  color: 'white',
+                  fill: 'white',
+                }} 
+              />
+              <span style={{ color: 'white' }}>MCMV</span>
+            </Box>
+          </Tooltip>
+        )}
         {/* Botões de ação - Favoritar e Compartilhar */}
         <ActionButtonsContainer
           onClick={(e) => {

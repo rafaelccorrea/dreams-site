@@ -4,6 +4,18 @@
 
 const API_BASE_URL = 'http://localhost:3000/public'
 
+/**
+ * Informações sobre MCMV (Minha Casa Minha Vida)
+ * Aparece apenas quando isAvailableForMCMV === true
+ */
+export interface McmvInfo {
+  incomeRange?: string | null // "faixa1" | "faixa2" | "faixa3"
+  maxValue?: number | null // Valor máximo para financiamento MCMV em reais
+  subsidy?: number | null // Valor do subsídio disponível em reais
+  documentation?: string[] // Lista de documentos necessários
+  notes?: string | null // Observações adicionais sobre o MCMV
+}
+
 export interface Property {
   id: string
   code: string | null
@@ -32,6 +44,8 @@ export interface Property {
   isActive: boolean
   isFeatured: boolean
   isAvailableForSite: boolean
+  isAvailableForMCMV: boolean // Indica se a propriedade está disponível para financiamento via MCMV
+  mcmv?: McmvInfo // Informações detalhadas sobre MCMV (apenas quando isAvailableForMCMV === true)
   companyId: string
   responsibleUserId: string
   createdAt: string

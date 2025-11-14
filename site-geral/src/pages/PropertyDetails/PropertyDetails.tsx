@@ -25,6 +25,8 @@ import {
   Email,
   WhatsApp,
   VerifiedUser,
+  Home,
+  CheckCircle,
 } from "@mui/icons-material";
 import {
   getPropertyById,
@@ -355,6 +357,22 @@ export const PropertyDetails = () => {
                     }}
                   />
                 )}
+                {property.isAvailableForMCMV && (
+                  <Chip
+                    icon={<Home sx={{ fontSize: 16 }} />}
+                    label="Minha Casa Minha Vida"
+                    sx={{
+                      bgcolor: "#4caf50",
+                      color: "white",
+                      fontWeight: 600,
+                      fontSize: "0.875rem",
+                      height: 28,
+                      "& .MuiChip-icon": {
+                        color: "white",
+                      },
+                    }}
+                  />
+                )}
                 {property.code && (
                   <Chip
                     label={`#${property.code}`}
@@ -452,6 +470,164 @@ export const PropertyDetails = () => {
                   </Box>
                 )}
               </Box>
+
+              {/* Informações MCMV */}
+              {property.isAvailableForMCMV && property.mcmv && (
+                <Box
+                  sx={{
+                    mb: 4,
+                    p: 3,
+                    borderRadius: 2,
+                    background: "linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(69, 160, 73, 0.15) 100%)",
+                    border: "2px solid rgba(76, 175, 80, 0.3)",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                    <Home sx={{ color: "#4caf50", fontSize: 28 }} />
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontWeight: 700,
+                        color: "#2e7d32",
+                      }}
+                    >
+                      Financiamento Minha Casa Minha Vida Disponível
+                    </Typography>
+                  </Box>
+
+                  <Grid container spacing={2}>
+                    {property.mcmv.incomeRange && (
+                      <Grid item xs={12} sm={6}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            fontSize: "0.75rem",
+                            display: "block",
+                            mb: 0.5,
+                          }}
+                        >
+                          Faixa de Renda
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            color: "#2e7d32",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {property.mcmv.incomeRange === "faixa1" ? "Faixa 1" :
+                           property.mcmv.incomeRange === "faixa2" ? "Faixa 2" :
+                           property.mcmv.incomeRange === "faixa3" ? "Faixa 3" :
+                           property.mcmv.incomeRange}
+                        </Typography>
+                      </Grid>
+                    )}
+
+                    {property.mcmv.maxValue && (
+                      <Grid item xs={12} sm={6}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            fontSize: "0.75rem",
+                            display: "block",
+                            mb: 0.5,
+                          }}
+                        >
+                          Valor Máximo
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            color: "#1976d2",
+                          }}
+                        >
+                          {formatPrice(property.mcmv.maxValue)}
+                        </Typography>
+                      </Grid>
+                    )}
+
+                    {property.mcmv.subsidy && (
+                      <Grid item xs={12} sm={6}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            fontSize: "0.75rem",
+                            display: "block",
+                            mb: 0.5,
+                          }}
+                        >
+                          Subsídio Disponível
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            color: "#4caf50",
+                          }}
+                        >
+                          {formatPrice(property.mcmv.subsidy)}
+                        </Typography>
+                      </Grid>
+                    )}
+
+                    {property.mcmv.documentation && property.mcmv.documentation.length > 0 && (
+                      <Grid item xs={12}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            fontSize: "0.75rem",
+                            display: "block",
+                            mb: 1,
+                          }}
+                        >
+                          Documentos Necessários
+                        </Typography>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                          {property.mcmv.documentation.map((doc, index) => (
+                            <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <CheckCircle sx={{ fontSize: 16, color: "#4caf50" }} />
+                              <Typography variant="body2" sx={{ color: "text.primary" }}>
+                                {doc}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Grid>
+                    )}
+
+                    {property.mcmv.notes && (
+                      <Grid item xs={12}>
+                        <Box
+                          sx={{
+                            mt: 1,
+                            p: 1.5,
+                            bgcolor: "rgba(76, 175, 80, 0.1)",
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ color: "text.primary", fontStyle: "italic" }}>
+                            {property.mcmv.notes}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              )}
 
               {/* Condomínio e IPTU */}
               {(property.condominiumFee || property.iptu) && (
