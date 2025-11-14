@@ -52,7 +52,6 @@ export const BrokersPage = () => {
         const data = await getAvailableBrokers(location.city);
         setBrokers(data);
       } catch (error) {
-        console.error("Erro ao carregar corretores:", error);
         setBrokers([]);
       } finally {
         setLoading(false);

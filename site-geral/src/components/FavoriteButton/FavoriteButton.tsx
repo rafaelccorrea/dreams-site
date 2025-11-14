@@ -48,7 +48,6 @@ export const FavoriteButton = ({
           const result = await checkFavorite(propertyId)
           setIsFavorite(result.isFavorite)
         } catch (error) {
-          console.error('Erro ao verificar favorito:', error)
         }
       }
       loadFavoriteStatus()
@@ -80,7 +79,6 @@ export const FavoriteButton = ({
       // Disparar evento para atualizar outros componentes
       window.dispatchEvent(new CustomEvent('favorites-changed'))
     } catch (error) {
-      console.error('Erro ao alternar favorito:', error)
       // Rollback: reverter para o estado anterior em caso de erro
       setIsFavorite(previousFavoriteState)
     } finally {

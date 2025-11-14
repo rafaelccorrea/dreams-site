@@ -272,11 +272,9 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
               combinedImages.push(mainImageUrl)
             }
             
-            console.log(`Property ${property.id}: API retornou ${allImages?.length || 0} URLs, ${combinedImages.length} após adicionar mainImage`)
             setImages(combinedImages)
           })
           .catch((error) => {
-            console.error('Erro ao carregar imagens:', error)
             if (mainImageUrl) {
               setImages([mainImageUrl])
             }
@@ -319,11 +317,9 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
               combinedImages.push(mainImageUrl)
             }
             
-            console.log(`Property ${property.id}: API retornou ${allImages?.length || 0} URLs, ${combinedImages.length} após adicionar mainImage`)
             setImages(combinedImages)
           })
           .catch((error) => {
-            console.error('Erro ao carregar imagens:', error)
             // Se falhar, usa a imagem principal se disponível
             if (mainImageUrl) {
               setImages([mainImageUrl])

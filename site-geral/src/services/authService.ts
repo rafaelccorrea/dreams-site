@@ -75,7 +75,6 @@ export const decodeGoogleCredential = (credential: string): GoogleUser | null =>
       picture: payload.picture,
     }
   } catch (error) {
-    console.error('Erro ao decodificar credencial do Google:', error)
     return null
   }
 }
@@ -85,12 +84,10 @@ export const decodeGoogleCredential = (credential: string): GoogleUser | null =>
  */
 export const initializeGoogleAuth = (callback: (user: GoogleUser | null) => void) => {
   if (!window.google?.accounts?.id) {
-    console.error('Google Identity Services não carregado')
     return
   }
 
   if (!config.google.clientId) {
-    console.error('Google Client ID não configurado')
     return
   }
 
@@ -109,14 +106,12 @@ export const initializeGoogleAuth = (callback: (user: GoogleUser | null) => void
 export const triggerGoogleLogin = (onSuccess: (user: GoogleUser) => void, onError?: (error: Error) => void) => {
   if (!window.google?.accounts?.id) {
     const error = new Error('Google Identity Services não carregado')
-    console.error(error)
     onError?.(error)
     return
   }
 
   if (!config.google.clientId) {
     const error = new Error('Google Client ID não configurado')
-    console.error(error)
     onError?.(error)
     return
   }
@@ -141,7 +136,6 @@ export const triggerGoogleLogin = (onSuccess: (user: GoogleUser) => void, onErro
       }
     })
   } catch (error) {
-    console.error('Erro ao iniciar login do Google:', error)
     onError?.(error as Error)
   }
 }

@@ -447,11 +447,7 @@ export const HeroCard = ({ onSearch, currentFilters }: HeroCardProps) => {
   }
 
   const handleNeighborhoodChange = (value: string) => {
-    console.log('[HeroCard] handleNeighborhoodChange CALLED')
-    console.log('[HeroCard] New value:', value)
-    console.log('[HeroCard] Current neighborhood state:', neighborhood)
     setNeighborhood(value)
-    console.log('[HeroCard] After setNeighborhood, neighborhood state will be:', value)
   }
 
   const handleFeaturedChange = (event: React.ChangeEvent<HTMLInputElement>) => {

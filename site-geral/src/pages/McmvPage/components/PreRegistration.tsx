@@ -90,7 +90,6 @@ export const PreRegistration = ({ defaultCity, defaultState }: PreRegistrationPr
           }
         }
       } catch (err) {
-        console.error('Erro ao carregar estados:', err)
       } finally {
         setLoadingStates(false)
       }
@@ -115,7 +114,6 @@ export const PreRegistration = ({ defaultCity, defaultState }: PreRegistrationPr
             }
           }
         } catch (err) {
-          console.error('Erro ao carregar cidades:', err)
         } finally {
           setLoadingCities(false)
         }

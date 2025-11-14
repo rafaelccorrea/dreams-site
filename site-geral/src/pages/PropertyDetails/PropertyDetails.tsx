@@ -136,7 +136,6 @@ export const PropertyDetails = () => {
             
             setImages(combinedImages);
           } catch (imgErr) {
-            console.error('Erro ao carregar imagens:', imgErr);
             // Se falhar, usa a imagem principal se disponível
             if (mainImageUrl) {
               setImages([mainImageUrl]);
@@ -167,13 +166,11 @@ export const PropertyDetails = () => {
             setImages(imageUrls);
           }
         } catch (imgErr) {
-          console.error('Erro ao carregar imagens:', imgErr);
           setImages([]);
         }
       }
     } catch (err) {
       setError("Propriedade não encontrada");
-      console.error(err);
     } finally {
       setLoading(false);
     }

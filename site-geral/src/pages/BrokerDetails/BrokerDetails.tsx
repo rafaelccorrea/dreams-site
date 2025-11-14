@@ -70,7 +70,6 @@ export const BrokerDetails = () => {
       else setError("Corretor não encontrado");
     } catch (err) {
       setError("Erro ao carregar corretor");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -84,7 +83,6 @@ export const BrokerDetails = () => {
       setProperties(result.properties);
       setTotalProperties(result.total);
     } catch (err) {
-      console.error("Erro ao carregar propriedades:", err);
       setProperties([]);
       setTotalProperties(0);
     } finally {

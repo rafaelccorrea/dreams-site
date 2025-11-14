@@ -29,7 +29,6 @@ export const getStates = async (): Promise<BrazilianState[]> => {
       nome: estado.nome,
     }))
   } catch (error) {
-    console.error('Erro ao buscar estados:', error)
     throw error
   }
 }
@@ -51,7 +50,6 @@ export const getCitiesByState = async (stateId: number): Promise<City[]> => {
       nome: municipio.nome,
     }))
   } catch (error) {
-    console.error('Erro ao buscar cidades:', error)
     throw error
   }
 }
@@ -64,7 +62,6 @@ export const getStateByCode = async (code: string): Promise<BrazilianState | nul
     const states = await getStates()
     return states.find((state) => state.sigla === code.toUpperCase()) || null
   } catch (error) {
-    console.error('Erro ao buscar estado por código:', error)
     return null
   }
 }

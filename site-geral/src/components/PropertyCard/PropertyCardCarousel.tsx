@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { IconButton, Box } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 import styled from 'styled-components'
+import { ShimmerBase } from '../Shimmer'
 
 const CarouselContainer = styled.div`
   position: relative;
@@ -40,15 +41,21 @@ const ImageWrapper = styled.div`
   justify-content: center;
 `
 
-const CarouselImage = styled.img<{ $isActive: boolean }>`
+const CarouselImage = styled.img<{ $isActive: boolean; $isLoaded: boolean }>`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: ${({ $isActive }) => ($isActive ? 1 : 0)};
+  opacity: ${({ $isActive, $isLoaded }) => {
+    // Se é a imagem ativa, sempre mostra
+    if ($isActive) return 1
+    // Se não é ativa, sempre esconde
+    return 0
+  }};
   position: ${({ $isActive }) => ($isActive ? 'relative' : 'absolute')};
   top: 0;
   left: 0;
   transition: opacity 0.3s ease;
+  pointer-events: ${({ $isActive }) => ($isActive ? 'auto' : 'none')};
   /* Melhora a qualidade da renderização */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
@@ -61,6 +68,17 @@ const CarouselImage = styled.img<{ $isActive: boolean }>`
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   will-change: transform;
+`
+
+const ImageSkeleton = styled(ShimmerBase)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  border-radius: 0;
+  pointer-events: none;
 `
 
 const NavigationButton = styled(IconButton)`
@@ -166,23 +184,54 @@ export const PropertyCardCarousel = ({ images }: PropertyCardCarouselProps) => {
     return images.filter(img => img && img.trim() !== '')
   }, [images])
   
-  console.log(`[PropertyCardCarousel] Recebeu ${images.length} imagens, ${allImages.length} após filtrar vazias`)
 
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set())
   
-  // Reseta o índice quando as imagens mudarem
+  // Reseta o índice e imagens carregadas quando as imagens mudarem
   useEffect(() => {
     setCurrentIndex(0)
+    setLoadedImages(new Set())
   }, [images.length])
+  
+  const handleImageLoad = (index: number) => {
+    setLoadedImages(prev => new Set(prev).add(index))
+  }
+  
+  const handleImageError = (index: number) => {
+    // Mesmo em caso de erro, marca como "carregado" para remover o skeleton
+    setLoadedImages(prev => new Set(prev).add(index))
+  }
+  
+  // Verifica se a imagem atual já está carregada (pode estar em cache)
+  useEffect(() => {
+    if (allImages.length > 0 && currentIndex < allImages.length) {
+      // Pequeno delay para garantir que o DOM foi atualizado
+      const timeoutId = setTimeout(() => {
+        const img = new Image()
+        img.onload = () => {
+          handleImageLoad(currentIndex)
+        }
+        img.onerror = () => {
+          handleImageError(currentIndex)
+        }
+        img.src = allImages[currentIndex]
+      }, 100)
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [currentIndex, allImages])
 
   // Se não há imagens, mostra placeholder
   if (!allImages || allImages.length === 0) {
     return (
       <CarouselContainer>
+        <ImageSkeleton />
         <CarouselImage
           src="https://via.placeholder.com/400x250?text=Sem+Imagem"
           alt="Sem imagem"
           $isActive={true}
+          $isLoaded={true}
           loading="eager"
           fetchPriority="high"
           decoding="async"
@@ -193,15 +242,20 @@ export const PropertyCardCarousel = ({ images }: PropertyCardCarouselProps) => {
 
   // Se só tem uma imagem, não mostra controles
   if (allImages.length === 1) {
+    const isLoaded = loadedImages.has(0)
     return (
       <CarouselContainer>
+        {!isLoaded && <ImageSkeleton />}
         <CarouselImage
           src={allImages[0] || 'https://via.placeholder.com/400x250?text=Sem+Imagem'}
           alt="Propriedade"
           $isActive={true}
+          $isLoaded={isLoaded}
           loading="eager"
           fetchPriority="high"
           decoding="async"
+          onLoad={() => handleImageLoad(0)}
+          onError={() => handleImageError(0)}
         />
       </CarouselContainer>
     )
@@ -222,20 +276,31 @@ export const PropertyCardCarousel = ({ images }: PropertyCardCarouselProps) => {
     setCurrentIndex(index)
   }
 
+  const currentImageLoaded = loadedImages.has(currentIndex)
+
   return (
     <CarouselContainer>
       <ImageWrapper>
-        {allImages.map((image, index) => (
-          <CarouselImage
-            key={index}
-            src={image || 'https://via.placeholder.com/400x250?text=Sem+Imagem'}
-            alt={`Propriedade ${index + 1}`}
-            $isActive={index === currentIndex}
-            loading={index === currentIndex ? "eager" : "lazy"}
-            fetchPriority={index === currentIndex ? "high" : "low"}
-            decoding="async"
-          />
-        ))}
+        {!currentImageLoaded && <ImageSkeleton />}
+        {allImages.map((image, index) => {
+          const isLoaded = loadedImages.has(index)
+          const isActive = index === currentIndex
+          
+          return (
+            <CarouselImage
+              key={`${image}-${index}`}
+              src={image || 'https://via.placeholder.com/400x250?text=Sem+Imagem'}
+              alt={`Propriedade ${index + 1}`}
+              $isActive={isActive}
+              $isLoaded={isLoaded || isActive}
+              loading={isActive ? "eager" : "lazy"}
+              fetchPriority={isActive ? "high" : "low"}
+              decoding="async"
+              onLoad={() => handleImageLoad(index)}
+              onError={() => handleImageError(index)}
+            />
+          )
+        })}
       </ImageWrapper>
 
       <NavigationButton

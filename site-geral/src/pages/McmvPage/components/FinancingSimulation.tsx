@@ -109,7 +109,6 @@ export const FinancingSimulation = ({ defaultCity, defaultState }: FinancingSimu
           }
         }
       } catch (err) {
-        console.error('Erro ao carregar estados:', err)
       } finally {
         setLoadingStates(false)
       }
@@ -134,7 +133,6 @@ export const FinancingSimulation = ({ defaultCity, defaultState }: FinancingSimu
             }
           }
         } catch (err) {
-          console.error('Erro ao carregar cidades:', err)
         } finally {
           setLoadingCities(false)
         }

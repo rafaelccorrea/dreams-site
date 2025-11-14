@@ -17,7 +17,6 @@ export const ConfirmEmailPage = () => {
 
   useEffect(() => {
     const token = searchParams.get('token')
-    console.log('ConfirmEmailPage montado, token:', token ? token.substring(0, 20) + '...' : 'não encontrado')
 
     if (!token) {
       setStatus('error')
@@ -29,9 +28,7 @@ export const ConfirmEmailPage = () => {
 
     const handleConfirm = async () => {
       try {
-        console.log('Confirmando email com token:', token.substring(0, 20) + '...')
         const result = await confirmEmail(token)
-        console.log('Email confirmado com sucesso:', result)
         
         if (!isMounted) return
         
@@ -46,7 +43,6 @@ export const ConfirmEmailPage = () => {
           }
         }, 1000)
       } catch (error) {
-        console.error('Erro ao confirmar email:', error)
         if (!isMounted) return
         
         setStatus('error')

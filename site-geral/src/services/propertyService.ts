@@ -334,7 +334,6 @@ export async function getCompanyById(id: string): Promise<Company | null> {
     const data = await response.json()
     return data
   } catch (error) {
-    console.error('Erro ao buscar detalhes da imobiliária:', error)
     return null
   }
 }
@@ -347,7 +346,6 @@ export async function getCompanyById(id: string): Promise<Company | null> {
  */
 export async function getAvailableBrokers(city: string, companyId?: string): Promise<Broker[]> {
   if (!city) {
-    console.warn('getAvailableBrokers requer o parâmetro city')
     return []
   }
 
@@ -369,7 +367,6 @@ export async function getAvailableBrokers(city: string, companyId?: string): Pro
     const data = await response.json()
     return data.brokers || []
   } catch (error) {
-    console.error('Erro ao buscar corretores:', error)
     return []
   }
 }
@@ -388,7 +385,6 @@ export async function getBrokerById(id: string): Promise<Broker | null> {
     const data = await response.json()
     return data
   } catch (error) {
-    console.error('Erro ao buscar detalhes do corretor:', error)
     return null
   }
 }
@@ -454,7 +450,6 @@ export async function getBrokerProperties(
       totalPages: 0,
     }
   } catch (error) {
-    console.error('Erro ao buscar propriedades do corretor:', error)
     return {
       properties: [],
       total: 0,
@@ -495,7 +490,6 @@ export async function getPropertyImages(propertyId: string): Promise<string[]> {
       if (!response.ok) {
         // Se não houver endpoint específico, retorna array vazio
         if (response.status !== 404) {
-          console.warn(`Endpoint de imagens não encontrado (${response.status}) para propriedade ${propertyId}`)
         }
         return []
       }
@@ -512,7 +506,6 @@ export async function getPropertyImages(propertyId: string): Promise<string[]> {
         // Se retornar objeto com propriedade images
         imageObjects = data.images
       } else {
-        console.warn(`[getPropertyImages] Formato de resposta não reconhecido para ${propertyId}:`, data)
         return []
       }
       
@@ -533,7 +526,6 @@ export async function getPropertyImages(propertyId: string): Promise<string[]> {
           if (imgUrl && imgUrl.trim() !== '') {
             // Log para debug: verificar qual URL está sendo usada
             if (img.thumbnailUrl && !img.url && !img.fileUrl) {
-              console.warn(`⚠️ [getPropertyImages] Usando thumbnailUrl (baixa qualidade) para propriedade ${propertyId}`)
             }
             // Adiciona TODAS as URLs, mesmo que sejam iguais
             imageUrls.push(imgUrl)
@@ -541,7 +533,6 @@ export async function getPropertyImages(propertyId: string): Promise<string[]> {
         }
       })
       
-      console.log(`[getPropertyImages] ${propertyId}: ${imageObjects.length} imagens recebidas, ${imageUrls.length} URLs extraídas (mantendo duplicatas)`)
       
       // Salva no cache
       imageCache.set(propertyId, {
@@ -554,7 +545,6 @@ export async function getPropertyImages(propertyId: string): Promise<string[]> {
       
       return imageUrls
     } catch (error) {
-      console.error('Erro ao buscar imagens:', error)
       // Remove da lista de requisições pendentes em caso de erro
       pendingRequests.delete(propertyId)
       return []
@@ -604,7 +594,6 @@ export async function getNeighborhoods(
       total: data.total || 0,
     }
   } catch (error) {
-    console.error('Erro ao buscar bairros:', error)
     return {
       neighborhoods: [],
       total: 0,
@@ -655,7 +644,6 @@ export async function getFeaturedProperties(
 
     return response.json()
   } catch (error) {
-    console.error('Erro ao buscar propriedades em destaque:', error)
     return {
       properties: [],
       total: 0,

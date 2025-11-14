@@ -65,7 +65,6 @@ export const LoginModal = ({
   }, [prefillEmail])
 
   const handleGoogleLoginSuccess = (user: GoogleUser) => {
-    console.log('Login com Google realizado:', user)
     setSuccessMessage(`Bem-vindo, ${user.name}!`)
     
     // TODO: Enviar dados do usuário para o backend
@@ -78,7 +77,6 @@ export const LoginModal = ({
   }
 
   const handleGoogleLoginError = (error: Error) => {
-    console.error('Erro no login com Google:', error)
     setErrorMessage('Erro ao fazer login com Google. Tente novamente.')
   }
 
@@ -150,7 +148,6 @@ export const LoginModal = ({
 
   const handleForgotPassword = () => {
     // TODO: Implementar recuperação de senha
-    console.log('Esqueceu senha')
   }
 
   return (

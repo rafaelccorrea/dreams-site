@@ -142,8 +142,6 @@ export const MyPropertyPage = () => {
 
   // Debug: verificar se propriedade está sendo carregada
   useEffect(() => {
-    console.log('Property state:', property)
-    console.log('Loading state:', loading)
   }, [property, loading])
 
   // Carregar imagens da propriedade quando ela existir
@@ -151,11 +149,9 @@ export const MyPropertyPage = () => {
     if (property && property.id) {
       getPublicPropertyImages(property.id)
         .then((images: string[]) => {
-          console.log('Imagens carregadas:', images)
           setPropertyImages(images || [])
         })
         .catch((err: unknown) => {
-          console.error('Erro ao carregar imagens:', err)
           setPropertyImages([])
         })
     } else {
@@ -251,7 +247,6 @@ export const MyPropertyPage = () => {
         }
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error)
     } finally {
       setLoadingCEP(false)
     }
@@ -385,7 +380,6 @@ export const MyPropertyPage = () => {
         try {
           await uploadImages(newProperty.id, selectedImages)
         } catch (uploadErr) {
-          console.error('Erro ao fazer upload de imagens:', uploadErr)
           setFormErrors({ _general: 'Propriedade criada, mas houve erro ao fazer upload das imagens. Você pode adicioná-las depois.' })
         }
       }
@@ -414,7 +408,6 @@ export const MyPropertyPage = () => {
       await deleteProperty(property.id)
       setDeleteDialogOpen(false)
     } catch (err) {
-      console.error('Erro ao deletar propriedade:', err)
     } finally {
       setDeleteLoading(false)
     }

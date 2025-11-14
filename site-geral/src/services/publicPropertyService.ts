@@ -157,27 +157,19 @@ export async function getMyProperty(): Promise<GetMyPropertyResponse> {
   const contentType = response.headers.get('content-type')
   const text = await response.text()
   
-  console.log('Resposta getMyProperty - Status:', response.status)
-  console.log('Resposta getMyProperty - Content-Type:', contentType)
-  console.log('Resposta getMyProperty - Text:', text)
-  
   // Se não houver conteúdo ou não for JSON, retornar null
   if (!text || text.trim().length === 0) {
-    console.warn('Resposta vazia do servidor')
     return null
   }
   
   if (!contentType || !contentType.includes('application/json')) {
-    console.warn('Content-Type não é JSON:', contentType)
     return null
   }
   
   try {
     const parsed = JSON.parse(text) as GetMyPropertyResponse
-    console.log('Propriedade parseada:', parsed)
     return parsed
   } catch (error) {
-    console.error('Erro ao fazer parse da resposta JSON:', error)
     // Se não conseguir fazer parse, retornar null
     return null
   }
@@ -240,7 +232,6 @@ export async function getPublicPropertyImages(propertyId: string): Promise<strin
 
     const data = await response.json()
     
-    console.log('Resposta da API de imagens:', data)
     
     // A API retorna um objeto com { images: [...], total: number } ou um array direto
     let imageObjects: GalleryImage[] = []
@@ -250,7 +241,6 @@ export async function getPublicPropertyImages(propertyId: string): Promise<strin
     } else if (data.images && Array.isArray(data.images)) {
       imageObjects = data.images
     } else {
-      console.warn('Formato de resposta não reconhecido:', data)
       return []
     }
     
@@ -265,17 +255,14 @@ export async function getPublicPropertyImages(propertyId: string): Promise<strin
       
       // Log para debug: verificar qual URL está sendo usada
       if (img.thumbnailUrl && !img.url && !img.fileUrl) {
-        console.warn('⚠️ Usando thumbnailUrl (baixa qualidade) para imagem:', img.id || 'unknown')
       }
       
       return url
     }).filter((url: string) => url && url.trim() !== '')
     
-    console.log('URLs extraídas (priorizando qualidade):', imageUrls)
     
     return imageUrls
   } catch (error) {
-    console.error('Erro ao buscar imagens:', error)
     return []
   }
 }

@@ -97,76 +97,51 @@ export const NeighborhoodSelect = ({
   // Fecha o menu quando o valor mudar (garante que funcione mesmo dentro de Drawer)
   useEffect(() => {
     if (value && value !== '') {
-      console.log('[NeighborhoodSelect] useEffect - value changed to:', value, 'closing menu')
       setOpen(false)
     }
   }, [value])
 
   const handleChange = (event: SelectChangeEvent<string>) => {
     const newValue = event.target.value as string
-    console.log('[NeighborhoodSelect] handleChange CALLED')
-    console.log('[NeighborhoodSelect] Event:', event)
-    console.log('[NeighborhoodSelect] New value:', newValue)
-    console.log('[NeighborhoodSelect] Current value prop:', value)
-    console.log('[NeighborhoodSelect] Current open state:', open)
-    console.log('[NeighborhoodSelect] Available neighborhoods:', uniqueNeighborhoods.map(n => n.name))
     
     onChange(newValue)
-    console.log('[NeighborhoodSelect] onChange callback called with:', newValue)
     
     // Fecha o menu após selecionar
-    console.log('[NeighborhoodSelect] Setting open to false')
     setOpen(false)
-    console.log('[NeighborhoodSelect] After setOpen(false), open state will be:', false)
   }
 
 
   const handleClose = () => {
-    console.log('[NeighborhoodSelect] handleClose CALLED')
-    console.log('[NeighborhoodSelect] Current open state:', open)
     setOpen(false)
-    console.log('[NeighborhoodSelect] After handleClose, open state will be:', false)
   }
 
   const handleOpen = () => {
-    console.log('[NeighborhoodSelect] handleOpen CALLED')
-    console.log('[NeighborhoodSelect] Current open state:', open)
     setOpen(true)
-    console.log('[NeighborhoodSelect] After handleOpen, open state will be:', true)
   }
 
   // Verifica se o valor atual existe nas opções disponíveis
   // Se estiver carregando ou não houver bairros, sempre usa string vazia
   const selectValue = useMemo(() => {
-    console.log('[NeighborhoodSelect] selectValue useMemo - calculating...')
-    console.log('[NeighborhoodSelect] selectValue inputs - loading:', loading, 'value:', value, 'neighborhoods count:', uniqueNeighborhoods.length)
-    
     // Se está carregando, retorna string vazia temporariamente
     if (loading) {
-      console.log('[NeighborhoodSelect] selectValue: loading, returning empty string')
       return ''
     }
     
     // Se não há bairros disponíveis ainda, retorna string vazia
     if (uniqueNeighborhoods.length === 0) {
-      console.log('[NeighborhoodSelect] selectValue: no neighborhoods, returning empty string')
       return ''
     }
     
     // Se não há valor, retorna string vazia
     if (!value) {
-      console.log('[NeighborhoodSelect] selectValue: no value, returning empty string')
       return ''
     }
     
     // Verifica se o valor existe nas opções disponíveis
     const exists = uniqueNeighborhoods.some(n => n.name === value)
     const result = exists ? value : ''
-    console.log('[NeighborhoodSelect] selectValue calculated - value exists?', exists, 'value:', value, 'available:', uniqueNeighborhoods.map(n => n.name), 'returning:', result)
     return result
   }, [value, uniqueNeighborhoods, loading])
-
-  console.log('[NeighborhoodSelect] Render - open:', open, 'value prop:', value, 'selectValue:', selectValue, 'loading:', loading, 'neighborhoods count:', uniqueNeighborhoods.length)
 
   return (
     <StyledSelect fullWidth variant="outlined">
@@ -247,7 +222,6 @@ export const NeighborhoodSelect = ({
             <MenuItem 
               value=""
               onClick={() => {
-                console.log('[NeighborhoodSelect] MenuItem "Todos" clicked')
                 const syntheticEvent = {
                   target: { value: '' }
                 } as SelectChangeEvent<string>
@@ -256,15 +230,12 @@ export const NeighborhoodSelect = ({
             >
               <em>{placeholder}</em>
             </MenuItem>
-            {(() => {
-              console.log('[NeighborhoodSelect] Rendering MenuItems - count:', uniqueNeighborhoods.length, 'names:', uniqueNeighborhoods.map(n => n.name))
-              return uniqueNeighborhoods.map((neighborhood) => (
+            {uniqueNeighborhoods.map((neighborhood) => (
               <MenuItem 
                 key={neighborhood.name} 
                 value={neighborhood.name}
                 sx={{ py: 1.5 }}
                 onClick={() => {
-                  console.log('[NeighborhoodSelect] MenuItem clicked:', neighborhood.name)
                   // Cria evento sintético e chama handleChange diretamente
                   const syntheticEvent = {
                     target: { value: neighborhood.name }
@@ -289,8 +260,7 @@ export const NeighborhoodSelect = ({
                   sx={{ pointerEvents: 'none' }}
                 />
               </MenuItem>
-            ))
-            })()}
+            ))}
           </>
         )}
       </Select>

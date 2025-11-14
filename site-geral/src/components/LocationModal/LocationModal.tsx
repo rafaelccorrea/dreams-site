@@ -257,7 +257,6 @@ export const LocationModal = ({ open, onClose, forceOpen = false }: LocationModa
       setStates(data)
     } catch (err) {
       setError('Erro ao carregar estados. Tente novamente.')
-      console.error(err)
     } finally {
       setLoadingStates(false)
     }
@@ -271,7 +270,6 @@ export const LocationModal = ({ open, onClose, forceOpen = false }: LocationModa
       setCities(data)
     } catch (err) {
       setError('Erro ao carregar cidades. Tente novamente.')
-      console.error(err)
     } finally {
       setLoadingCities(false)
     }

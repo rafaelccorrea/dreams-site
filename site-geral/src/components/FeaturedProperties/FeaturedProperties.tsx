@@ -147,6 +147,9 @@ const CarouselScroll = styled(Box)`
   padding-left: ${({ theme }) => theme.spacing.lg};
   padding-right: ${({ theme }) => theme.spacing.lg};
   position: relative;
+  will-change: scroll-position;
+  transform: translateZ(0);
+  backface-visibility: hidden;
   
   /* Esconder scrollbar completamente */
   scrollbar-width: none; /* Firefox */
@@ -167,6 +170,8 @@ const CardWrapper = styled(Box)`
   flex: 0 0 380px;
   min-width: 380px;
   max-width: 380px;
+  transform: translateZ(0);
+  will-change: transform;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     flex: 0 0 320px;
@@ -372,7 +377,6 @@ export const FeaturedProperties = () => {
       })
       setProperties(result.properties || [])
     } catch (error) {
-      console.error('Erro ao carregar propriedades em destaque:', error)
       setProperties([])
     } finally {
       setLoading(false)
@@ -394,7 +398,7 @@ export const FeaturedProperties = () => {
     }
   }, [])
 
-  // Função para iniciar auto-scroll
+  // Função para iniciar auto-scroll usando setInterval (mais simples e estável)
   const startAutoScroll = useCallback(() => {
     // Limpa qualquer intervalo existente
     if (autoScrollIntervalRef.current) {
@@ -409,72 +413,55 @@ export const FeaturedProperties = () => {
     }
     
     autoScrollIntervalRef.current = setInterval(() => {
-      if (scrollRef.current && !isUserInteractingRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
-        const maxScroll = scrollWidth - clientWidth
-        
-        // Se não há scroll disponível, não faz nada
-        if (maxScroll <= 0) {
-          return
+      if (!scrollRef.current || isUserInteractingRef.current) {
+        if (autoScrollIntervalRef.current) {
+          clearInterval(autoScrollIntervalRef.current)
+          autoScrollIntervalRef.current = null
         }
-        
-        // Verifica se já está no fim com uma margem maior
-        if (scrollLeft >= maxScroll - 2) {
-          // Para o intervalo antes de resetar
-          if (autoScrollIntervalRef.current) {
-            clearInterval(autoScrollIntervalRef.current)
-            autoScrollIntervalRef.current = null
-          }
-          
-          // Aguarda um pouco antes de resetar para evitar loop
-          resetTimeoutRef.current = setTimeout(() => {
-            if (scrollRef.current && !isUserInteractingRef.current) {
-              const currentScroll = scrollRef.current.scrollLeft
-              const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
-              
-              // Animação de retrocesso rápida
-              const startTime = Date.now()
-              const duration = 600 // 600ms para retrocesso rápido
-              
-              const animate = () => {
-                if (!scrollRef.current || isUserInteractingRef.current) {
-                  resetTimeoutRef.current = null
-                  return
-                }
-                
-                const elapsed = Date.now() - startTime
-                const progress = Math.min(elapsed / duration, 1)
-                
-                // Easing function para animação suave
-                const easeOut = 1 - Math.pow(1 - progress, 3)
-                
-                scrollRef.current.scrollLeft = currentScroll - (currentScroll * easeOut)
-                
-                if (progress < 1) {
-                  requestAnimationFrame(animate)
-                } else {
-                  // Garante que chegou no início
-                  scrollRef.current.scrollLeft = 0
-                  // Aguarda um pouco antes de reiniciar o auto-scroll
-                  setTimeout(() => {
-                    if (!isUserInteractingRef.current && scrollRef.current) {
-                      startAutoScroll()
-                    }
-                  }, 200)
-                  resetTimeoutRef.current = null
-                }
-              }
-              
-              requestAnimationFrame(animate)
-            }
-          }, 300)
-          return
-        }
-        
-        // Move lentamente para a direita
-        scrollRef.current.scrollLeft = scrollLeft + 0.5
+        return
       }
-    }, 30)
+      
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      const maxScroll = scrollWidth - clientWidth
+      
+      // Se não há scroll disponível, não faz nada
+      if (maxScroll <= 0) {
+        if (autoScrollIntervalRef.current) {
+          clearInterval(autoScrollIntervalRef.current)
+          autoScrollIntervalRef.current = null
+        }
+        return
+      }
+      
+      // Verifica se já está no fim
+      if (scrollLeft >= maxScroll - 5) {
+        // Para o intervalo antes de resetar
+        if (autoScrollIntervalRef.current) {
+          clearInterval(autoScrollIntervalRef.current)
+          autoScrollIntervalRef.current = null
+        }
+        
+        // Aguarda um pouco antes de resetar
+        resetTimeoutRef.current = setTimeout(() => {
+          if (scrollRef.current && !isUserInteractingRef.current) {
+            // Reset suave usando scrollTo com behavior smooth
+            scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+            
+            // Aguarda a animação de reset terminar antes de reiniciar
+            setTimeout(() => {
+              if (!isUserInteractingRef.current && scrollRef.current) {
+                startAutoScroll()
+              }
+            }, 1500)
+            resetTimeoutRef.current = null
+          }
+        }, 1000)
+        return
+      }
+      
+      // Move suavemente para a direita (1 pixel a cada intervalo)
+      scrollRef.current.scrollLeft += 1
+    }, 20) // 20ms = 50fps, suave e estável
   }, [])
 
   // Pausar auto-scroll quando usuário interagir

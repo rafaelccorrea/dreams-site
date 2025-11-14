@@ -27,7 +27,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         // Se há localização salva, considera como confirmada (usuário já havia confirmado antes)
         setIsLocationConfirmed(true)
       } catch (error) {
-        console.error('Erro ao carregar localização:', error)
         localStorage.removeItem(STORAGE_KEY)
       }
     }

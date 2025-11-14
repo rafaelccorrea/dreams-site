@@ -41,7 +41,7 @@ export const HomePage = () => {
           setIsInitialLoad(false)
         }, 3000) // 3 segundos
       })
-      .catch((error) => console.error('Erro ao carregar animação Lottie:', error))
+      .catch(() => {})
   }, [])
 
   // Função para exibir o modal Lottie

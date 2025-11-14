@@ -85,7 +85,6 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
           }
         }
       } catch (err) {
-        console.error('Erro ao carregar estados:', err)
       } finally {
         setLoadingStates(false)
       }
@@ -110,7 +109,6 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
             }
           }
         } catch (err) {
-          console.error('Erro ao carregar cidades:', err)
         } finally {
           setLoadingCities(false)
         }

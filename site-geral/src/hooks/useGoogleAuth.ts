@@ -30,7 +30,6 @@ export const useGoogleAuth = (
         await waitForGoogleAuth()
         setIsReady(true)
       } catch (err) {
-        console.error('Erro ao inicializar Google Auth:', err)
         setError(err as Error)
       }
     }

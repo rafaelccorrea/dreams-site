@@ -53,7 +53,6 @@ export const CompaniesPage = () => {
         const data = await getAvailableCompanies(location.city);
         setCompanies(data);
       } catch (error) {
-        console.error("Erro ao carregar imobiliárias:", error);
         setCompanies([]);
       } finally {
         setLoading(false);

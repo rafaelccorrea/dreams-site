@@ -59,7 +59,6 @@ export const ShareButton = ({
           setSnackbarMessage('Link copiado para a área de transferência!')
           setSnackbarOpen(true)
         } catch (clipboardError) {
-          console.error('Erro ao copiar link:', clipboardError)
           setSnackbarMessage('Erro ao compartilhar. Tente novamente.')
           setSnackbarOpen(true)
         }

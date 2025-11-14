@@ -47,7 +47,6 @@ export async function fetchCepData(cep: string): Promise<ViaCepResponse | null> 
 
     return data
   } catch (error) {
-    console.error('Erro ao buscar CEP:', error)
     return null
   }
 }
