@@ -92,7 +92,7 @@ export const PropertyCardShimmer = ({ count = 1 }: PropertyCardShimmerProps) => 
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
-        <Grid item xs={12} sm={6} md={6} lg={6} xl={3} key={index}>
+        <Grid item xs={12} sm={6} md={6} lg={4} xl={3} key={index}>
           <StyledCard>
             <StyledCardMedia>
               <ShimmerImage />
