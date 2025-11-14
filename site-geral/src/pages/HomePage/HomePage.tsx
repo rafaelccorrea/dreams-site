@@ -25,7 +25,7 @@ export const HomePage = () => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchFilters, setSearchFilters] = useState<Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'> | undefined>(undefined)
-  const [homeAnimation, setHomeAnimation] = useState<any>(null)
+  const [homeAnimation, setHomeAnimation] = useState<Record<string, unknown> | null>(null)
   const [showLottieModal, setShowLottieModal] = useState(true)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
@@ -60,7 +60,7 @@ export const HomePage = () => {
     const transaction = searchParams.get('transaction') as 'sale' | 'rent' | undefined
 
     if (type || transaction) {
-      const filters: any = {}
+      const filters: Partial<Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'>> = {}
       
       if (type) {
         filters.type = type
@@ -92,6 +92,7 @@ export const HomePage = () => {
 
   const handleSearch = (filters: PropertySearchFilters) => {
     // Remove city, state, page e limit para passar apenas os filtros de busca
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { city, state, page, limit, ...filterProps } = filters
     
     // Criar um novo objeto para forçar a atualização do React, mesmo se os valores forem os mesmos
@@ -195,9 +196,11 @@ export const HomePage = () => {
     })
   }
 
+  const isLottieModalOpen = showLottieModal && homeAnimation !== null
+
   return (
     <PageContainer>
-      <LottieModal $isOpen={showLottieModal && homeAnimation}>
+      <LottieModal $isOpen={isLottieModalOpen}>
         <LottieModalBackdrop onClick={() => setShowLottieModal(false)} />
         <LottieModalContent>
           <LottieContainer>

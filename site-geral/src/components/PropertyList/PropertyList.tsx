@@ -10,19 +10,17 @@ import { useLocation } from '../../contexts/LocationContext'
 
 const ContainerWrapper = styled(Box)`
   width: 100%;
-  padding-top: ${({ theme }) => theme.spacing['2xl']};
+  padding-top: ${({ theme }) => theme.spacing.xl};
   padding-bottom: ${({ theme }) => theme.spacing['2xl']};
   background: ${({ theme }) => theme.colors.background};
   position: relative;
   z-index: 3;
-  margin-top: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.lg};
   max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
   padding-left: ${({ theme }) => theme.spacing.lg};
   padding-right: ${({ theme }) => theme.spacing.lg};
-  border-radius: ${({ theme }) => theme.borderRadius.lg} ${({ theme }) => theme.borderRadius.lg} 0 0;
-  box-shadow: ${({ theme }) => theme.shadows.sm};
   
   /* Garantir que a imagem de background não apareça aqui */
   &::before {
@@ -34,7 +32,11 @@ const ContainerWrapper = styled(Box)`
     bottom: 0;
     background: ${({ theme }) => theme.colors.background};
     z-index: -1;
-    border-radius: ${({ theme }) => theme.borderRadius.lg} ${({ theme }) => theme.borderRadius.lg} 0 0;
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    margin-top: ${({ theme }) => theme.spacing.xl};
+    padding-top: ${({ theme }) => theme.spacing.xl};
   }
 `
 
@@ -71,14 +73,14 @@ const SectionTitle = styled(Typography)`
 
 const SectionSubtitle = styled(Typography)`
   color: ${({ theme }) => theme.colors.textSecondary};
-  margin-bottom: ${({ theme }) => theme.spacing['3xl'] || '64px'};
+  margin-bottom: 80px;
   text-align: left;
   padding-left: ${({ theme }) => theme.spacing.lg};
   font-size: 1rem;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     padding-left: ${({ theme }) => theme.spacing.md};
-    margin-bottom: ${({ theme }) => theme.spacing['2xl'] || '48px'};
+    margin-bottom: 64px;
   }
 `
 
@@ -427,8 +429,8 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters, onRem
   const hasFilters = filters && Object.keys(filters).length > 0
 
   // Função para formatar o label do filtro
-  const getFilterLabel = (key: string, value: any): string => {
-    const labels: Record<string, (val: any) => string> = {
+  const getFilterLabel = (key: string, value: unknown): string => {
+    const labels: Record<string, (val: unknown) => string> = {
       type: (val) => {
         const typeMap: Record<string, string> = {
           house: 'Casa',
@@ -437,27 +439,48 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters, onRem
           land: 'Terreno',
           rural: 'Rural',
         }
-        return typeMap[val] || val
+        return typeMap[String(val)] || String(val)
       },
       operation: (val) => {
         const operationMap: Record<string, string> = {
           sale: 'Venda',
           rent: 'Aluguel',
         }
-        return operationMap[val] || val
+        return operationMap[String(val)] || String(val)
       },
-      neighborhood: (val) => `Bairro: ${val}`,
-      bedrooms: (val) => `${val} ${val === 1 ? 'quarto' : 'quartos'}`,
-      bathrooms: (val) => `${val} ${val === 1 ? 'banheiro' : 'banheiros'}`,
-      parkingSpaces: (val) => `${val} ${val === 1 ? 'vaga' : 'vagas'}`,
-      minPrice: (val) => `Preço mínimo: R$ ${val.toLocaleString('pt-BR')}`,
-      maxPrice: (val) => `Preço máximo: R$ ${val.toLocaleString('pt-BR')}`,
-      minArea: (val) => `Área mínima: ${val} m²`,
-      maxArea: (val) => `Área máxima: ${val} m²`,
+      neighborhood: (val) => `Bairro: ${String(val)}`,
+      bedrooms: (val) => {
+        const num = Number(val)
+        return `${num} ${num === 1 ? 'quarto' : 'quartos'}`
+      },
+      bathrooms: (val) => {
+        const num = Number(val)
+        return `${num} ${num === 1 ? 'banheiro' : 'banheiros'}`
+      },
+      parkingSpaces: (val) => {
+        const num = Number(val)
+        return `${num} ${num === 1 ? 'vaga' : 'vagas'}`
+      },
+      minPrice: (val) => {
+        const num = Number(val)
+        return `Preço mínimo: R$ ${num.toLocaleString('pt-BR')}`
+      },
+      maxPrice: (val) => {
+        const num = Number(val)
+        return `Preço máximo: R$ ${num.toLocaleString('pt-BR')}`
+      },
+      minArea: (val) => {
+        const num = Number(val)
+        return `Área mínima: ${num} m²`
+      },
+      maxArea: (val) => {
+        const num = Number(val)
+        return `Área máxima: ${num} m²`
+      },
       isFeatured: () => 'Apenas em destaque',
       features: (val) => {
         if (Array.isArray(val) && val.length > 0) {
-          return val.length === 1 ? val[0] : `${val.length} características`
+          return val.length === 1 ? String(val[0]) : `${val.length} características`
         }
         return ''
       },
@@ -466,14 +489,14 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters, onRem
     if (labels[key]) {
       return labels[key](value)
     }
-    return `${key}: ${value}`
+    return `${key}: ${String(value)}`
   }
 
   // Função para obter os filtros ativos formatados
   const getActiveFilters = () => {
     if (!filters) return []
     
-    const activeFilters: Array<{ key: string; label: string; value?: any }> = []
+    const activeFilters: Array<{ key: string; label: string; value?: unknown }> = []
     
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -514,12 +537,12 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters, onRem
   }
 
   return (
-    <ContainerWrapper ref={containerRef}>
+    <ContainerWrapper ref={containerRef} sx={{ paddingTop: '16px !important', marginTop: '0 !important' }}>
       <SectionTitle variant="h3">
         Propriedades em {location.city}
         {location.state && ` - ${location.state}`}
       </SectionTitle>
-      <SectionSubtitle variant="body1">
+      <SectionSubtitle variant="body1" sx={{ marginBottom: '48px', display: 'block' }}>
         {loading
           ? 'Buscando propriedades...'
           : total > 0

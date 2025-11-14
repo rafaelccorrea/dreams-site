@@ -10,12 +10,13 @@ import { useLocation } from '../../contexts/LocationContext'
 
 const FeaturedContainer = styled(Box)`
   width: 100%;
-  padding-top: ${({ theme }) => theme.spacing['2xl']};
-  padding-bottom: ${({ theme }) => theme.spacing.md};
+  padding-top: ${({ theme }) => theme.spacing.lg};
+  padding-bottom: 0 !important;
   background: ${({ theme }) => theme.colors.background};
   position: relative;
   z-index: 2;
-  margin-top: ${({ theme }) => theme.spacing['2xl']};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
   max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
@@ -32,10 +33,17 @@ const FeaturedContainer = styled(Box)`
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: auto;
     background: ${({ theme }) => theme.colors.background};
     z-index: -1;
     border-radius: ${({ theme }) => theme.borderRadius.lg};
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    margin-top: ${({ theme }) => theme.spacing.md} !important;
+    padding-top: ${({ theme }) => theme.spacing.lg} !important;
+    margin-bottom: ${({ theme }) => theme.spacing.xl} !important;
+    padding-bottom: 0 !important;
   }
 `
 
@@ -44,6 +52,8 @@ const ContentWrapper = styled(Box)`
   z-index: 1;
   width: 100%;
   overflow: visible !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
 `
 
 const SectionHeader = styled(Box)`
@@ -84,7 +94,7 @@ const SectionTitle = styled(Typography)`
 
 const SectionSubtitle = styled(Typography)`
   color: ${({ theme }) => theme.colors.textSecondary};
-  margin-bottom: ${({ theme }) => theme.spacing['3xl'] || '64px'};
+  margin-bottom: ${({ theme }) => theme.spacing.xl} !important;
   margin-top: ${({ theme }) => theme.spacing.md};
   text-align: left;
   padding-left: ${({ theme }) => theme.spacing.lg};
@@ -92,7 +102,11 @@ const SectionSubtitle = styled(Typography)`
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     padding-left: ${({ theme }) => theme.spacing.md};
-    margin-bottom: ${({ theme }) => theme.spacing['2xl'] || '48px'};
+    margin-bottom: ${({ theme }) => theme.spacing.lg} !important;
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    margin-bottom: ${({ theme }) => theme.spacing.xl} !important;
   }
 `
 
@@ -101,8 +115,17 @@ const CarouselContainer = styled(Box)`
   width: 100%;
   padding-left: 0;
   padding-right: 0;
-  margin-bottom: 0;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  margin-top: ${({ theme }) => theme.spacing.md} !important;
   overflow: hidden !important;
+  
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    margin-top: ${({ theme }) => theme.spacing.lg} !important;
+  }
 
   /* Máscara de fade nas laterais para cards sumirem gradualmente */
   &::before,
@@ -146,6 +169,8 @@ const CarouselScroll = styled(Box)`
   -webkit-overflow-scrolling: touch;
   padding-left: ${({ theme }) => theme.spacing.lg};
   padding-right: ${({ theme }) => theme.spacing.lg};
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
   position: relative;
   will-change: scroll-position;
   transform: translateZ(0);
@@ -163,6 +188,13 @@ const CarouselScroll = styled(Box)`
     gap: ${({ theme }) => theme.spacing.md};
     padding-left: ${({ theme }) => theme.spacing.md};
     padding-right: ${({ theme }) => theme.spacing.md};
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
   }
 `
 
@@ -613,7 +645,18 @@ export const FeaturedProperties = () => {
   }
 
   return (
-    <FeaturedContainer>
+    <FeaturedContainer sx={{ 
+      marginTop: '16px !important',
+      paddingTop: '24px !important',
+      marginBottom: '32px !important', 
+      paddingBottom: '0 !important',
+      '@media (min-width: 768px)': {
+        marginTop: '16px !important',
+        paddingTop: '24px !important',
+        marginBottom: '32px !important',
+        paddingBottom: '0 !important',
+      }
+    }}>
       <ContentWrapper>
         <SectionHeader>
           <Box>
@@ -637,7 +680,7 @@ export const FeaturedProperties = () => {
             </CarouselScroll>
           </CarouselContainer>
         ) : (
-          <Box sx={{ position: 'relative', width: '100%' }}>
+          <Box sx={{ position: 'relative', width: '100%', marginBottom: '0 !important', paddingBottom: '0 !important' }}>
             <CarouselContainer>
               <CarouselScroll 
                 ref={scrollRef}

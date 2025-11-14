@@ -45,8 +45,8 @@ export const MainContentWrapper = styled.main<MainContentWrapperProps>`
       }
 
       @media (max-width: ${theme.breakpoints.md}) {
-        height: 80vh;
-        max-height: 80vh;
+        height: 110vh;
+        max-height: 110vh;
       }
     }
     
@@ -80,8 +80,8 @@ export const MainContentWrapper = styled.main<MainContentWrapperProps>`
       }
 
       @media (max-width: ${theme.breakpoints.md}) {
-        height: 80vh;
-        max-height: 80vh;
+        height: 110vh;
+        max-height: 110vh;
       }
     }
   `}
