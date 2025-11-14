@@ -13,28 +13,29 @@ export const fadeInUp = keyframes`
 `
 
 export const HomeContainer = styled(Container)`
-  min-height: calc(100vh - 200px);
-  max-height: calc(100vh - 200px + 150px);
+  min-height: auto;
+  max-height: none;
   position: relative;
   z-index: 2;
   overflow: hidden;
   display: flex;
   align-items: center;
-  padding-top: ${({ theme }) => theme.spacing['2xl']};
-  padding-bottom: ${({ theme }) => theme.spacing['2xl']};
+  padding-top: ${({ theme }) => theme.spacing.xl};
+  padding-bottom: ${({ theme }) => theme.spacing.xl};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) and (max-width: ${({ theme }) => theme.breakpoints.lg}) {
+    padding-top: ${({ theme }) => theme.spacing.lg};
+    padding-bottom: ${({ theme }) => theme.spacing.lg};
+  }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    min-height: calc(100vh - 180px);
-    max-height: calc(100vh - 180px + 150px);
-    padding-top: ${({ theme }) => theme.spacing.xl};
-    padding-bottom: ${({ theme }) => theme.spacing.xl};
+    padding-top: ${({ theme }) => theme.spacing.lg};
+    padding-bottom: ${({ theme }) => theme.spacing.lg};
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    min-height: auto;
-    max-height: none;
-    padding-top: ${({ theme }) => theme.spacing.lg};
-    padding-bottom: ${({ theme }) => theme.spacing.lg};
+    padding-top: ${({ theme }) => theme.spacing.md};
+    padding-bottom: ${({ theme }) => theme.spacing.md};
   }
 `
 

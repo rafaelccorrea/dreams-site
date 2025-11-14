@@ -186,7 +186,8 @@ const Title = styled(Typography)`
 const Address = styled(Typography)`
   color: ${({ theme }) => theme.colors.textSecondary};
   font-size: 0.875rem;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-top: ${({ theme }) => theme.spacing.xs};
 `
 
 const FeaturesContainer = styled(Box)`

@@ -124,6 +124,63 @@ export const HomePage = () => {
     }
   }
 
+  const handleRemoveFilter = (filterKey: string) => {
+    if (!searchFilters) return
+    
+    // Verificar se é uma característica individual (formato: "features:Nome da Característica")
+    if (filterKey.startsWith('features:')) {
+      const featureToRemove = filterKey.replace('features:', '')
+      const currentFeatures = searchFilters.features || []
+      const newFeatures = currentFeatures.filter((f: string) => f !== featureToRemove)
+      
+      const newFilters = { ...searchFilters }
+      if (newFeatures.length > 0) {
+        newFilters.features = newFeatures
+      } else {
+        delete newFilters.features
+      }
+      
+      // Verificar se sobrou algum filtro
+      const hasRemainingFilters = Object.values(newFilters).some(value => {
+        if (value === undefined || value === null) return false
+        if (typeof value === 'string' && value.trim() === '') return false
+        if (Array.isArray(value) && value.length === 0) return false
+        return true
+      })
+      
+      if (hasRemainingFilters) {
+        setSearchFilters(newFilters)
+      } else {
+        setSearchFilters(undefined)
+        setSearchParams({}, { replace: true })
+      }
+    } else {
+      // Criar novo objeto de filtros sem o filtro removido
+      const newFilters = { ...searchFilters }
+      delete newFilters[filterKey as keyof typeof newFilters]
+      
+      // Se não sobrou nenhum filtro, limpar tudo
+      const hasRemainingFilters = Object.values(newFilters).some(value => {
+        if (value === undefined || value === null) return false
+        if (typeof value === 'string' && value.trim() === '') return false
+        if (Array.isArray(value) && value.length === 0) return false
+        return true
+      })
+      
+      if (hasRemainingFilters) {
+        setSearchFilters(newFilters)
+      } else {
+        setSearchFilters(undefined)
+        setSearchParams({}, { replace: true })
+      }
+    }
+    
+    // Exibir Lottie quando filtro for removido (apenas se não for o carregamento inicial)
+    if (!isInitialLoad) {
+      showLottie()
+    }
+  }
+
   // Verificar se há filtros ativos
   const hasActiveFilters = () => {
     if (!searchFilters) return false
@@ -175,14 +232,21 @@ export const HomePage = () => {
           </Grid>
           <Grid item xs={12} md={6}>
             <RightSection>
-              <HeroCard onSearch={handleSearch} />
+              <HeroCard 
+                onSearch={handleSearch}
+                currentFilters={searchFilters}
+              />
             </RightSection>
           </Grid>
         </Grid>
       </HomeContainer>
       
       {!hasActiveFilters() && <FeaturedProperties />}
-      <PropertyList filters={searchFilters} onClearFilters={handleClearFilters} />
+      <PropertyList 
+        filters={searchFilters} 
+        onClearFilters={handleClearFilters}
+        onRemoveFilter={handleRemoveFilter}
+      />
       <ScrollToTop />
     </PageContainer>
   )

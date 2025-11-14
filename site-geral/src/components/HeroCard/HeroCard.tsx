@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Button, 
   TextField, 
@@ -18,10 +18,10 @@ import {
   Snackbar
 } from '@mui/material'
 import styled, { keyframes } from 'styled-components'
-import { Search, AttachMoney, FilterList, Close, LocalParking, Star } from '@mui/icons-material'
+import { Search, AttachMoney, FilterList, Close, Star } from '@mui/icons-material'
 import { formatCurrency, formatNumber } from '../../utils/masks'
 import { useLocation } from '../../contexts/LocationContext'
-import { searchProperties, PropertySearchFilters } from '../../services/propertyService'
+import { PropertySearchFilters } from '../../services/propertyService'
 import { NeighborhoodSelect } from '../NeighborhoodSelect'
 
 const fadeIn = keyframes`
@@ -288,6 +288,7 @@ const DrawerActions = styled.div`
 
 interface HeroCardProps {
   onSearch?: (filters: PropertySearchFilters) => void
+  currentFilters?: Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'> // Filtros atuais para sincronizar o estado
 }
 
 interface SearchErrorState {
@@ -309,7 +310,7 @@ const COMMON_FEATURES = [
   'Salão de festas',
 ]
 
-export const HeroCard = ({ onSearch }: HeroCardProps) => {
+export const HeroCard = ({ onSearch, currentFilters }: HeroCardProps) => {
   const { location } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [propertyType, setPropertyType] = useState('')
@@ -326,6 +327,108 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
   const [isFeatured, setIsFeatured] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<SearchErrorState>({ show: false, message: '' })
+
+  // Sincronizar estado interno com os filtros atuais quando um filtro é removido
+  useEffect(() => {
+    if (currentFilters === undefined) {
+      // Se não há filtros, limpar tudo
+      setBedrooms('')
+      setBathrooms('')
+      setParkingSpaces('')
+      setNeighborhood('')
+      setIsFeatured(false)
+      setAreaMin('')
+      setAreaMax('')
+      setOperation('both')
+      setSelectedFeatures([])
+      setPropertyType('')
+      setPriceMin('')
+      setPriceMax('')
+      return
+    }
+
+    // Sincronizar cada campo com os filtros atuais
+    if (currentFilters.bedrooms !== undefined) {
+      setBedrooms(String(currentFilters.bedrooms))
+    } else {
+      setBedrooms('')
+    }
+
+    if (currentFilters.bathrooms !== undefined) {
+      setBathrooms(String(currentFilters.bathrooms))
+    } else {
+      setBathrooms('')
+    }
+
+    if (currentFilters.parkingSpaces !== undefined) {
+      setParkingSpaces(String(currentFilters.parkingSpaces))
+    } else {
+      setParkingSpaces('')
+    }
+
+    if (currentFilters.neighborhood) {
+      setNeighborhood(currentFilters.neighborhood)
+    } else {
+      setNeighborhood('')
+    }
+
+    if (currentFilters.isFeatured !== undefined) {
+      setIsFeatured(currentFilters.isFeatured)
+    } else {
+      setIsFeatured(false)
+    }
+
+    if (currentFilters.minArea !== undefined) {
+      setAreaMin(formatNumber(String(currentFilters.minArea)))
+    } else {
+      setAreaMin('')
+    }
+
+    if (currentFilters.maxArea !== undefined) {
+      setAreaMax(formatNumber(String(currentFilters.maxArea)))
+    } else {
+      setAreaMax('')
+    }
+
+    if (currentFilters.operation) {
+      setOperation(currentFilters.operation)
+    } else {
+      setOperation('both')
+    }
+
+    if (currentFilters.features && currentFilters.features.length > 0) {
+      setSelectedFeatures(currentFilters.features)
+    } else {
+      setSelectedFeatures([])
+    }
+
+    // Tipo de imóvel
+    if (currentFilters.type) {
+      const typeMap: Record<string, string> = {
+        house: 'casa',
+        apartment: 'apartamento',
+        commercial: 'comercial',
+        land: 'terreno',
+        rural: 'rural',
+      }
+      setPropertyType(typeMap[currentFilters.type] || '')
+    } else {
+      setPropertyType('')
+    }
+
+    // Preços
+    if (currentFilters.minPrice !== undefined) {
+      setPriceMin(formatCurrency(String(currentFilters.minPrice)))
+    } else {
+      setPriceMin('')
+    }
+
+    if (currentFilters.maxPrice !== undefined) {
+      setPriceMax(formatCurrency(String(currentFilters.maxPrice)))
+    } else {
+      setPriceMax('')
+    }
+  }, [currentFilters])
 
   const handlePropertyTypeChange = (event: SelectChangeEvent<string>) => {
     setPropertyType(event.target.value)
@@ -344,7 +447,11 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
   }
 
   const handleNeighborhoodChange = (value: string) => {
+    console.log('[HeroCard] handleNeighborhoodChange CALLED')
+    console.log('[HeroCard] New value:', value)
+    console.log('[HeroCard] Current neighborhood state:', neighborhood)
     setNeighborhood(value)
+    console.log('[HeroCard] After setNeighborhood, neighborhood state will be:', value)
   }
 
   const handleFeaturedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -763,11 +870,12 @@ export const HeroCard = ({ onSearch }: HeroCardProps) => {
           </Button>
           <Button
             variant="contained"
-            onClick={toggleDrawer(false)}
+            onClick={handleSearch}
             fullWidth
             sx={{ textTransform: 'none' }}
+            disabled={loading || !location?.city}
           >
-            Aplicar Filtros
+            {loading ? 'Aplicando...' : 'Aplicar Filtros'}
           </Button>
         </DrawerActions>
       </Drawer>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Grid } from '@mui/material'
+import { Box, Typography, Grid, Chip, CircularProgress } from '@mui/material'
 import { Close as CloseIcon } from '@mui/icons-material'
 import styled from 'styled-components'
 import { PropertyCard } from '../PropertyCard'
@@ -138,6 +138,19 @@ const EndMessageSubtitle = styled(Typography)`
   color: rgba(255, 255, 255, 0.9);
 `
 
+const ActiveFiltersContainer = styled(Box)`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  }
+`
+
 const ClearFiltersContainer = styled(Box)`
   display: flex;
   align-items: center;
@@ -201,9 +214,10 @@ interface PropertyListProps {
   filters?: Omit<PropertySearchFilters, 'city' | 'state' | 'page' | 'limit'>
   shouldLoad?: boolean // Flag para controlar quando deve carregar
   onClearFilters?: () => void // Callback para limpar filtros
+  onRemoveFilter?: (filterKey: string) => void // Callback para remover um filtro específico
 }
 
-export const PropertyList = ({ filters, shouldLoad = true, onClearFilters }: PropertyListProps) => {
+export const PropertyList = ({ filters, shouldLoad = true, onClearFilters, onRemoveFilter }: PropertyListProps) => {
   const navigate = useNavigate()
   const { location, isLocationConfirmed } = useLocation()
   const [properties, setProperties] = useState<Property[]>([])
@@ -412,6 +426,79 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters }: Pro
   // Verificar se há filtros aplicados
   const hasFilters = filters && Object.keys(filters).length > 0
 
+  // Função para formatar o label do filtro
+  const getFilterLabel = (key: string, value: any): string => {
+    const labels: Record<string, (val: any) => string> = {
+      type: (val) => {
+        const typeMap: Record<string, string> = {
+          house: 'Casa',
+          apartment: 'Apartamento',
+          commercial: 'Comercial',
+          land: 'Terreno',
+          rural: 'Rural',
+        }
+        return typeMap[val] || val
+      },
+      operation: (val) => {
+        const operationMap: Record<string, string> = {
+          sale: 'Venda',
+          rent: 'Aluguel',
+        }
+        return operationMap[val] || val
+      },
+      neighborhood: (val) => `Bairro: ${val}`,
+      bedrooms: (val) => `${val} ${val === 1 ? 'quarto' : 'quartos'}`,
+      bathrooms: (val) => `${val} ${val === 1 ? 'banheiro' : 'banheiros'}`,
+      parkingSpaces: (val) => `${val} ${val === 1 ? 'vaga' : 'vagas'}`,
+      minPrice: (val) => `Preço mínimo: R$ ${val.toLocaleString('pt-BR')}`,
+      maxPrice: (val) => `Preço máximo: R$ ${val.toLocaleString('pt-BR')}`,
+      minArea: (val) => `Área mínima: ${val} m²`,
+      maxArea: (val) => `Área máxima: ${val} m²`,
+      isFeatured: () => 'Apenas em destaque',
+      features: (val) => {
+        if (Array.isArray(val) && val.length > 0) {
+          return val.length === 1 ? val[0] : `${val.length} características`
+        }
+        return ''
+      },
+    }
+
+    if (labels[key]) {
+      return labels[key](value)
+    }
+    return `${key}: ${value}`
+  }
+
+  // Função para obter os filtros ativos formatados
+  const getActiveFilters = () => {
+    if (!filters) return []
+    
+    const activeFilters: Array<{ key: string; label: string; value?: any }> = []
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        if (Array.isArray(value) && value.length > 0) {
+          // Para características, criar um chip para cada uma
+          if (key === 'features') {
+            value.forEach((feature) => {
+              activeFilters.push({ key: 'features', label: feature, value: feature })
+            })
+          } else {
+            activeFilters.push({ key, label: getFilterLabel(key, value), value })
+          }
+        } else if (typeof value === 'boolean' && value) {
+          activeFilters.push({ key, label: getFilterLabel(key, value), value })
+        } else if (typeof value === 'number' && value > 0) {
+          activeFilters.push({ key, label: getFilterLabel(key, value), value })
+        } else if (typeof value === 'string' && value.trim() !== '') {
+          activeFilters.push({ key, label: getFilterLabel(key, value), value })
+        }
+      }
+    })
+    
+    return activeFilters
+  }
+
   // Função para contar quantos filtros estão ativos
   const getActiveFiltersCount = () => {
     if (!filters) return 0
@@ -439,6 +526,50 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters }: Pro
             ? `${total} propriedade${total === 1 ? '' : 's'} encontrada${total === 1 ? '' : 's'}`
             : ''}
       </SectionSubtitle>
+
+      {/* Filtros ativos com chips removíveis */}
+      {hasFilters && getActiveFilters().length > 0 && (
+        <ActiveFiltersContainer>
+          {getActiveFilters().map((filter, index) => (
+            <Chip
+              key={`${filter.key}-${index}-${filter.value || filter.label}`}
+              label={filter.label}
+              onDelete={() => {
+                if (onRemoveFilter) {
+                  // Se for uma característica individual, passar o valor também
+                  if (filter.key === 'features' && filter.value) {
+                    onRemoveFilter(`features:${filter.value}`)
+                  } else {
+                    onRemoveFilter(filter.key)
+                  }
+                }
+              }}
+              deleteIcon={<CloseIcon />}
+              sx={{
+                backgroundColor: (theme) => theme.palette.primary.main,
+                color: 'white',
+                fontWeight: 500,
+                height: 32,
+                '& .MuiChip-label': {
+                  color: 'white',
+                  fontWeight: 500,
+                  padding: '0 12px',
+                },
+                '& .MuiChip-deleteIcon': {
+                  color: 'white',
+                  marginRight: '4px',
+                  '&:hover': {
+                    color: 'rgba(255, 255, 255, 0.8)',
+                  },
+                },
+                '&:hover': {
+                  backgroundColor: (theme) => theme.palette.primary.dark,
+                },
+              }}
+            />
+          ))}
+        </ActiveFiltersContainer>
+      )}
 
       {/* Botão de limpar filtros */}
       {hasFilters && onClearFilters && (
@@ -481,9 +612,9 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters }: Pro
           {hasMore && (
             <LoadMoreTrigger ref={observerTarget}>
               {loadingMore && (
-                <PropertiesGrid container spacing={{ xs: 2, sm: 3, md: 3 }} sx={{ mt: 2 }}>
-                  <PropertyCardShimmer count={3} />
-                </PropertiesGrid>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                  <CircularProgress size={40} />
+                </Box>
               )}
             </LoadMoreTrigger>
           )}

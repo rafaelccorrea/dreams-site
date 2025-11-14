@@ -25,8 +25,8 @@ export const MainContentWrapper = styled.main<MainContentWrapperProps>`
       top: 0;
       left: 0;
       right: 0;
-      height: calc(100vh - 100px + 150px);
-      max-height: calc(100vh - 100px + 150px);
+      height: calc(100vh - 100px + 50px);
+      max-height: calc(100vh - 100px + 50px);
       background-image: url('/background.jpg');
       background-size: cover;
       background-position: center top;
@@ -34,9 +34,14 @@ export const MainContentWrapper = styled.main<MainContentWrapperProps>`
       background-attachment: scroll;
       z-index: 0;
 
+      @media (min-width: ${theme.breakpoints.md}) and (max-width: ${theme.breakpoints.lg}) {
+        height: 60vh;
+        max-height: 60vh;
+      }
+
       @media (max-width: ${theme.breakpoints.md}) {
-        height: calc(100vh - 90px + 150px);
-        max-height: calc(100vh - 90px + 150px);
+        height: 70vh;
+        max-height: 70vh;
       }
     }
     
@@ -47,8 +52,8 @@ export const MainContentWrapper = styled.main<MainContentWrapperProps>`
       top: 0;
       left: 0;
       right: 0;
-      height: calc(100vh - 100px + 150px);
-      max-height: calc(100vh - 100px + 150px);
+      height: calc(100vh - 100px + 50px);
+      max-height: calc(100vh - 100px + 50px);
       background: linear-gradient(
         135deg,
         rgba(51, 112, 166, 0.35) 0%,
@@ -59,9 +64,14 @@ export const MainContentWrapper = styled.main<MainContentWrapperProps>`
       );
       z-index: 1;
 
+      @media (min-width: ${theme.breakpoints.md}) and (max-width: ${theme.breakpoints.lg}) {
+        height: 60vh;
+        max-height: 60vh;
+      }
+
       @media (max-width: ${theme.breakpoints.md}) {
-        height: calc(100vh - 90px + 150px);
-        max-height: calc(100vh - 90px + 150px);
+        height: 70vh;
+        max-height: 70vh;
       }
     }
   `}

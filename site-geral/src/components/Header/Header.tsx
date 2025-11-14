@@ -30,6 +30,15 @@ import {
   ChevronIcon,
   MobileLocationIcon,
   MobileLoginButton,
+  MobileMenuItem,
+  MobileSubmenu,
+  MobileSubmenuItem,
+  MobileUserSection,
+  MobileUserInfo,
+  MobileUserLocation,
+  MobileLogoutButton,
+  MobileNavLink,
+  MobileMcmvNavLink,
 } from './Header.styles'
 import { StyledButton } from './HeaderButton'
 import { NavItem } from './Header.types'
@@ -69,6 +78,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false)
+    setOpenMobileSubmenu(null)
   }
 
   const handleLogout = () => {
@@ -327,21 +337,23 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
 
           {/* Seção Direita - Localização, Meu Perfil e Botão Entrar/Usuário */}
           <RightSection>
-            {/* LocationIndicator - apenas desktop quando não logado */}
+            {/* LocationIndicator - desktop e tablet quando não logado */}
             {!isAuthenticated && (
               <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                 <LocationIndicator />
               </Box>
             )}
             
-            {/* Ícone de localização - apenas mobile quando não logado */}
+            {/* Ícone de localização - apenas mobile (< 768px) quando não logado */}
             {!isAuthenticated && (
-              <MobileLocationIcon onClick={() => setLocationModalOpen(true)}>
-                <LocationOn />
-              </MobileLocationIcon>
+              <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+                <MobileLocationIcon onClick={() => setLocationModalOpen(true)}>
+                  <LocationOn />
+                </MobileLocationIcon>
+              </Box>
             )}
             
-            {/* Menu "Meu Perfil" - apenas desktop quando logado */}
+            {/* Menu "Meu Perfil" - desktop e tablet quando logado */}
             {isAuthenticated && meuPerfilMenu && (
               <Box sx={{ display: { xs: 'none', md: 'block' }, position: 'relative' }}>
                 <NavLinkWithDropdown
@@ -356,6 +368,20 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                     }
                   }}
                   onMouseLeave={handleDropdownLeave}
+                  onClick={(e) => {
+                    // Para tablets/dispositivos touch, toggle no click
+                    if (window.innerWidth >= 768 && window.innerWidth < 1024) {
+                      e.preventDefault()
+                      if (meuPerfilMenu) {
+                        if (openDropdown === meuPerfilMenu.href) {
+                          setOpenDropdown(null)
+                          setDropdownPosition(null)
+                        } else {
+                          handleDropdownEnter(meuPerfilMenu.href, navItemRefs.current[meuPerfilMenu.href])
+                        }
+                      }
+                    }
+                  }}
                 >
                   <NavLink
                     to={meuPerfilMenu.href}
@@ -383,6 +409,10 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
                       }
                     }}
                     onMouseLeave={handleDropdownLeave}
+                    onClick={(e) => {
+                      // Prevenir fechamento ao clicar dentro do dropdown em tablets
+                      e.stopPropagation()
+                    }}
                   >
                     {user && (
                       <>
@@ -476,7 +506,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               </Box>
             )}
             
-            {/* Botão Entrar - apenas desktop quando não logado */}
+            {/* Botão Entrar - desktop e tablet quando não logado */}
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
               {!isAuthenticated && (
                 <StyledButton 
@@ -499,60 +529,81 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
         {/* Menu Mobile */}
         <MobileMenu $isOpen={mobileMenuOpen}>
           {navItems.map((item) => {
-            // No mobile, renderizar todos os subitens diretamente, sem mostrar o item pai
+            // Itens com submenu - criar menu expansível
             if (item.submenu && item.submenu.length > 0) {
-              return item.submenu.map((subItem) => {
-                // Mapear sub-itens para filtros (mesma lógica do dropdown)
-                const getFilters = (href: string) => {
-                  const params = new URLSearchParams()
-                  
-                  if (href.includes('casas-a-venda')) {
-                    params.set('type', 'house')
-                    params.set('transaction', 'sale')
-                  } else if (href.includes('casas-para-alugar')) {
-                    params.set('type', 'house')
-                    params.set('transaction', 'rent')
-                  } else if (href.includes('apartamentos-a-venda')) {
-                    params.set('type', 'apartment')
-                    params.set('transaction', 'sale')
-                  } else if (href.includes('apartamentos-para-alugar')) {
-                    params.set('type', 'apartment')
-                    params.set('transaction', 'rent')
-                  } else if (href.includes('imoveis-comerciais-a-venda')) {
-                    params.set('type', 'commercial')
-                    params.set('transaction', 'sale')
-                  } else if (href.includes('imoveis-comerciais-para-alugar')) {
-                    params.set('type', 'commercial')
-                    params.set('transaction', 'rent')
-                  }
-                  
-                  return params.toString()
+              const isSubmenuOpen = openMobileSubmenu === item.href
+              
+              // Função para mapear sub-itens para filtros
+              const getFilters = (href: string) => {
+                const params = new URLSearchParams()
+                
+                if (href.includes('casas-a-venda')) {
+                  params.set('type', 'house')
+                  params.set('transaction', 'sale')
+                } else if (href.includes('casas-para-alugar')) {
+                  params.set('type', 'house')
+                  params.set('transaction', 'rent')
+                } else if (href.includes('apartamentos-a-venda')) {
+                  params.set('type', 'apartment')
+                  params.set('transaction', 'sale')
+                } else if (href.includes('apartamentos-para-alugar')) {
+                  params.set('type', 'apartment')
+                  params.set('transaction', 'rent')
+                } else if (href.includes('imoveis-comerciais-a-venda')) {
+                  params.set('type', 'commercial')
+                  params.set('transaction', 'sale')
+                } else if (href.includes('imoveis-comerciais-para-alugar')) {
+                  params.set('type', 'commercial')
+                  params.set('transaction', 'rent')
                 }
                 
-                const filterParams = getFilters(subItem.href)
-                const finalHref = filterParams ? `/?${filterParams}` : '/'
-                
-                return (
-                  <NavLink
-                    key={subItem.href}
-                    to={finalHref}
-                    className={currentPath === subItem.href ? 'active' : ''}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      closeMobileMenu()
-                      navigate(finalHref)
+                return params.toString()
+              }
+              
+              return (
+                <Box key={item.href}>
+                  <MobileMenuItem
+                    $isOpen={isSubmenuOpen}
+                    onClick={() => {
+                      setOpenMobileSubmenu(isSubmenuOpen ? null : item.href)
                     }}
                   >
-                    {subItem.label}
-                  </NavLink>
-                )
-              })
+                    <span>{item.label}</span>
+                    <ChevronIcon className={isSubmenuOpen ? 'open' : ''}>
+                      <KeyboardArrowDown fontSize="small" />
+                    </ChevronIcon>
+                  </MobileMenuItem>
+                  
+                  {/* Submenu expandido */}
+                  <MobileSubmenu $isOpen={isSubmenuOpen}>
+                    {item.submenu.map((subItem) => {
+                      const filterParams = getFilters(subItem.href)
+                      const finalHref = filterParams ? `/?${filterParams}` : '/'
+                      
+                      return (
+                        <MobileSubmenuItem
+                          key={subItem.href}
+                          to={finalHref}
+                          className={currentPath === subItem.href ? 'active' : ''}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            closeMobileMenu()
+                            navigate(finalHref)
+                          }}
+                        >
+                          {subItem.label}
+                        </MobileSubmenuItem>
+                      )
+                    })}
+                  </MobileSubmenu>
+                </Box>
+              )
             }
             
             // Itens sem submenu aparecem normalmente
-            // Usar McmvNavLink para o link Minha Casa Minha Vida
+            // Usar MobileMcmvNavLink para o link Minha Casa Minha Vida
             const isMcmv = item.href === '/minha-casa-minha-vida'
-            const LinkComponent = isMcmv ? McmvNavLink : NavLink
+            const LinkComponent = isMcmv ? MobileMcmvNavLink : MobileNavLink
             
             // Se for MCMV e não estiver autenticado, abrir modal de login
             const handleMcmvClick = (e: React.MouseEvent) => {
@@ -576,6 +627,66 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
               </LinkComponent>
             )
           })}
+          
+          {/* Menu "Meu Perfil" no mobile quando logado */}
+          {isAuthenticated && meuPerfilMenu && (
+            <MobileUserSection>
+              <MobileMenuItem
+                $isOpen={openMobileSubmenu === meuPerfilMenu.href}
+                onClick={() => {
+                  setOpenMobileSubmenu(openMobileSubmenu === meuPerfilMenu.href ? null : meuPerfilMenu.href)
+                }}
+              >
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.25, flex: 1 }}>
+                  <span>{meuPerfilMenu.label}</span>
+                  {user && (
+                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#757575' }}>
+                      {getUserDisplayName()}
+                    </span>
+                  )}
+                </Box>
+                <ChevronIcon className={openMobileSubmenu === meuPerfilMenu.href ? 'open' : ''}>
+                  <KeyboardArrowDown fontSize="small" />
+                </ChevronIcon>
+              </MobileMenuItem>
+              
+              {/* Submenu expandido */}
+              <MobileSubmenu $isOpen={openMobileSubmenu === meuPerfilMenu.href}>
+                {user && location?.city && (
+                  <MobileUserInfo>
+                    <MobileUserLocation>
+                      <LocationOn fontSize="small" />
+                      <span>{location.city}, {location.state}</span>
+                    </MobileUserLocation>
+                  </MobileUserInfo>
+                )}
+                {meuPerfilMenu.submenu?.map((subItem) => (
+                  <MobileSubmenuItem
+                    key={subItem.href}
+                    to={subItem.href}
+                    className={currentPath === subItem.href ? 'active' : ''}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      closeMobileMenu()
+                      navigate(subItem.href)
+                    }}
+                  >
+                    {subItem.label}
+                  </MobileSubmenuItem>
+                ))}
+                <MobileLogoutButton
+                  onClick={(e) => {
+                    e.preventDefault()
+                    closeMobileMenu()
+                    handleLogout()
+                  }}
+                >
+                  <Logout fontSize="small" />
+                  Sair
+                </MobileLogoutButton>
+              </MobileSubmenu>
+            </MobileUserSection>
+          )}
           
           {/* Botão Entrar no mobile quando não logado */}
           {!isAuthenticated && (
