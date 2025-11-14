@@ -172,7 +172,7 @@ export const CompanyDetails = () => {
   // Atualizar título da página dinamicamente
   usePageTitle(
     company ? `${company.name} - Imobiliária - Dream Keys` : undefined,
-    company ? `Perfil da imobiliária ${company.name}${company.city ? ` em ${company.city}` : ''}${company.state ? `, ${company.state}` : ''}. Veja imóveis disponíveis e entre em contato.` : undefined
+    company ? `Perfil da imobiliária ${company.name}. Veja imóveis disponíveis e entre em contato.` : undefined
   )
 
   if (loading) return <CompanyDetailsShimmer />;

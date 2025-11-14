@@ -190,14 +190,14 @@ export const PropertyDetails = () => {
 
   // Atualizar título da página dinamicamente
   usePageTitle(
-    property ? `${property.title || `${getTypeLabel(property.type)} em ${property.city || ''}`} - Dream Keys` : undefined,
+    property ? `${property.title || getTypeLabel(property.type)} - Dream Keys` : undefined,
     property ? (() => {
       const priceText = property.salePrice && Number(property.salePrice) > 0
         ? formatPrice(property.salePrice)
         : property.rentPrice && Number(property.rentPrice) > 0
         ? formatPrice(property.rentPrice)
         : 'Preço sob consulta'
-      return `${property.title || `${getTypeLabel(property.type)} em ${property.city || ''}`} - ${priceText}`
+      return `${property.title || getTypeLabel(property.type)} - ${priceText}`
     })() : undefined
   )
 

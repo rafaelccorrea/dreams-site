@@ -17,8 +17,9 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import BusinessIcon from "@mui/icons-material/Business";
 import VerifiedIcon from "@mui/icons-material/Verified";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SortIcon from "@mui/icons-material/Sort";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CompanyCard } from "../../components/CompanyCard";
 import { CompanyCardShimmer } from "../../components/Shimmer";
 import { ScrollToTop } from "../../components/ScrollToTop";
@@ -109,21 +110,6 @@ export const CompaniesPage = () => {
           >
             Imobiliárias
           </Typography>
-          {location?.city && (
-            <Chip
-              icon={<LocationOnIcon />}
-              label={`${location.city}, ${location.state}`}
-              sx={{
-                bgcolor: "primary.main",
-                color: "white",
-                fontWeight: 600,
-                height: 32,
-                "& .MuiChip-icon": {
-                  color: "white",
-                },
-              }}
-            />
-          )}
         </Box>
         <Typography
           variant="body1"
@@ -141,6 +127,114 @@ export const CompaniesPage = () => {
       </PageHeader>
 
       <PageContent>
+        {/* Banner de Convite para Sistema de Gestão */}
+        <Box
+          sx={{
+            mb: { xs: 3, sm: 4 },
+            p: { xs: 2.5, sm: 3, md: 4 },
+            borderRadius: 3,
+            background: "linear-gradient(135deg, rgba(51, 112, 166, 0.1) 0%, rgba(139, 180, 217, 0.15) 100%)",
+            border: "2px solid rgba(51, 112, 166, 0.2)",
+            position: "relative",
+            overflow: "hidden",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: "200px",
+              height: "200px",
+              background: "radial-gradient(circle, rgba(51, 112, 166, 0.1) 0%, transparent 70%)",
+              borderRadius: "50%",
+              transform: "translate(30%, -30%)",
+            },
+          }}
+        >
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, alignItems: { xs: "flex-start", md: "center" }, position: "relative", zIndex: 1 }}>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+                <BusinessIcon sx={{ fontSize: 28, color: "#3370A6" }} />
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "text.primary",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem", md: "1.75rem" },
+                  }}
+                >
+                  Faça parte do nosso sistema de gestão
+                </Typography>
+              </Box>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: "text.secondary",
+                  fontSize: { xs: "0.9rem", sm: "1rem" },
+                  mb: 2,
+                  lineHeight: 1.6,
+                }}
+              >
+                Tenha suas propriedades no Dreams Keys e alcance mais clientes. Nosso sistema de gestão integrado facilita o gerenciamento dos seus imóveis e aumenta sua visibilidade no mercado.
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 18, color: "#3370A6" }} />
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    Gestão completa de propriedades
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 18, color: "#3370A6" }} />
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    Maior visibilidade para seus imóveis
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 18, color: "#3370A6" }} />
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    Ferramentas profissionais de gestão
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                component="button"
+                onClick={() => {
+                  // Aqui você pode adicionar um link ou ação para contato
+                  window.open("mailto:contato@dreamskeys.com?subject=Interesse no Sistema de Gestão", "_blank");
+                }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: { xs: 2.5, sm: 3 },
+                  py: { xs: 1.25, sm: 1.5 },
+                  bgcolor: "#3370A6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    bgcolor: "#2a5a85",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 4px 12px rgba(51, 112, 166, 0.3)",
+                  },
+                  "&:active": {
+                    transform: "translateY(0)",
+                  },
+                }}
+              >
+                Saiba mais
+                <ArrowForwardIcon sx={{ fontSize: 20 }} />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+
         {/* Filtros e Busca */}
         {location?.city && companies.length > 0 && (
           <Box sx={{ mb: { xs: 3, sm: 4 } }}>

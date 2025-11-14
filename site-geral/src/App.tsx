@@ -22,6 +22,7 @@ import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { LocationProtectedRoute } from './components/LocationProtectedRoute'
 import { usePageTitle } from './hooks/usePageTitle'
 import { Box } from '@mui/material'
 
@@ -80,9 +81,10 @@ function AppContent() {
   }, [hasLocation, showModal])
 
   const handleModalClose = () => {
-    // Sempre permite fechar quando chamado explicitamente
-    // O modal só é fechado via onClose quando o usuário confirma uma localização
-    setShowModal(false)
+    // Só permite fechar se tiver localização confirmada
+    if (hasLocation && isLocationConfirmed) {
+      setShowModal(false)
+    }
   }
 
   // Scroll automático ao topo quando mudar de rota
@@ -108,31 +110,58 @@ function AppContent() {
             }
           />
           {/* Rotas principais com URLs descritivas */}
-          <Route path="/imovel/:id" element={<PropertyDetails />} />
+          <Route 
+            path="/imovel/:id" 
+            element={
+              <LocationProtectedRoute>
+                <PropertyDetails />
+              </LocationProtectedRoute>
+            } 
+          />
           <Route 
             path="/corretores" 
             element={
-              <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
-                <BrokersPage />
-              </MainContentWrapper>
+              <LocationProtectedRoute>
+                <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
+                  <BrokersPage />
+                </MainContentWrapper>
+              </LocationProtectedRoute>
             } 
           />
-          <Route path="/corretor/:id" element={<BrokerDetails />} />
+          <Route 
+            path="/corretor/:id" 
+            element={
+              <LocationProtectedRoute>
+                <BrokerDetails />
+              </LocationProtectedRoute>
+            } 
+          />
           <Route 
             path="/imobiliarias" 
             element={
-              <MainContentWrapper $showBackground={false}>
-                <CompaniesPage />
-              </MainContentWrapper>
+              <LocationProtectedRoute>
+                <MainContentWrapper $showBackground={false}>
+                  <CompaniesPage />
+                </MainContentWrapper>
+              </LocationProtectedRoute>
             } 
           />
-          <Route path="/imobiliaria/:id" element={<CompanyDetails />} />
+          <Route 
+            path="/imobiliaria/:id" 
+            element={
+              <LocationProtectedRoute>
+                <CompanyDetails />
+              </LocationProtectedRoute>
+            } 
+          />
           <Route 
             path="/lancamentos" 
             element={
-              <MainContentWrapper $showBackground={false}>
-                <LancamentosPage />
-              </MainContentWrapper>
+              <LocationProtectedRoute>
+                <MainContentWrapper $showBackground={false}>
+                  <LancamentosPage />
+                </MainContentWrapper>
+              </LocationProtectedRoute>
             } 
           />
           <Route 
@@ -146,17 +175,21 @@ function AppContent() {
           <Route 
             path="/favoritos" 
             element={
-              <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
-                <FavoritesPage />
-              </MainContentWrapper>
+              <LocationProtectedRoute>
+                <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
+                  <FavoritesPage />
+                </MainContentWrapper>
+              </LocationProtectedRoute>
             } 
           />
           <Route 
             path="/minha-propriedade" 
             element={
-              <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
-                <MyPropertyPage />
-              </MainContentWrapper>
+              <LocationProtectedRoute>
+                <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
+                  <MyPropertyPage />
+                </MainContentWrapper>
+              </LocationProtectedRoute>
             } 
           />
           <Route 
@@ -190,7 +223,11 @@ function AppContent() {
         </Routes>
       </Box>
       <Footer />
-      <LocationModal open={showModal} onClose={handleModalClose} />
+      <LocationModal 
+        open={showModal} 
+        onClose={handleModalClose}
+        forceOpen={!hasLocation || !isLocationConfirmed}
+      />
     </Box>
   )
 }

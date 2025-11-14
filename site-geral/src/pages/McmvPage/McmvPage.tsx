@@ -70,17 +70,6 @@ export const McmvPage = () => {
           >
             Minha Casa Minha Vida
           </Typography>
-          {hasLocation && (
-            <Chip
-              label={`${location.city}, ${location.state}`}
-              sx={{
-                bgcolor: 'primary.main',
-                color: 'white',
-                fontWeight: 600,
-                height: 32,
-              }}
-            />
-          )}
         </Box>
         <Typography
           variant="body1"

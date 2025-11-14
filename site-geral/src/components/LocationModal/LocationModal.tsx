@@ -6,10 +6,6 @@ import {
   DialogActions,
   Button,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Typography,
   Autocomplete,
   Alert,
@@ -223,9 +219,10 @@ const StyledButton = styled(Button)`
 interface LocationModalProps {
   open: boolean
   onClose: () => void
+  forceOpen?: boolean // Se true, não permite fechar sem selecionar cidade
 }
 
-export const LocationModal = ({ open, onClose }: LocationModalProps) => {
+export const LocationModal = ({ open, onClose, forceOpen = false }: LocationModalProps) => {
   const { setLocation } = useLocation()
   const [states, setStates] = useState<BrazilianState[]>([])
   const [cities, setCities] = useState<City[]>([])
@@ -303,6 +300,20 @@ export const LocationModal = ({ open, onClose }: LocationModalProps) => {
     }
   }
 
+  const handleClose = (_event?: {}, reason?: string) => {
+    // Se forceOpen estiver ativo, não permite fechar sem selecionar cidade
+    if (forceOpen) {
+      if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+        return // Não permite fechar
+      }
+      // Só permite fechar se tiver cidade selecionada
+      if (!canSubmit) {
+        return // Não permite fechar
+      }
+    }
+    onClose()
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && canSubmit) {
       handleSubmit()
@@ -312,10 +323,10 @@ export const LocationModal = ({ open, onClose }: LocationModalProps) => {
   return (
     <StyledDialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
-      disableEscapeKeyDown
+      disableEscapeKeyDown={forceOpen}
       onKeyPress={handleKeyPress}
       $open={open}
       PaperProps={{

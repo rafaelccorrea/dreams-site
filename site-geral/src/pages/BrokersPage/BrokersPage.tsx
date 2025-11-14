@@ -106,21 +106,6 @@ export const BrokersPage = () => {
           >
             Corretores
           </Typography>
-          {location?.city && (
-            <Chip
-              icon={<LocationOnIcon />}
-              label={`${location.city}, ${location.state}`}
-              sx={{
-                bgcolor: "primary.main",
-                color: "white",
-                fontWeight: 600,
-                height: 32,
-                "& .MuiChip-icon": {
-                  color: "white",
-                },
-              }}
-            />
-          )}
         </Box>
         <Typography
           variant="body1"

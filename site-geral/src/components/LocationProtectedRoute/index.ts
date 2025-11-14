@@ -1,0 +1,2 @@
+export { LocationProtectedRoute } from './LocationProtectedRoute'
+
