@@ -13,7 +13,7 @@ export const ShimmerBase = styled.div`
   background: linear-gradient(
     90deg,
     ${({ theme }) => theme.colors.neutralLight} 0%,
-    ${({ theme }) => theme.colors.neutral} 50%,
+    ${({ theme }) => theme.colors.neutralMedium} 50%,
     ${({ theme }) => theme.colors.neutralLight} 100%
   );
   background-size: 1000px 100%;
@@ -25,6 +25,8 @@ export const ShimmerBox = styled(ShimmerBase)<{ width?: string; height?: string 
   width: ${({ width }) => width || '100%'};
   height: ${({ height }) => height || '20px'};
 `
+
+
 
 
 

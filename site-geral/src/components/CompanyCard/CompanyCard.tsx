@@ -1,4 +1,4 @@
-import { Paper, Typography, Box, Grid, Chip, Avatar, Divider } from '@mui/material'
+import { Paper, Typography, Box, Chip, Avatar, Divider } from '@mui/material'
 import { Phone, Email, LocationOn, Business, Language, Home } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { Company } from '../../services/propertyService'

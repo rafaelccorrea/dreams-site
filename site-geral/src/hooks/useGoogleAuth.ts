@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  initializeGoogleAuth,
   triggerGoogleLogin,
   waitForGoogleAuth,
-  isGoogleAuthReady,
   GoogleUser,
 } from '../services/authService'
 

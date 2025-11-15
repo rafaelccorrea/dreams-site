@@ -37,7 +37,6 @@ import {
   formatEmail,
   formatCEP,
   unformatCEP,
-  isValidCEP,
 } from '../../../utils/masks'
 
 interface EligibilityCheckProps {

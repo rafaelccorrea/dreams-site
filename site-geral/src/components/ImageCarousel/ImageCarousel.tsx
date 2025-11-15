@@ -471,6 +471,69 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
   const hasMoreImages = allImages.length > 5
   const remainingCount = allImages.length - 5
 
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!modalOpen) return
+    e.preventDefault()
+    
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    const newZoom = Math.max(1, Math.min(3, zoom + delta))
+    setZoom(newZoom)
+    
+    if (newZoom === 1) {
+      setTranslateX(0)
+      setTranslateY(0)
+    }
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom <= 1) return
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - translateX, y: e.clientY - translateY })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || zoom <= 1) return
+    setTranslateX(e.clientX - dragStart.x)
+    setTranslateY(e.clientY - dragStart.y)
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleImageLoad = () => {
+    setImageLoading(false)
+  }
+
+  const handleImageError = () => {
+    setImageLoading(false)
+  }
+
+  const handleImageDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (zoom === 1) {
+      setZoom(2)
+    } else {
+      setZoom(1)
+      setTranslateX(0)
+      setTranslateY(0)
+    }
+  }
+
+  const handleImageClick = (e: React.MouseEvent) => {
+    // Se não estiver com zoom, não faz nada (permite fechar ao clicar no backdrop)
+    if (zoom === 1) {
+      return
+    }
+    // Se estiver com zoom, não fecha o modal
+    e.stopPropagation()
+  }
+
+  const openModal = (index: number = 0) => {
+    setModalIndex(index)
+    setModalOpen(true)
+  }
+
   if (!allImages || allImages.length === 0) {
     return (
       <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }}>
@@ -646,71 +709,8 @@ export const ImageCarousel = ({ images, mainImage }: ImageCarouselProps) => {
     setCurrentIndex(index)
   }
 
-  const openModal = (index: number = 0) => {
-    setModalIndex(index)
-    setModalOpen(true)
-  }
-
   const goToModalImage = (index: number) => {
     setModalIndex(index)
-  }
-
-  const handleWheel = (e: React.WheelEvent) => {
-    if (!modalOpen) return
-    e.preventDefault()
-    
-    const delta = e.deltaY > 0 ? -0.1 : 0.1
-    const newZoom = Math.max(1, Math.min(3, zoom + delta))
-    setZoom(newZoom)
-    
-    if (newZoom === 1) {
-      setTranslateX(0)
-      setTranslateY(0)
-    }
-  }
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom <= 1) return
-    setIsDragging(true)
-    setDragStart({ x: e.clientX - translateX, y: e.clientY - translateY })
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || zoom <= 1) return
-    setTranslateX(e.clientX - dragStart.x)
-    setTranslateY(e.clientY - dragStart.y)
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  const handleImageLoad = () => {
-    setImageLoading(false)
-  }
-
-  const handleImageError = () => {
-    setImageLoading(false)
-  }
-
-  const handleImageDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (zoom === 1) {
-      setZoom(2)
-    } else {
-      setZoom(1)
-      setTranslateX(0)
-      setTranslateY(0)
-    }
-  }
-
-  const handleImageClick = (e: React.MouseEvent) => {
-    // Se não estiver com zoom, não faz nada (permite fechar ao clicar no backdrop)
-    if (zoom === 1) {
-      return
-    }
-    // Se estiver com zoom, não fecha o modal
-    e.stopPropagation()
   }
 
   return (

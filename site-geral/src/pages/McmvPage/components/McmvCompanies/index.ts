@@ -1,2 +1,2 @@
-export { McmvCompanies } from './McmvCompanies'
+export { McmvCompanies } from '../McmvCompanies'
 

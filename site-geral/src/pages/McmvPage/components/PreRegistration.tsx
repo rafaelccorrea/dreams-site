@@ -415,7 +415,7 @@ export const PreRegistration = ({ defaultCity, defaultState }: PreRegistrationPr
 
     try {
       const propertyPreferences = {
-        ...(propertyType && propertyType !== '' && { type: propertyType }),
+        ...(propertyType && { type: propertyType }),
         ...(minBedrooms && { minBedrooms: parseInt(minBedrooms) }),
         ...(maxValue && { maxValue: unformatCurrency(maxValue) }),
         ...(neighborhoods && {

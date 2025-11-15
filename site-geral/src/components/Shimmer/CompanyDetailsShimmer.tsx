@@ -26,6 +26,31 @@ const ShimmerButton = styled(ShimmerBase)`
   border-radius: 8px;
 `;
 
+const ShimmerBadge = styled(ShimmerBase)<{ $width?: number; $height?: number }>`
+  width: ${({ $width }) => $width || 24}px;
+  height: ${({ $height }) => $height || 24}px;
+  border-radius: 50%;
+`;
+
+const ShimmerTextCustom = styled(ShimmerText)<{ $width?: number | string; $height?: number; $mb?: number }>`
+  width: ${({ $width }) => typeof $width === 'number' ? `${$width}px` : $width || '150px'};
+  height: ${({ $height }) => $height || 16}px;
+  margin-bottom: ${({ $mb }) => $mb ? `${$mb * 8}px` : '0'};
+`;
+
+const ShimmerBoxCustom = styled(ShimmerBase)<{ $width?: number | string; $height?: number; $borderRadius?: number; $mx?: string; $mb?: number }>`
+  width: ${({ $width }) => typeof $width === 'number' ? `${$width}px` : $width || '40px'};
+  height: ${({ $height }) => $height || 40}px;
+  border-radius: ${({ $borderRadius, theme }) => $borderRadius ? `${$borderRadius}px` : theme.borderRadius.sm};
+  margin-left: ${({ $mx }) => $mx === 'auto' ? 'auto' : '0'};
+  margin-right: ${({ $mx }) => $mx === 'auto' ? 'auto' : '0'};
+  margin-bottom: ${({ $mb }) => $mb ? `${$mb * 8}px` : '0'};
+`;
+
+const ShimmerAvatarWithMargin = styled(ShimmerAvatar)`
+  margin-bottom: 16px;
+`;
+
 export const CompanyDetailsShimmer = () => {
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", pb: 10 }}>
@@ -116,7 +141,7 @@ export const CompanyDetailsShimmer = () => {
                         alignItems: "center",
                       }}
                     >
-                      <ShimmerAvatar sx={{ mb: 2 }} />
+                      <ShimmerAvatarWithMargin />
                       <Box
                         sx={{
                           display: "flex",
@@ -126,71 +151,23 @@ export const CompanyDetailsShimmer = () => {
                         }}
                       >
                         <ShimmerTitle />
-                        <ShimmerBase
-                          sx={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: "50%",
-                          }}
-                        />
+                        <ShimmerBadge />
                       </Box>
-                      <ShimmerText sx={{ width: 250, mb: 2 }} />
+                      <ShimmerTextCustom $width={250} $mb={2} />
                       <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: "center" }}>
-                        <ShimmerBase
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 1,
-                          }}
-                        />
-                        <ShimmerBase
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 1,
-                          }}
-                        />
+                        <ShimmerBoxCustom />
+                        <ShimmerBoxCustom />
                       </Stack>
 
                       {/* Estatísticas como rede social */}
                       <Stack direction="row" spacing={3} sx={{ mt: 3, width: "100%", justifyContent: "center" }}>
                         <Box sx={{ textAlign: "center" }}>
-                          <ShimmerBase
-                            sx={{
-                              width: 40,
-                              height: 28,
-                              borderRadius: 1,
-                              mx: "auto",
-                              mb: 0.5,
-                            }}
-                          />
-                          <ShimmerBase
-                            sx={{
-                              width: 60,
-                              height: 14,
-                              borderRadius: 1,
-                              mx: "auto",
-                            }}
-                          />
+                          <ShimmerBoxCustom $width={40} $height={28} $mx="auto" $mb={0.5} />
+                          <ShimmerBoxCustom $width={60} $height={14} $mx="auto" />
                         </Box>
                         <Box sx={{ textAlign: "center" }}>
-                          <ShimmerBase
-                            sx={{
-                              width: 40,
-                              height: 28,
-                              borderRadius: 1,
-                              mx: "auto",
-                              mb: 0.5,
-                            }}
-                          />
-                          <ShimmerBase
-                            sx={{
-                              width: 70,
-                              height: 14,
-                              borderRadius: 1,
-                              mx: "auto",
-                            }}
-                          />
+                          <ShimmerBoxCustom $width={40} $height={28} $mx="auto" $mb={0.5} />
+                          <ShimmerBoxCustom $width={70} $height={14} $mx="auto" />
                         </Box>
                       </Stack>
                     </Box>

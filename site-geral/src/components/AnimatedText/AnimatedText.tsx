@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Typography } from '@mui/material'
 import styled, { keyframes } from 'styled-components'
 
@@ -68,11 +67,6 @@ interface AnimatedTextProps {
 }
 
 export const AnimatedText = ({ title, subtitle, delay = 0 }: AnimatedTextProps) => {
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    setIsVisible(true)
-  }, [])
 
   return (
     <AnimatedContainer $delay={delay}>

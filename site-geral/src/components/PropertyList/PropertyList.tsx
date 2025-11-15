@@ -441,6 +441,13 @@ export const PropertyList = ({ filters, shouldLoad = true, onClearFilters, onRem
         }
         return typeMap[String(val)] || String(val)
       },
+      search: (val) => {
+        const searchMap: Record<string, string> = {
+          sale: 'Venda',
+          rent: 'Aluguel',
+        }
+        return searchMap[String(val)] || String(val)
+      },
       operation: (val) => {
         const operationMap: Record<string, string> = {
           sale: 'Venda',

@@ -5,7 +5,6 @@ import styled from 'styled-components'
 import { useFavorites } from '../../hooks/useFavorites'
 import { useAuth } from '../../hooks/useAuth'
 import { LoginModal } from '../LoginModal'
-import { RegisterModal } from '../RegisterModal'
 
 const StyledIconButton = styled(IconButton)`
   color: ${({ theme }) => theme.colors.error || '#d32f2f'};
@@ -47,7 +46,9 @@ export const FavoriteButton = ({
         try {
           const result = await checkFavorite(propertyId)
           setIsFavorite(result.isFavorite)
-        } catch (error) {
+        } catch {
+          // Silently fail - if check fails, default to not favorite
+          setIsFavorite(false)
         }
       }
       loadFavoriteStatus()

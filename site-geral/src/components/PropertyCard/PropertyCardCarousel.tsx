@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { IconButton, Box } from '@mui/material'
+import { IconButton } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 import styled from 'styled-components'
 import { ShimmerBase } from '../Shimmer'
@@ -45,7 +45,7 @@ const CarouselImage = styled.img<{ $isActive: boolean; $isLoaded: boolean }>`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: ${({ $isActive, $isLoaded }) => {
+  opacity: ${({ $isActive }) => {
     // Se é a imagem ativa, sempre mostra
     if ($isActive) return 1
     // Se não é ativa, sempre esconde
@@ -162,7 +162,7 @@ const Dot = styled.div<{ $isActive: boolean }>`
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: ${({ $isActive, theme }) =>
+  background: ${({ $isActive }) =>
     $isActive ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'};
   transition: all 0.3s ease;
   cursor: pointer;

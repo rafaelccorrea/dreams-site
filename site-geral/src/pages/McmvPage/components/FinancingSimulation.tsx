@@ -235,7 +235,7 @@ export const FinancingSimulation = ({ defaultCity, defaultState }: FinancingSimu
         return ''
       case 'cep':
         if (!value) return 'CEP é obrigatório'
-        const cepDigits = unformatCEP(value)
+        unformatCEP(value)
         if (!isValidCEP(value)) return 'CEP inválido (deve ter 8 dígitos)'
         return ''
       case 'city':

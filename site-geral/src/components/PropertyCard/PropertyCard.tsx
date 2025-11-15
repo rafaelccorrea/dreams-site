@@ -227,7 +227,7 @@ interface PropertyCardProps {
 
 export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideCode = false, isOwnProperty = false }: PropertyCardProps) => {
   const [images, setImages] = useState<string[]>([])
-  const [loadingImages, setLoadingImages] = useState(false)
+  const [, setLoadingImages] = useState(false)
 
   const getTypeLabel = (type: string) => {
     const types: Record<string, string> = {
@@ -274,7 +274,7 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
             
             setImages(combinedImages)
           })
-          .catch((error) => {
+          .catch(() => {
             if (mainImageUrl) {
               setImages([mainImageUrl])
             }
@@ -319,7 +319,7 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
             
             setImages(combinedImages)
           })
-          .catch((error) => {
+          .catch(() => {
             // Se falhar, usa a imagem principal se disponível
             if (mainImageUrl) {
               setImages([mainImageUrl])

@@ -1,2 +1,2 @@
-export { McmvProperties } from './McmvProperties'
+export { McmvProperties } from '../McmvProperties'
 

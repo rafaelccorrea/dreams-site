@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Fab, Zoom } from '@mui/material'
+import { Zoom } from '@mui/material'
 import { KeyboardArrowUp } from '@mui/icons-material'
 import { ScrollToTopButton } from './ScrollToTop.styles'
 

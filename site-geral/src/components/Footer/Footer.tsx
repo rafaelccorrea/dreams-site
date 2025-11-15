@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Link as MuiLink, Divider } from '@mui/material'
+import { Box, Typography, Divider } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { LocationOn, Email, Business, Description } from '@mui/icons-material'
 import { StyledFooter, FooterContainer, FooterContent, FooterSection, FooterLink, FooterInfo, FooterInfoItem, LogoContainer } from './Footer.styles'

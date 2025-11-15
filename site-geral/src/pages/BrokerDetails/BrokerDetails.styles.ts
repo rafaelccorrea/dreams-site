@@ -5,7 +5,7 @@ export const HeaderSection = styled(Box)`
   width: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: ${({ theme }) => theme.spacing.xl} 0
-    ${({ theme }) => theme.spacing["4xl"] || "80px"} 0;
+    ${({ theme }) => theme.spacing["3xl"] || "80px"} 0;
   color: white;
   position: relative;
   overflow: visible;

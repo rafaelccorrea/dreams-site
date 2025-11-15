@@ -1,6 +1,9 @@
 import { config } from '../config'
 import { Property } from './propertyService'
 
+// Re-export Property type for convenience
+export type { Property }
+
 /**
  * Remove /api se já estiver presente para evitar duplicação
  */
@@ -247,18 +250,14 @@ export async function getPublicPropertyImages(propertyId: string): Promise<strin
     // Extrair URLs das imagens
     // Prioriza: url (original) > fileUrl (arquivo original) > thumbnailUrl (versão comprimida)
     // Isso garante que sempre usemos a melhor qualidade disponível
-    const imageUrls = imageObjects.map((img: GalleryImage) => {
-      // Primeiro tenta url (URL completa da imagem)
-      // Depois fileUrl (caminho do arquivo original)
-      // Por último thumbnailUrl (versão comprimida/miniatura)
-      const url = img.url || img.fileUrl || img.thumbnailUrl
-      
-      // Log para debug: verificar qual URL está sendo usada
-      if (img.thumbnailUrl && !img.url && !img.fileUrl) {
-      }
-      
-      return url
-    }).filter((url: string) => url && url.trim() !== '')
+    const imageUrls = imageObjects
+      .map((img: GalleryImage) => {
+        // Primeiro tenta url (URL completa da imagem)
+        // Depois fileUrl (caminho do arquivo original)
+        // Por último thumbnailUrl (versão comprimida/miniatura)
+        return img.url || img.fileUrl || img.thumbnailUrl
+      })
+      .filter((url): url is string => url !== undefined && url !== null && url.trim() !== '')
     
     
     return imageUrls

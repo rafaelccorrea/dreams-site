@@ -6,7 +6,6 @@ import {
   KeyboardArrowDown, 
   Login as LoginIcon, 
   LocationOn,
-  Favorite,
   Logout
 } from '@mui/icons-material'
 import { Box, Typography } from '@mui/material'

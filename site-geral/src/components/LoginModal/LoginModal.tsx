@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
-  Button,
   Typography,
   Box,
   IconButton,
@@ -25,7 +24,6 @@ import {
   RegisterButton,
   ForgotPasswordLink,
   LogoContainer,
-  GoogleButton,
   StyledTextField,
   StyledDivider,
 } from './LoginModal.styles'
@@ -76,22 +74,27 @@ export const LoginModal = ({
     }, 1500)
   }
 
-  const handleGoogleLoginError = (error: Error) => {
+  const handleGoogleLoginError = () => {
     setErrorMessage('Erro ao fazer login com Google. Tente novamente.')
   }
 
-  const { login: googleLogin, isLoading: googleLoading, isReady: googleReady } = useGoogleAuth(
+  useGoogleAuth(
     handleGoogleLoginSuccess,
     handleGoogleLoginError
   )
 
-  const handleGoogleLogin = async () => {
-    if (!googleReady) {
-      setErrorMessage('Aguarde o Google carregar...')
-      return
-    }
-    await googleLogin()
-  }
+  // Função para login com Google (temporariamente desabilitada)
+  // const handleGoogleLogin = async () => {
+  //   const { login: googleLogin, isReady: googleReady } = useGoogleAuth(
+  //     handleGoogleLoginSuccess,
+  //     handleGoogleLoginError
+  //   )
+  //   if (!googleReady) {
+  //     setErrorMessage('Aguarde o Google carregar...')
+  //     return
+  //   }
+  //   await googleLogin()
+  // }
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatEmail(e.target.value)
@@ -154,7 +157,7 @@ export const LoginModal = ({
     <>
       <Dialog
         open={open}
-        onClose={(event, reason) => {
+        onClose={(_event, reason) => {
           // Só fechar se clicar no backdrop ou pressionar ESC
           if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
             onClose()
@@ -174,11 +177,11 @@ export const LoginModal = ({
             display: 'flex',
             flexDirection: 'column',
           },
-          onClick: (e) => {
+          onClick: (e: React.MouseEvent) => {
             // Prevenir propagação do clique dentro do Paper
             e.stopPropagation()
           },
-          onMouseDown: (e) => {
+          onMouseDown: (e: React.MouseEvent) => {
             // Prevenir propagação do mousedown dentro do Paper
             e.stopPropagation()
           },
@@ -257,8 +260,8 @@ export const LoginModal = ({
               {/* <GoogleButton
                 variant="outlined"
                 fullWidth
-                onClick={handleGoogleLogin}
-                disabled={googleLoading || !googleReady}
+                onClick={() => {}}
+                disabled={false}
                 size="large"
                 startIcon={
                   <Box

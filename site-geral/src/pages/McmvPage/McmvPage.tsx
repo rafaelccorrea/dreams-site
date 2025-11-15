@@ -6,7 +6,6 @@ import {
   Tab,
   Paper,
   Alert,
-  Chip,
 } from '@mui/material'
 import {
   CheckCircle,

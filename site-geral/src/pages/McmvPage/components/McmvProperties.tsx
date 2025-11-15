@@ -5,14 +5,12 @@ import {
   Grid,
   Typography,
   Alert,
-  CircularProgress,
   Pagination,
   Paper,
   Card,
   CardContent,
   CardMedia,
   Chip,
-  Button,
 } from '@mui/material'
 import {
   Bed,

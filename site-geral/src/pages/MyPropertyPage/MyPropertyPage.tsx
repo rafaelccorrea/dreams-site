@@ -151,7 +151,7 @@ export const MyPropertyPage = () => {
         .then((images: string[]) => {
           setPropertyImages(images || [])
         })
-        .catch((err: unknown) => {
+        .catch(() => {
           setPropertyImages([])
         })
     } else {
@@ -812,12 +812,12 @@ export const MyPropertyPage = () => {
                               </Box>
                             </Box>
                           )}
-                          {property.totalArea > 0 && (
+                          {property.totalArea && Number(property.totalArea) > 0 && (
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                               <SquareFoot sx={{ fontSize: 28, color: "#1976d2" }} />
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                  {formatArea(property.totalArea)}
+                                  {formatArea(String(property.totalArea))}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
                                   Área Total
@@ -825,12 +825,12 @@ export const MyPropertyPage = () => {
                               </Box>
                             </Box>
                           )}
-                          {property.builtArea > 0 && (
+                          {property.builtArea && Number(property.builtArea) > 0 && (
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                               <SquareFoot sx={{ fontSize: 28, color: "#1976d2" }} />
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                  {formatArea(property.builtArea)}
+                                  {formatArea(String(property.builtArea))}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
                                   Área Construída
@@ -944,7 +944,7 @@ export const MyPropertyPage = () => {
                                   : property.status}
                               </Typography>
                             </Box>
-                            {property.totalArea > 0 && (
+                            {property.totalArea && Number(property.totalArea) > 0 && (
                               <Box
                                 sx={{
                                   display: "flex",
@@ -964,11 +964,11 @@ export const MyPropertyPage = () => {
                                   Área Total:
                                 </Typography>
                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                  {formatArea(property.totalArea)}
+                                  {formatArea(String(property.totalArea))}
                                 </Typography>
                               </Box>
                             )}
-                            {property.builtArea > 0 && (
+                            {property.builtArea && Number(property.builtArea) > 0 && (
                               <Box
                                 sx={{
                                   display: "flex",
@@ -988,7 +988,7 @@ export const MyPropertyPage = () => {
                                   Área Construída:
                                 </Typography>
                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                  {formatArea(property.builtArea)}
+                                  {formatArea(String(property.builtArea))}
                                 </Typography>
                               </Box>
                             )}

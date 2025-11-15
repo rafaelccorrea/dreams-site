@@ -11,7 +11,6 @@ import {
   Divider,
   Avatar,
   Container,
-  IconButton,
   Stack,
 } from "@mui/material";
 import {
@@ -52,7 +51,7 @@ export const PropertyDetails = () => {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPublicProperty, setIsPublicProperty] = useState(false);
+  const [, setIsPublicProperty] = useState(false);
   
   // Verifica se a propriedade é do próprio usuário
   const isOwnProperty = isAuthenticated && myProperty && property && myProperty.id === property.id;

@@ -8,6 +8,9 @@
 import { config } from '../config'
 import { Property } from './propertyService'
 
+// Re-export Property type for convenience
+export type { Property }
+
 // Remove /api se já estiver presente para evitar duplicação
 const getApiBaseUrl = (): string => {
   const baseUrl = config.api.url.trim()

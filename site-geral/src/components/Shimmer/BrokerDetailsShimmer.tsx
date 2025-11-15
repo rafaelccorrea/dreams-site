@@ -41,6 +41,47 @@ const ShimmerIcon = styled(ShimmerBase)`
   margin-top: 4px;
 `;
 
+const ShimmerBadge = styled(ShimmerBase)<{ $width?: number; $height?: number }>`
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: ${({ $width }) => $width || 32}px;
+  height: ${({ $height }) => $height || 32}px;
+  border-radius: 50%;
+`;
+
+const ShimmerTitleCentered = styled(ShimmerTitle)`
+  margin: 0 auto;
+`;
+
+const ShimmerChipCentered = styled(ShimmerChip)`
+  margin: 0 auto;
+`;
+
+const ShimmerBoxSmall = styled(ShimmerBase)<{ $width?: number; $height?: number; $borderRadius?: number }>`
+  width: ${({ $width }) => $width || 40}px;
+  height: ${({ $height }) => $height || 40}px;
+  border-radius: ${({ $borderRadius, theme }) => $borderRadius ? `${$borderRadius}px` : theme.borderRadius.sm};
+`;
+
+const ShimmerTitleCustom = styled(ShimmerBase)<{ $width?: number; $height?: number; $mb?: number }>`
+  width: ${({ $width }) => $width || 220}px;
+  height: ${({ $height }) => $height || 28}px;
+  margin-bottom: ${({ $mb }) => $mb ? `${$mb * 8}px` : '0'};
+`;
+
+const ShimmerTextCustom = styled(ShimmerText)<{ $width?: number | string; $height?: number; $mb?: number }>`
+  width: ${({ $width }) => typeof $width === 'number' ? `${$width}px` : $width || '150px'};
+  height: ${({ $height }) => $height || 16}px;
+  margin-bottom: ${({ $mb }) => $mb ? `${$mb * 8}px` : '0'};
+`;
+
+const ShimmerButtonFull = styled(ShimmerBase)`
+  height: 40px;
+  width: 100%;
+  border-radius: 8px;
+`;
+
 export const BrokerDetailsShimmer = () => {
   return (
     <Box sx={{ bgcolor: "#ffffff", minHeight: "100vh" }}>
@@ -61,76 +102,55 @@ export const BrokerDetailsShimmer = () => {
                 <Stack alignItems="center" spacing={2}>
                   <Box sx={{ position: "relative" }}>
                     <ShimmerAvatar />
-                    <ShimmerBase
-                      sx={{
-                        position: "absolute",
-                        bottom: 5,
-                        right: 5,
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                      }}
-                    />
+                    <ShimmerBadge />
                   </Box>
 
                   <Box sx={{ textAlign: "center" }}>
-                    <ShimmerTitle sx={{ mx: "auto", mb: 2 }} />
-                    <ShimmerChip sx={{ mx: "auto" }} />
+                    <ShimmerTitleCentered style={{ marginBottom: '16px' }} />
+                    <ShimmerChipCentered />
                   </Box>
 
                   <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                    <ShimmerBase
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1,
-                      }}
-                    />
-                    <ShimmerBase
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1,
-                      }}
-                    />
+                    <ShimmerBoxSmall />
+                    <ShimmerBoxSmall />
                   </Stack>
                 </Stack>
               </Grid>
 
               {/* Informações de Contato */}
               <Grid item xs={12} md={5}>
-                <ShimmerTitle sx={{ width: 220, height: 28, mb: 3 }} />
+                <ShimmerTitleCustom $width={220} $height={28} $mb={3} />
 
                 <Stack spacing={2.5}>
                   <ShimmerInfoItem>
                     <ShimmerIcon />
                     <Box>
-                      <ShimmerText sx={{ width: 80, height: 12, mb: 0.5 }} />
-                      <ShimmerText sx={{ width: 120, height: 20 }} />
+                      <ShimmerTextCustom $width={80} $height={12} $mb={0.5} />
+                      <ShimmerTextCustom $width={120} $height={20} />
                     </Box>
                   </ShimmerInfoItem>
 
                   <ShimmerInfoItem>
                     <ShimmerIcon />
                     <Box>
-                      <ShimmerText sx={{ width: 60, height: 12, mb: 0.5 }} />
-                      <ShimmerText sx={{ width: 150, height: 20 }} />
+                      <ShimmerTextCustom $width={60} $height={12} $mb={0.5} />
+                      <ShimmerTextCustom $width={150} $height={20} />
                     </Box>
                   </ShimmerInfoItem>
 
                   <ShimmerInfoItem>
                     <ShimmerIcon />
                     <Box sx={{ flex: 1 }}>
-                      <ShimmerText sx={{ width: 50, height: 12, mb: 0.5 }} />
-                      <ShimmerText sx={{ width: "90%", height: 20 }} />
+                      <ShimmerTextCustom $width={50} $height={12} $mb={0.5} />
+                      <ShimmerTextCustom $width="90%" $height={20} />
                     </Box>
                   </ShimmerInfoItem>
 
                   <ShimmerInfoItem>
                     <ShimmerIcon />
                     <Box>
-                      <ShimmerText sx={{ width: 70, height: 12, mb: 0.5 }} />
-                      <ShimmerText sx={{ width: 100, height: 20 }} />
+                      <ShimmerTextCustom $width={70} $height={12} $mb={0.5} />
+                      <ShimmerTextCustom $width={100} $height={20} />
                     </Box>
                   </ShimmerInfoItem>
                 </Stack>
@@ -139,27 +159,9 @@ export const BrokerDetailsShimmer = () => {
               {/* Botões de Ação */}
               <Grid item xs={12} md={4}>
                 <Stack spacing={2}>
-                  <ShimmerBase
-                    sx={{
-                      height: 40,
-                      width: "100%",
-                      borderRadius: 1,
-                    }}
-                  />
-                  <ShimmerBase
-                    sx={{
-                      height: 40,
-                      width: "100%",
-                      borderRadius: 1,
-                    }}
-                  />
-                  <ShimmerBase
-                    sx={{
-                      height: 40,
-                      width: "100%",
-                      borderRadius: 1,
-                    }}
-                  />
+                  <ShimmerButtonFull />
+                  <ShimmerButtonFull />
+                  <ShimmerButtonFull />
                 </Stack>
               </Grid>
             </Grid>

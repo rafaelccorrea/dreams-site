@@ -490,7 +490,7 @@ export const MobileMenuItem = styled.button<{ $isOpen?: boolean }>`
   padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.lg}`};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   border: none;
-  background: ${({ $isOpen, theme }) => 
+  background: ${({ $isOpen }) => 
     $isOpen ? 'rgba(51, 112, 166, 0.08)' : 'transparent'};
   color: ${({ theme }) => theme.colors.textPrimary};
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -512,7 +512,7 @@ export const MobileMenuItem = styled.button<{ $isOpen?: boolean }>`
   }
 
   &:hover {
-    background: ${({ $isOpen, theme }) => 
+    background: ${({ $isOpen }) => 
       $isOpen ? 'rgba(51, 112, 166, 0.12)' : 'rgba(0, 0, 0, 0.04)'};
     color: ${({ theme }) => theme.colors.primary};
   }
