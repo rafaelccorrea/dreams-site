@@ -115,18 +115,20 @@ export const RightSection = styled.div`
   flex: 1 1 0;
   gap: ${({ theme }) => theme.spacing.md};
   height: 100% !important;
-  flex-wrap: wrap;
-  overflow: hidden;
+  flex-wrap: nowrap;
+  overflow: visible;
+  position: relative;
+  z-index: ${({ theme }) => theme.zIndex.sticky + 1};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     justify-content: flex-end;
     gap: ${({ theme }) => theme.spacing.sm};
-    overflow: hidden;
+    overflow: visible;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     gap: ${({ theme }) => theme.spacing.xs};
-    overflow: hidden;
+    overflow: visible;
   }
 `
 
@@ -410,6 +412,10 @@ export const MobileMenuToggle = styled.button`
   height: 100%;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: ${({ theme }) => theme.zIndex.sticky + 1};
+  flex-shrink: 0;
+  min-width: 44px;
 
   &:hover {
     transform: scale(1.1);
@@ -417,7 +423,7 @@ export const MobileMenuToggle = styled.button`
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
-    display: flex;
+    display: flex !important;
   }
 `
 
