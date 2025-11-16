@@ -200,8 +200,7 @@ export const CompaniesPage = () => {
               <Box
                 component="button"
                 onClick={() => {
-                  // Aqui você pode adicionar um link ou ação para contato
-                  window.open("mailto:contato@dreamskeys.com?subject=Interesse no Sistema de Gestão", "_blank");
+                  window.open("https://dreamkeys.com.br/sistema/login", "_blank");
                 }}
                 sx={{
                   display: "flex",
@@ -227,7 +226,7 @@ export const CompaniesPage = () => {
                   },
                 }}
               >
-                Saiba mais
+                Ir para o Sistema
                 <ArrowForwardIcon sx={{ fontSize: 20 }} />
               </Box>
             </Box>
