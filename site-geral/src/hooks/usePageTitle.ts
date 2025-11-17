@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useSEO } from './useSEO'
 
 interface PageTitleConfig {
   [path: string]: string
@@ -23,6 +23,26 @@ const pageTitles: PageTitleConfig = {
   '/minha-propriedade': 'Minha Propriedade - Dream Keys',
   '/confirm-email': 'Confirmar Email - Dream Keys',
   '/confirmar-email': 'Confirmar Email - Dream Keys',
+}
+
+const pageDescriptions: PageTitleConfig = {
+  '/': 'Encontre casas, apartamentos e imóveis comerciais para compra e locação. Sua plataforma completa de imóveis com os melhores corretores e imobiliárias.',
+  '/imoveis-para-comprar': 'Encontre imóveis para comprar: casas, apartamentos e imóveis comerciais. Milhares de opções em todo o Brasil.',
+  '/casas-a-venda': 'Casas à venda em todo o Brasil. Encontre a casa dos seus sonhos com os melhores preços e condições.',
+  '/apartamentos-a-venda': 'Apartamentos à venda. Encontre apartamentos novos e usados com as melhores condições de pagamento.',
+  '/imoveis-comerciais-a-venda': 'Imóveis comerciais à venda: salas, lojas, galpões e escritórios. Invista no seu negócio.',
+  '/alugar': 'Imóveis para alugar: casas, apartamentos e imóveis comerciais. Encontre o imóvel ideal para locação.',
+  '/casas-para-alugar': 'Casas para locação. Encontre casas para alugar com os melhores preços e localizações.',
+  '/apartamentos-para-alugar': 'Apartamentos para locação. Encontre apartamentos para alugar em todas as regiões.',
+  '/imoveis-comerciais-para-alugar': 'Imóveis comerciais para locação. Salas, lojas e escritórios para alugar.',
+  '/lancamentos': 'Confira os últimos lançamentos imobiliários. Apartamentos e casas novas com condições especiais.',
+  '/minha-casa-minha-vida': 'Verifique sua elegibilidade e simule seu financiamento no programa Minha Casa Minha Vida.',
+  '/corretores': 'Encontre os melhores corretores de imóveis perto de você. Profissionais qualificados e experientes.',
+  '/imobiliarias': 'Explore as melhores imobiliárias e encontre seu imóvel ideal. Parceiros confiáveis em todo o Brasil.',
+  '/favoritos': 'Seus imóveis favoritos salvos. Acompanhe os imóveis que mais te interessam.',
+  '/minha-propriedade': 'Gerencie sua propriedade. Adicione e edite informações sobre seus imóveis.',
+  '/confirm-email': 'Confirme seu email para ativar sua conta e acessar todas as funcionalidades.',
+  '/confirmar-email': 'Confirme seu email para ativar sua conta e acessar todas as funcionalidades.',
 }
 
 const getPageTitle = (pathname: string): string => {
@@ -51,38 +71,24 @@ const getPageTitle = (pathname: string): string => {
   return 'Dream Keys - Encontre seu imóvel dos sonhos'
 }
 
-export const usePageTitle = (customTitle?: string, customDescription?: string) => {
+const getPageDescription = (pathname: string): string => {
+  if (pageDescriptions[pathname]) {
+    return pageDescriptions[pathname]
+  }
+  return 'Encontre seu imóvel dos sonhos na Dream Keys.'
+}
+
+export const usePageTitle = (customTitle?: string, customDescription?: string, customImage?: string) => {
   const location = useLocation()
-
-  useEffect(() => {
-    const title = customTitle || getPageTitle(location.pathname)
-    document.title = title
-
-    // Atualizar meta description básico
-    let metaDescription = document.querySelector('meta[name="description"]')
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta')
-      metaDescription.setAttribute('name', 'description')
-      document.head.appendChild(metaDescription)
-    }
-
-    // Usa descrição customizada se fornecida, caso contrário usa descrições padrão
-    if (customDescription) {
-      metaDescription.setAttribute('content', customDescription)
-    } else {
-      // Descrições específicas por página
-      const descriptions: PageTitleConfig = {
-        '/': 'Encontre casas, apartamentos e imóveis comerciais para compra e locação. Sua plataforma completa de imóveis.',
-        '/minha-casa-minha-vida': 'Verifique sua elegibilidade e simule seu financiamento no programa Minha Casa Minha Vida.',
-      '/corretores': 'Encontre os melhores corretores de imóveis perto de você.',
-      '/imobiliarias': 'Explore as melhores imobiliárias e encontre seu imóvel ideal.',
-      '/lancamentos': 'Confira os últimos lançamentos imobiliários.',
-      '/favoritos': 'Seus imóveis favoritos salvos.',
-      }
-
-      const description = descriptions[location.pathname] || 'Encontre seu imóvel dos sonhos na Dream Keys.'
-      metaDescription.setAttribute('content', description)
-    }
-  }, [location.pathname, customTitle, customDescription])
+  
+  const title = customTitle || getPageTitle(location.pathname)
+  const description = customDescription || getPageDescription(location.pathname)
+  
+  useSEO({
+    title,
+    description,
+    image: customImage,
+    type: 'website',
+  })
 }
 

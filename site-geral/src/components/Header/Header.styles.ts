@@ -157,7 +157,7 @@ export const LogoContainer = styled.div`
   }
 
   .logo-header {
-    height: 235px;
+    height: 180px;
     max-width: 100%;
     width: auto;
     object-fit: contain;

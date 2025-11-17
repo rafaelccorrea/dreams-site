@@ -4,13 +4,16 @@ Allow: /
 # Sitemap
 Sitemap: https://dreamskeys.com.br/sitemap.xml
 
-# Nota: Substitua 'dreamskeys.com.br' pelo domínio real do site em produção
-
-# Não indexar páginas de desenvolvimento
+# Não indexar páginas de desenvolvimento e administrativas
 Disallow: /dev/
 Disallow: /test/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /node_modules/
 
-# Permitir todas as páginas principais
+# Permitir todas as páginas principais e importantes para SEO
+Allow: /
 Allow: /imoveis-para-comprar
 Allow: /casas-a-venda
 Allow: /apartamentos-a-venda
@@ -27,6 +30,16 @@ Allow: /imovel/
 Allow: /corretor/
 Allow: /imobiliaria/
 
-# Crawl-delay
+# Crawl-delay (opcional - ajuda a não sobrecarregar o servidor)
+Crawl-delay: 1
+
+# Googlebot específico
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bingbot específico
+User-agent: Bingbot
+Allow: /
 Crawl-delay: 1
 
