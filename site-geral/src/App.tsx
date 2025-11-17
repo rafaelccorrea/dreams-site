@@ -18,6 +18,7 @@ import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { MyPropertyPage } from './pages/MyPropertyPage'
 import { McmvPage } from './pages/McmvPage'
+import { LocalSearchPage } from './pages/LocalSearchPage'
 import { LocationProvider, useLocation } from './contexts/LocationContext'
 import { LocationModal } from './components/LocationModal'
 import { MainContentWrapper } from './components/MainContentWrapper'
@@ -38,6 +39,15 @@ const RedirectToRoute = ({ template, paramKey }: { template: string; paramKey: s
   const newPath = template.replace(`:${paramKey}`, paramValue)
   
   return <Navigate to={newPath} replace />
+}
+
+// Componente para redirecionar para URL externa
+const RedirectToExternal = ({ url }: { url: string }) => {
+  useEffect(() => {
+    window.location.href = url
+  }, [url])
+  
+  return null
 }
 
 function AppContent() {
@@ -217,6 +227,47 @@ function AppContent() {
           />
           <Route path="/favorites" element={<Navigate to="/favoritos" replace />} />
           <Route path="/mcmv" element={<Navigate to="/minha-casa-minha-vida" replace />} />
+          
+          {/* Redirecionamentos para SEO genérico */}
+          <Route path="/sobre-imobiliarias" element={<Navigate to="/imobiliarias" replace />} />
+          <Route path="/sobre-corretores" element={<Navigate to="/corretores" replace />} />
+          <Route 
+            path="/sistema-imobiliario" 
+            element={<RedirectToExternal url="https://www.dreamkeys.com.br/sistema/" />} 
+          />
+          <Route 
+            path="/sistema" 
+            element={<RedirectToExternal url="https://www.dreamkeys.com.br/sistema/" />} 
+          />
+          
+          {/* Rotas dinâmicas para SEO local */}
+          {/* Formato: /casas-a-venda-em-marilia, /apartamentos-para-alugar-em-sao-paulo, etc. */}
+          <Route 
+            path="/:typeSlug-:operationSlug-em-:citySlug" 
+            element={
+              <MainContentWrapper $showBackground={false}>
+                <LocalSearchPage />
+              </MainContentWrapper>
+            } 
+          />
+          {/* Formato alternativo: /casas-em-marilia, /apartamentos-em-sao-paulo */}
+          <Route 
+            path="/:typeSlug-em-:citySlug" 
+            element={
+              <MainContentWrapper $showBackground={false}>
+                <LocalSearchPage />
+              </MainContentWrapper>
+            } 
+          />
+          {/* Formato: /imoveis-em-marilia */}
+          <Route 
+            path="/imoveis-em-:citySlug" 
+            element={
+              <MainContentWrapper $showBackground={false}>
+                <LocalSearchPage />
+              </MainContentWrapper>
+            } 
+          />
           
           {/* Rota catch-all: redireciona qualquer rota inexistente para a home */}
           <Route path="*" element={<Navigate to="/" replace />} />

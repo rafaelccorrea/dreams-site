@@ -1,0 +1,2 @@
+export { LocalSearchPage } from './LocalSearchPage'
+

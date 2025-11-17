@@ -108,4 +108,61 @@
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
+  
+  <!-- Páginas locais - Cidades principais do Brasil (exemplos para SEO) -->
+  <!-- As rotas dinâmicas funcionam para TODAS as cidades do Brasil -->
+  <!-- São Paulo -->
+  <url>
+    <loc>https://www.dreamkeys.com.br/casas-a-venda-em-sao-paulo</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.dreamkeys.com.br/apartamentos-a-venda-em-sao-paulo</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Rio de Janeiro -->
+  <url>
+    <loc>https://www.dreamkeys.com.br/casas-a-venda-em-rio-de-janeiro</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.dreamkeys.com.br/apartamentos-a-venda-em-rio-de-janeiro</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Belo Horizonte -->
+  <url>
+    <loc>https://www.dreamkeys.com.br/casas-a-venda-em-belo-horizonte</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Curitiba -->
+  <url>
+    <loc>https://www.dreamkeys.com.br/casas-a-venda-em-curitiba</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Brasília -->
+  <url>
+    <loc>https://www.dreamkeys.com.br/casas-a-venda-em-brasilia</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Marília -->
+  <url>
+    <loc>https://www.dreamkeys.com.br/casas-a-venda-em-marilia</loc>
+    <lastmod>2025-11-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>
