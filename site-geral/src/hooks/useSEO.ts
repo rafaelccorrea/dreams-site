@@ -10,7 +10,7 @@ interface SEOConfig {
   noindex?: boolean
 }
 
-const SITE_URL = 'https://dreamskeys.com.br'
+const SITE_URL = 'https://www.dreamkeys.com.br'
 const DEFAULT_IMAGE = `${SITE_URL}/logo-dream.png`
 
 const updateMetaTag = (name: string, content: string, attribute: string = 'name') => {

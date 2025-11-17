@@ -1,7 +1,15 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+  
+  # Permitir acesso direto a sitemap.xml e robots.txt
+  RewriteRule ^sitemap\.xml$ - [L]
+  RewriteRule ^robots\.txt$ - [L]
+  
+  # Não redirecionar index.html
   RewriteRule ^index\.html$ - [L]
+  
+  # Redirecionar apenas se o arquivo não existir e não for um diretório
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /index.html [L]

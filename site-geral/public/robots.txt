@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://dreamskeys.com.br/sitemap.xml
+Sitemap: https://www.dreamkeys.com.br/sitemap.xml
 
 # Não indexar páginas de desenvolvimento e administrativas
 Disallow: /dev/

@@ -14,7 +14,7 @@ interface BreadcrumbsProps {
   showHome?: boolean
 }
 
-const SITE_URL = 'https://dreamskeys.com.br'
+const SITE_URL = 'https://www.dreamkeys.com.br'
 
 const getDefaultBreadcrumbs = (pathname: string): BreadcrumbItem[] => {
   const items: BreadcrumbItem[] = [{ label: 'Home', path: '/' }]

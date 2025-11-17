@@ -44,9 +44,10 @@ Sitelinks são links adicionais que aparecem abaixo do resultado principal do si
 ## Próximos Passos para Ativar os Sitelinks
 
 ### 1. Configurar o Domínio
-1. Atualize o domínio em `public/sitemap.xml` substituindo `dreamskeys.com.br` pelo domínio real
-2. Atualize o domínio em `public/robots.txt` substituindo `dreamskeys.com.br` pelo domínio real
-3. Atualize o domínio em `index.html` nos dados estruturados (Schema.org)
+1. ✅ Domínio configurado: `www.dreamkeys.com.br`
+2. ✅ Sitemap atualizado: `https://www.dreamkeys.com.br/sitemap.xml`
+3. ✅ Robots.txt atualizado: `https://www.dreamkeys.com.br/robots.txt`
+4. ✅ Dados estruturados atualizados no `index.html`
 
 ### 2. Submeter o Sitemap no Google Search Console
 1. Acesse [Google Search Console](https://search.google.com/search-console)
