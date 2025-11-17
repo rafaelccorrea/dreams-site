@@ -33,25 +33,6 @@ const updateLinkTag = (rel: string, href: string) => {
   element.setAttribute('href', href)
 }
 
-const updateOrCreateTag = (tag: string, attributes: Record<string, string>) => {
-  const selector = Object.entries(attributes)
-    .map(([key, value]) => `[${key}="${value}"]`)
-    .join('')
-  
-  let element = document.querySelector(`${tag}${selector}`) as HTMLElement
-  if (!element) {
-    element = document.createElement(tag) as HTMLElement
-    Object.entries(attributes).forEach(([key, value]) => {
-      element.setAttribute(key, value)
-    })
-    document.head.appendChild(element)
-  } else {
-    Object.entries(attributes).forEach(([key, value]) => {
-      element.setAttribute(key, value)
-    })
-  }
-}
-
 export const useSEO = (config: SEOConfig) => {
   const location = useLocation()
   const currentUrl = `${SITE_URL}${location.pathname}${location.search}`
