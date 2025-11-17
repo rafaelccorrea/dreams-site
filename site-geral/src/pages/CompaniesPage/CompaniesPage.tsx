@@ -200,7 +200,7 @@ export const CompaniesPage = () => {
               <Box
                 component="button"
                 onClick={() => {
-                  window.open("https://dreamkeys.com.br/sistema/login", "_blank");
+                  window.open("https://www.dreamkeys.com.br/sistema/", "_blank");
                 }}
                 sx={{
                   display: "flex",
