@@ -186,6 +186,20 @@ export const PropertyDetails = () => {
     return types[type] || type;
   };
 
+  const handleWhatsApp = () => {
+    const phone = property?.responsibleUser?.phone || property?.company?.phone;
+    if (phone) {
+      const phoneNumber = phone.replace(/\D/g, "");
+      const propertyTitle = property?.title || "este imóvel";
+      const message = encodeURIComponent(
+        `Olá${property?.responsibleUser?.name ? ` ${property.responsibleUser.name}` : ""}${
+          property?.company?.name ? ` da ${property.company.name}` : ""
+        }, gostaria de mais informações sobre ${propertyTitle}.`
+      );
+      window.open(`https://wa.me/55${phoneNumber}?text=${message}`, "_blank");
+    }
+  };
+
   // Atualizar título da página dinamicamente
   usePageTitle(
     property ? `${property.title || getTypeLabel(property.type)} - Dream Keys` : undefined,
@@ -1121,39 +1135,28 @@ export const PropertyDetails = () => {
                 )}
 
                 {/* Botões de ação */}
-                <Stack spacing={2}>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    startIcon={<WhatsApp />}
-                    sx={{
-                      fontWeight: 600,
-                      textTransform: "none",
-                      py: 1.5,
-                      bgcolor: "#25d366",
-                      "&:hover": {
-                        bgcolor: "#20ba5a",
-                      },
-                    }}
-                  >
-                    WhatsApp
-                  </Button>
-
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    size="large"
-                    sx={{
-                      fontWeight: 600,
-                      textTransform: "none",
-                      py: 1.5,
-                    }}
-                  >
-                    Solicitar Informações
-                  </Button>
-                </Stack>
+                {(property.responsibleUser?.phone || property.company?.phone) && (
+                  <Stack spacing={2}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      size="large"
+                      startIcon={<WhatsApp />}
+                      onClick={handleWhatsApp}
+                      sx={{
+                        fontWeight: 600,
+                        textTransform: "none",
+                        py: 1.5,
+                        bgcolor: "#25d366",
+                        "&:hover": {
+                          bgcolor: "#20ba5a",
+                        },
+                      }}
+                    >
+                      WhatsApp
+                    </Button>
+                  </Stack>
+                )}
               </Box>
             )}
           </Grid>
