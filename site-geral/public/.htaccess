@@ -2,9 +2,11 @@
   RewriteEngine On
   RewriteBase /
   
-  # Permitir acesso direto a sitemap.xml e robots.txt
+  # Permitir acesso direto a arquivos estáticos importantes
   RewriteRule ^sitemap\.xml$ - [L]
   RewriteRule ^robots\.txt$ - [L]
+  RewriteRule ^favicon\.ico$ - [L]
+  RewriteRule ^icon_url\.png$ - [L]
   
   # Não redirecionar index.html
   RewriteRule ^index\.html$ - [L]
