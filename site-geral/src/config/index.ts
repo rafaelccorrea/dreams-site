@@ -8,7 +8,7 @@ export const config = {
     url: import.meta.env.VITE_APP_URL || 'http://localhost:5173',
   },
   api: {
-    url: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    url: import.meta.env.VITE_API_URL || 'https://api.dreamkeys.com.br',
     timeout: 30000,
   },
   google: {

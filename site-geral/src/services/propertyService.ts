@@ -1,8 +1,24 @@
+import { config } from '../config'
+
 /**
  * Serviço para integração com API pública do IMOBX
  */
 
-const API_BASE_URL = 'http://localhost:3000/public'
+const getApiBaseUrl = (): string => {
+  const baseUrl = config.api.url.trim()
+  // Se já termina com /public, retorna como está
+  if (baseUrl.endsWith('/public')) {
+    return baseUrl
+  }
+  // Se já termina com /api, substitui por /public
+  if (baseUrl.endsWith('/api')) {
+    return baseUrl.replace('/api', '/public')
+  }
+  // Adiciona /public ao final
+  return baseUrl.endsWith('/') ? `${baseUrl}public` : `${baseUrl}/public`
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 /**
  * Informações sobre MCMV (Minha Casa Minha Vida)
