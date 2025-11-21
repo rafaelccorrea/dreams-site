@@ -515,13 +515,14 @@ export const MyPropertyPage = () => {
     <>
       <PageContainer>
         <PageHeader>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 2 }}>
             <Typography
               variant="h3"
               sx={{
                 fontWeight: 700,
                 color: 'text.primary',
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                flex: { xs: '1 1 100%', sm: '0 1 auto' },
               }}
             >
               {property ? 'Minha Propriedade' : 'Cadastrar Propriedade'}
@@ -529,7 +530,7 @@ export const MyPropertyPage = () => {
             <Button
               startIcon={<ArrowBack />}
               onClick={() => navigate('/')}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', width: { xs: '100%', sm: 'auto' } }}
             >
               Voltar
             </Button>
@@ -547,7 +548,7 @@ export const MyPropertyPage = () => {
             </Typography>
         </PageHeader>
 
-        <PageContent sx={{ px: 0 }}>
+        <PageContent sx={{ px: { xs: 2, sm: 3, md: 0 } }}>
             {/* Erro geral */}
             {error && (
               <Alert severity="error" sx={{ mb: 3 }}>
@@ -574,14 +575,14 @@ export const MyPropertyPage = () => {
                     sx={{
                       width: "100%",
                       margin: "0",
-                      pt: 2,
-                      pb: 3,
+                      pt: { xs: 1, sm: 2 },
+                      pb: { xs: 2, sm: 3 },
                       px: { xs: 0, sm: 0, md: 0 },
                     }}
                   >
                     <Box
                       sx={{
-                        borderRadius: 4,
+                        borderRadius: { xs: 2, sm: 4 },
                         overflow: "hidden",
                         boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                       }}
@@ -596,11 +597,11 @@ export const MyPropertyPage = () => {
                   sx={{
                       width: "100%",
                       margin: "0",
-                      pb: 4,
+                      pb: { xs: 2, sm: 4 },
                       px: { xs: 0, sm: 0, md: 0 },
                   }}
                 >
-                  <Grid container spacing={4}>
+                  <Grid container spacing={{ xs: 2, sm: 4 }}>
                     <Grid item xs={12} md={8}>
                       {/* Seção: Título e Informações Principais */}
                       <Box sx={{ mb: 5 }}>
@@ -636,6 +637,7 @@ export const MyPropertyPage = () => {
                             color: "#212121",
                             mb: 2,
                             lineHeight: 1.3,
+                            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
                           }}
                         >
                           {property.title}
@@ -657,7 +659,7 @@ export const MyPropertyPage = () => {
                         </Box>
 
                         {/* Preços */}
-                        <Box sx={{ mb: 4 }}>
+                        <Box sx={{ mb: { xs: 3, sm: 4 } }}>
                           {property.salePrice && Number(property.salePrice) > 0 && (
                             <Box sx={{ mb: 2 }}>
                               <Typography
@@ -666,7 +668,7 @@ export const MyPropertyPage = () => {
                                   color: "text.secondary",
                                   fontWeight: 600,
                                   textTransform: "uppercase",
-                                  fontSize: "0.75rem",
+                                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
                                   display: "block",
                                   mb: 0.5,
                                 }}
@@ -678,6 +680,7 @@ export const MyPropertyPage = () => {
                                 sx={{
                                   fontWeight: 700,
                                   color: "#1976d2",
+                                  fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                                 }}
                               >
                                 {formatPrice(property.salePrice)}
@@ -692,7 +695,7 @@ export const MyPropertyPage = () => {
                                   color: "text.secondary",
                                   fontWeight: 600,
                                   textTransform: "uppercase",
-                                  fontSize: "0.75rem",
+                                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
                                   display: "block",
                                   mb: 0.5,
                                 }}
@@ -704,6 +707,7 @@ export const MyPropertyPage = () => {
                                 sx={{
                                   fontWeight: 700,
                                   color: "#4caf50",
+                                  fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                                 }}
                               >
                                 {formatPrice(property.rentPrice)}
@@ -714,7 +718,7 @@ export const MyPropertyPage = () => {
 
                         {/* Condomínio e IPTU */}
                         {(property.condominiumFee || property.iptu) && (
-                          <Box sx={{ display: "flex", gap: 3, mb: 4 }}>
+                          <Box sx={{ display: "flex", gap: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 }, flexWrap: 'wrap' }}>
                             {property.condominiumFee &&
                               Number(property.condominiumFee) > 0 && (
                                 <Box>
@@ -772,7 +776,7 @@ export const MyPropertyPage = () => {
                         )}
 
                         {/* Características do Imóvel */}
-                        <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 4 }}>
+                        <Box sx={{ display: "flex", gap: { xs: 2, sm: 3 }, flexWrap: "wrap", mb: { xs: 3, sm: 4 } }}>
                           {property.bedrooms > 0 && (
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                               <Bed sx={{ fontSize: 28, color: "#1976d2" }} />
@@ -841,14 +845,15 @@ export const MyPropertyPage = () => {
                         </Box>
 
                         {/* Descrição */}
-                        <Divider sx={{ my: 4 }} />
-                        <Box sx={{ mb: 5 }}>
+                        <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+                        <Box sx={{ mb: { xs: 3, sm: 5 } }}>
                           <Typography
                             variant="h5"
                             sx={{
                               fontWeight: 700,
                               color: "#212121",
                               mb: 2,
+                              fontSize: { xs: '1.25rem', sm: '1.5rem' },
                             }}
                           >
                             Descrição
@@ -869,14 +874,15 @@ export const MyPropertyPage = () => {
                         {/* Features */}
                         {property.features && property.features.length > 0 && (
                           <>
-                            <Divider sx={{ my: 4 }} />
-                            <Box sx={{ mb: 5 }}>
+                            <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+                            <Box sx={{ mb: { xs: 3, sm: 5 } }}>
                               <Typography
                                 variant="h5"
                                 sx={{
                                   fontWeight: 700,
                                   color: "#212121",
                                   mb: 2,
+                                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
                                 }}
                               >
                                 Características
@@ -901,7 +907,7 @@ export const MyPropertyPage = () => {
                           </>
                         )}
 
-                        <Divider sx={{ my: 4 }} />
+                        <Divider sx={{ my: { xs: 3, sm: 4 } }} />
 
                         {/* Informações Adicionais */}
                         <Box>
@@ -910,7 +916,8 @@ export const MyPropertyPage = () => {
                             sx={{
                               fontWeight: 700,
                               color: "#212121",
-                              mb: 3,
+                              mb: { xs: 2, sm: 3 },
+                              fontSize: { xs: '1.25rem', sm: '1.5rem' },
                             }}
                           >
                             Informações Adicionais
@@ -1073,7 +1080,7 @@ export const MyPropertyPage = () => {
 
                 {/* Upload de imagens */}
                 {propertyImages.length < 5 && (
-                  <Box sx={{ mb: 3, px: { xs: 0, sm: 0, md: 0 }, width: "100%", margin: "0" }}>
+                  <Box sx={{ mb: { xs: 2, sm: 3 }, px: { xs: 0, sm: 0, md: 0 }, width: "100%", margin: "0" }}>
                     {uploadError && (
                       <Alert severity="error" sx={{ mb: 2 }}>
                         {uploadError}
@@ -1111,12 +1118,13 @@ export const MyPropertyPage = () => {
                 )}
 
                 {/* Botão de deletar */}
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', px: { xs: 0, sm: 0, md: 0 }, width: "100%", margin: "0" }}>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'stretch', sm: 'flex-end' }, px: { xs: 0, sm: 0, md: 0 }, width: "100%", margin: "0" }}>
                   <Button
                     variant="contained"
                     color="error"
                     startIcon={<DeleteIcon />}
                     onClick={handleDeleteClick}
+                    sx={{ width: { xs: '100%', sm: 'auto' } }}
                   >
                     Deletar Propriedade
                   </Button>
@@ -1125,10 +1133,10 @@ export const MyPropertyPage = () => {
             ) : (
               // Formulário de criação
               <form onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
                   {/* Informações Básicas */}
                   <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{ mb: { xs: 1.5, sm: 2 }, fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                       Informações Básicas
                     </Typography>
                   </Grid>
@@ -1210,7 +1218,7 @@ export const MyPropertyPage = () => {
 
                   {/* Endereço */}
                   <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{ mb: { xs: 1.5, sm: 2 }, mt: { xs: 1.5, sm: 2 }, fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                       Endereço
                     </Typography>
                   </Grid>
@@ -1311,7 +1319,7 @@ export const MyPropertyPage = () => {
 
                   {/* Características */}
                   <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{ mb: { xs: 1.5, sm: 2 }, mt: { xs: 1.5, sm: 2 }, fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                       Características
                     </Typography>
                   </Grid>
@@ -1426,7 +1434,7 @@ export const MyPropertyPage = () => {
 
                   {/* Valores */}
                   <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{ mb: { xs: 1.5, sm: 2 }, mt: { xs: 1.5, sm: 2 }, fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                       Valores
                     </Typography>
                   </Grid>
@@ -1485,10 +1493,10 @@ export const MyPropertyPage = () => {
 
                   {/* Características */}
                   <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{ mb: { xs: 1.5, sm: 2 }, mt: { xs: 1.5, sm: 2 }, fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                       Características da Propriedade
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 0.75, sm: 1 } }}>
                       {COMMON_FEATURES.map((feature: string) => (
                         <Chip
                           key={feature}
@@ -1503,7 +1511,7 @@ export const MyPropertyPage = () => {
 
                   {/* Imagens */}
                   <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mb: 2, mt: 2, fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{ mb: { xs: 1.5, sm: 2 }, mt: { xs: 1.5, sm: 2 }, fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                       Imagens da Propriedade *
                     </Typography>
                     
@@ -1521,7 +1529,7 @@ export const MyPropertyPage = () => {
 
                     {/* Preview das imagens selecionadas */}
                     {previewImages.length > 0 && (
-                      <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }}>
                         {previewImages.map((previewUrl, index) => (
                           <Grid item xs={12} sm={6} md={4} key={index}>
                             <Box
@@ -1645,10 +1653,11 @@ export const MyPropertyPage = () => {
 
                   {/* Botões */}
                   <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+                    <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 }, justifyContent: { xs: 'stretch', sm: 'flex-end' }, mt: { xs: 1.5, sm: 2 }, flexDirection: { xs: 'column', sm: 'row' } }}>
                       <Button
                         variant="outlined"
                         onClick={() => navigate('/')}
+                        sx={{ width: { xs: '100%', sm: 'auto' } }}
                       >
                         Cancelar
                       </Button>
@@ -1657,6 +1666,7 @@ export const MyPropertyPage = () => {
                         variant="contained"
                         startIcon={<Save />}
                         disabled={submitLoading}
+                        sx={{ width: { xs: '100%', sm: 'auto' } }}
                       >
                         {submitLoading ? 'Salvando...' : 'Cadastrar Propriedade'}
                       </Button>

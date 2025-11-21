@@ -273,10 +273,12 @@ export const PropertyDetails = () => {
             width: "100%",
             maxWidth: "1400px",
             margin: "0 auto",
-            px: "25px",
+            px: { xs: 2, sm: 3, md: "25px" },
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
+            gap: { xs: 1.5, sm: 2 },
           }}
         >
           <Button
@@ -287,12 +289,13 @@ export const PropertyDetails = () => {
               textTransform: "none",
               fontWeight: 600,
               borderRadius: 3,
+              fontSize: { xs: "0.875rem", sm: "1rem" },
             }}
           >
             Voltar
           </Button>
 
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: { xs: 0.5, sm: 1 } }}>
             <FavoriteButton
               propertyId={property.id}
               size="medium"
@@ -314,14 +317,14 @@ export const PropertyDetails = () => {
           width: "100%",
           maxWidth: "1400px",
           margin: "0 auto",
-          pt: 6,
-          pb: 3,
-          px: "25px",
+          pt: { xs: 3, sm: 4, md: 6 },
+          pb: { xs: 2, sm: 3 },
+          px: { xs: 2, sm: 3, md: "25px" },
         }}
       >
         <Box
           sx={{
-            borderRadius: 4,
+            borderRadius: { xs: 2, sm: 4 },
             overflow: "hidden",
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           }}
@@ -335,15 +338,15 @@ export const PropertyDetails = () => {
           width: "100%",
           maxWidth: "1400px",
           margin: "0 auto",
-          pb: 4,
-          px: "25px",
+          pb: { xs: 3, sm: 4 },
+          px: { xs: 2, sm: 3, md: "25px" },
         }}
       >
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           <Grid item xs={12} md={8}>
             {/* Seção: Título e Informações Principais */}
-            <Box sx={{ mb: 5 }}>
-              <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+            <Box sx={{ mb: { xs: 3, sm: 4, md: 5 } }}>
+              <Box sx={{ display: "flex", gap: { xs: 0.75, sm: 1 }, mb: { xs: 1.5, sm: 2 }, flexWrap: "wrap" }}>
                 <Chip
                   label={getTypeLabel(property.type)}
                   sx={{
@@ -402,8 +405,9 @@ export const PropertyDetails = () => {
                 sx={{
                   fontWeight: 700,
                   color: "#212121",
-                  mb: 2,
+                  mb: { xs: 1.5, sm: 2 },
                   lineHeight: 1.3,
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
                 }}
               >
                 {property.title}
@@ -413,20 +417,21 @@ export const PropertyDetails = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 1,
+                  gap: { xs: 0.75, sm: 1 },
                   color: "text.secondary",
-                  mb: 3,
+                  mb: { xs: 2, sm: 3 },
+                  flexWrap: "wrap",
                 }}
               >
-                <LocationOn sx={{ color: "#1976d2", fontSize: 20 }} />
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                <LocationOn sx={{ color: "#1976d2", fontSize: { xs: 18, sm: 20 } }} />
+                <Typography variant="body1" sx={{ fontWeight: 500, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                   {property.address}, {property.neighborhood}, {property.city} -{" "}
                   {property.state}
                 </Typography>
               </Box>
 
               {/* Preços */}
-              <Box sx={{ mb: 4 }}>
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
                 {property.salePrice && Number(property.salePrice) > 0 && (
                   <Box sx={{ mb: 2 }}>
                     <Typography
@@ -435,7 +440,7 @@ export const PropertyDetails = () => {
                         color: "text.secondary",
                         fontWeight: 600,
                         textTransform: "uppercase",
-                        fontSize: "0.75rem",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
                         display: "block",
                         mb: 0.5,
                       }}
@@ -447,6 +452,7 @@ export const PropertyDetails = () => {
                       sx={{
                         fontWeight: 700,
                         color: "#1976d2",
+                        fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                       }}
                     >
                       {formatPrice(property.salePrice)}
@@ -461,7 +467,7 @@ export const PropertyDetails = () => {
                         color: "text.secondary",
                         fontWeight: 600,
                         textTransform: "uppercase",
-                        fontSize: "0.75rem",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
                         display: "block",
                         mb: 0.5,
                       }}
@@ -473,6 +479,7 @@ export const PropertyDetails = () => {
                       sx={{
                         fontWeight: 700,
                         color: "#4caf50",
+                        fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                       }}
                     >
                       {formatPrice(property.rentPrice)}
@@ -485,27 +492,28 @@ export const PropertyDetails = () => {
               {property.isAvailableForMCMV && property.mcmv && (
                 <Box
                   sx={{
-                    mb: 4,
-                    p: 3,
+                    mb: { xs: 3, sm: 4 },
+                    p: { xs: 2, sm: 3 },
                     borderRadius: 2,
                     background: "linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(69, 160, 73, 0.15) 100%)",
                     border: "2px solid rgba(76, 175, 80, 0.3)",
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                    <Home sx={{ color: "#4caf50", fontSize: 28 }} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5 }, mb: { xs: 1.5, sm: 2 }, flexWrap: "wrap" }}>
+                    <Home sx={{ color: "#4caf50", fontSize: { xs: 24, sm: 28 } }} />
                     <Typography
                       variant="h5"
                       sx={{
                         fontWeight: 700,
                         color: "#2e7d32",
+                        fontSize: { xs: '1.1rem', sm: '1.5rem' },
                       }}
                     >
                       Financiamento Minha Casa Minha Vida Disponível
                     </Typography>
                   </Box>
 
-                  <Grid container spacing={2}>
+                  <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                     {property.mcmv.incomeRange && (
                       <Grid item xs={12} sm={6}>
                         <Typography
@@ -641,7 +649,7 @@ export const PropertyDetails = () => {
 
               {/* Condomínio e IPTU */}
               {(property.condominiumFee || property.iptu) && (
-                <Box sx={{ display: "flex", gap: 3, mb: 4 }}>
+                <Box sx={{ display: "flex", gap: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 }, flexWrap: 'wrap' }}>
                   {property.condominiumFee &&
                     Number(property.condominiumFee) > 0 && (
                       <Box>
@@ -699,7 +707,7 @@ export const PropertyDetails = () => {
               )}
 
               {/* Características do Imóvel */}
-              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 4 }}>
+              <Box sx={{ display: "flex", gap: { xs: 2, sm: 3 }, flexWrap: "wrap", mb: { xs: 3, sm: 4 } }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Bed sx={{ fontSize: 28, color: "#1976d2" }} />
                   <Box>
@@ -773,16 +781,17 @@ export const PropertyDetails = () => {
               </Box>
             </Box>
 
-            <Divider sx={{ my: 4 }} />
+            <Divider sx={{ my: { xs: 3, sm: 4 } }} />
 
             {/* Seção: Descrição */}
-            <Box sx={{ mb: 5 }}>
+            <Box sx={{ mb: { xs: 3, sm: 5 } }}>
               <Typography
                 variant="h5"
                 sx={{
                   fontWeight: 700,
                   color: "#212121",
-                  mb: 2,
+                  mb: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
                 }}
               >
                 Descrição
@@ -802,15 +811,16 @@ export const PropertyDetails = () => {
 
             {property.features && property.features.length > 0 && (
               <>
-                <Divider sx={{ my: 4 }} />
+                <Divider sx={{ my: { xs: 3, sm: 4 } }} />
                 {/* Seção: Características */}
-                <Box sx={{ mb: 5 }}>
+                <Box sx={{ mb: { xs: 3, sm: 5 } }}>
                   <Typography
                     variant="h5"
                     sx={{
                       fontWeight: 700,
                       color: "#212121",
-                      mb: 2,
+                      mb: { xs: 1.5, sm: 2 },
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
                     }}
                   >
                     Características
@@ -835,7 +845,7 @@ export const PropertyDetails = () => {
               </>
             )}
 
-            <Divider sx={{ my: 4 }} />
+            <Divider sx={{ my: { xs: 3, sm: 4 } }} />
 
             {/* Seção: Informações Adicionais */}
             <Box>
@@ -844,7 +854,8 @@ export const PropertyDetails = () => {
                 sx={{
                   fontWeight: 700,
                   color: "#212121",
-                  mb: 3,
+                  mb: { xs: 2, sm: 3 },
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
                 }}
               >
                 Informações Adicionais
@@ -854,8 +865,9 @@ export const PropertyDetails = () => {
                   sx={{
                     display: "flex",
                     alignItems: "flex-start",
-                    gap: 2,
+                    gap: { xs: 1.5, sm: 2 },
                     py: 1,
+                    flexWrap: { xs: "wrap", sm: "nowrap" },
                   }}
                 >
                   <Typography
@@ -863,7 +875,8 @@ export const PropertyDetails = () => {
                     sx={{
                       color: "text.secondary",
                       fontWeight: 600,
-                      minWidth: 120,
+                      minWidth: { xs: "auto", sm: 120 },
+                      width: { xs: "100%", sm: "auto" },
                     }}
                   >
                     Status:
@@ -878,8 +891,9 @@ export const PropertyDetails = () => {
                   sx={{
                     display: "flex",
                     alignItems: "flex-start",
-                    gap: 2,
+                    gap: { xs: 1.5, sm: 2 },
                     py: 1,
+                    flexWrap: { xs: "wrap", sm: "nowrap" },
                   }}
                 >
                   <Typography
@@ -887,7 +901,8 @@ export const PropertyDetails = () => {
                     sx={{
                       color: "text.secondary",
                       fontWeight: 600,
-                      minWidth: 120,
+                      minWidth: { xs: "auto", sm: 120 },
+                      width: { xs: "100%", sm: "auto" },
                     }}
                   >
                     Tipo:
@@ -901,8 +916,9 @@ export const PropertyDetails = () => {
                     sx={{
                       display: "flex",
                       alignItems: "flex-start",
-                      gap: 2,
+                      gap: { xs: 1.5, sm: 2 },
                       py: 1,
+                      flexWrap: { xs: "wrap", sm: "nowrap" },
                     }}
                   >
                     <Typography
@@ -910,7 +926,8 @@ export const PropertyDetails = () => {
                       sx={{
                         color: "text.secondary",
                         fontWeight: 600,
-                        minWidth: 120,
+                        minWidth: { xs: "auto", sm: 120 },
+                        width: { xs: "100%", sm: "auto" },
                       }}
                     >
                       Área Construída:
@@ -929,8 +946,9 @@ export const PropertyDetails = () => {
             {property.company && (
               <Box
                 sx={{
-                  position: "sticky",
-                  top: 80,
+                  position: { xs: "static", md: "sticky" },
+                  top: { md: 80 },
+                  mt: { xs: 3, md: 0 },
                 }}
               >
                 {/* Imobiliária */}
@@ -1146,7 +1164,8 @@ export const PropertyDetails = () => {
                       sx={{
                         fontWeight: 600,
                         textTransform: "none",
-                        py: 1.5,
+                        py: { xs: 1.25, sm: 1.5 },
+                        fontSize: { xs: "0.875rem", sm: "1rem" },
                         bgcolor: "#25d366",
                         "&:hover": {
                           bgcolor: "#20ba5a",
