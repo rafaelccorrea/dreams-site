@@ -369,6 +369,7 @@ export const MyPropertyPage = () => {
     try {
       const dataToSubmit: CreatePropertyRequest = {
         ...formData,
+        status: 'available', // Sempre disponível para propriedades públicas
         zipCode: formData.zipCode.replace(/\D/g, ''),
         address: `${formData.street}, ${formData.number}${formData.complement ? `, ${formData.complement}` : ''} - ${formData.neighborhood}, ${formData.city} - ${formData.state}`,
       }
@@ -1197,21 +1198,6 @@ export const MyPropertyPage = () => {
                           <PropertyTypeIcon type="rural" />
                           Rural
                         </MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Status</InputLabel>
-                      <Select
-                        value={formData.status}
-                        onChange={(e) => handleChange('status', e.target.value)}
-                        label="Status"
-                      >
-                        <MenuItem value="available">Disponível</MenuItem>
-                        <MenuItem value="rented">Alugado</MenuItem>
-                        <MenuItem value="sold">Vendido</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>

@@ -5,16 +5,13 @@ import { Property } from './propertyService'
 export type { Property }
 
 /**
- * Remove /api se já estiver presente para evitar duplicação
+ * Obtém a URL base da API
+ * A URL base já contém o domínio completo, não precisa adicionar /api
  */
 const getApiBaseUrl = (): string => {
   const baseUrl = config.api.url.trim()
-  // Se já termina com /api, remove para evitar duplicação
-  if (baseUrl.endsWith('/api')) {
-    return baseUrl
-  }
-  // Se não termina com /, adiciona
-  return baseUrl.endsWith('/') ? `${baseUrl}api` : `${baseUrl}/api`
+  // Remove barra final se existir
+  return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
 }
 
 const API_BASE_URL = getApiBaseUrl()
