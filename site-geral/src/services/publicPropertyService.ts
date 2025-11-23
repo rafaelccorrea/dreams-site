@@ -6,12 +6,17 @@ export type { Property }
 
 /**
  * Obtém a URL base da API
- * A URL base já contém o domínio completo, não precisa adicionar /api
+ * Adiciona /api se não estiver presente
  */
 const getApiBaseUrl = (): string => {
   const baseUrl = config.api.url.trim()
   // Remove barra final se existir
-  return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+  let url = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+  // Adiciona /api se não estiver presente
+  if (!url.endsWith('/api')) {
+    url = url.endsWith('/') ? `${url}api` : `${url}/api`
+  }
+  return url
 }
 
 const API_BASE_URL = getApiBaseUrl()
