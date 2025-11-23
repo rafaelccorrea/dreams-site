@@ -247,6 +247,8 @@ export const MyPropertyPage = () => {
         }
       }
     } catch (error) {
+      // Erro ao buscar CEP, continuar normalmente
+      console.error('Erro ao buscar CEP:', error)
     } finally {
       setLoadingCEP(false)
     }
@@ -367,14 +369,60 @@ export const MyPropertyPage = () => {
 
     setSubmitLoading(true)
     try {
+      // Criar objeto apenas com os campos necessários para evitar enviar campos extras
       const dataToSubmit: CreatePropertyRequest = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
         status: 'available', // Sempre disponível para propriedades públicas
+        street: formData.street,
+        number: formData.number,
+        city: formData.city,
+        state: formData.state,
         zipCode: formData.zipCode.replace(/\D/g, ''),
+        neighborhood: formData.neighborhood,
         address: `${formData.street}, ${formData.number}${formData.complement ? `, ${formData.complement}` : ''} - ${formData.neighborhood}, ${formData.city} - ${formData.state}`,
+        totalArea: formData.totalArea,
       }
+
+      // Adicionar campos opcionais apenas se tiverem valores válidos
+      if (formData.complement && formData.complement.trim()) {
+        dataToSubmit.complement = formData.complement
+      }
+      if (formData.builtArea && formData.builtArea > 0) {
+        dataToSubmit.builtArea = formData.builtArea
+      }
+      if (formData.bedrooms && formData.bedrooms > 0) {
+        dataToSubmit.bedrooms = formData.bedrooms
+      }
+      if (formData.bathrooms && formData.bathrooms > 0) {
+        dataToSubmit.bathrooms = formData.bathrooms
+      }
+      if (formData.parkingSpaces && formData.parkingSpaces > 0) {
+        dataToSubmit.parkingSpaces = formData.parkingSpaces
+      }
+      if (formData.salePrice && formData.salePrice > 0) {
+        dataToSubmit.salePrice = formData.salePrice
+      }
+      if (formData.rentPrice && formData.rentPrice > 0) {
+        dataToSubmit.rentPrice = formData.rentPrice
+      }
+      if (formData.condominiumFee && formData.condominiumFee > 0) {
+        dataToSubmit.condominiumFee = formData.condominiumFee
+      }
+      if (formData.iptu && formData.iptu > 0) {
+        dataToSubmit.iptu = formData.iptu
+      }
+      if (formData.features && formData.features.length > 0) {
+        dataToSubmit.features = formData.features
+      }
+
+      // Limpar o objeto removendo campos undefined antes de enviar
+      const cleanedData = Object.fromEntries(
+        Object.entries(dataToSubmit).filter(([, value]) => value !== undefined)
+      ) as CreatePropertyRequest
       
-      const newProperty = await createProperty(dataToSubmit)
+      const newProperty = await createProperty(cleanedData)
       
       // Após criar a propriedade, fazer upload das imagens
       if (selectedImages.length > 0 && newProperty.id) {
@@ -409,6 +457,8 @@ export const MyPropertyPage = () => {
       await deleteProperty(property.id)
       setDeleteDialogOpen(false)
     } catch (err) {
+      // Erro já é tratado pelo hook usePublicProperty
+      console.error('Erro ao deletar propriedade:', err)
     } finally {
       setDeleteLoading(false)
     }
@@ -1170,7 +1220,7 @@ export const MyPropertyPage = () => {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12}>
                     <FormControl fullWidth required>
                       <InputLabel>Tipo de Propriedade *</InputLabel>
                       <Select
