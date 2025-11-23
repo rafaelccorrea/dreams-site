@@ -126,29 +126,30 @@ export const CompaniesPage = () => {
       </PageHeader>
 
       <PageContent>
-        {/* Banner de Convite para Sistema de Gestão */}
-        <Box
-          sx={{
-            mb: { xs: 3, sm: 4 },
-            p: { xs: 2.5, sm: 3, md: 4 },
-            borderRadius: 3,
-            background: "linear-gradient(135deg, rgba(51, 112, 166, 0.1) 0%, rgba(139, 180, 217, 0.15) 100%)",
-            border: "2px solid rgba(51, 112, 166, 0.2)",
-            position: "relative",
-            overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              right: 0,
-              width: "200px",
-              height: "200px",
-              background: "radial-gradient(circle, rgba(51, 112, 166, 0.1) 0%, transparent 70%)",
-              borderRadius: "50%",
-              transform: "translate(30%, -30%)",
-            },
-          }}
-        >
+        {/* Banner de Convite para Sistema de Gestão - Só mostra quando há imobiliárias */}
+        {companies.length > 0 && (
+          <Box
+            sx={{
+              mb: { xs: 3, sm: 4 },
+              p: { xs: 2.5, sm: 3, md: 4 },
+              borderRadius: 3,
+              background: "linear-gradient(135deg, rgba(51, 112, 166, 0.1) 0%, rgba(139, 180, 217, 0.15) 100%)",
+              border: "2px solid rgba(51, 112, 166, 0.2)",
+              position: "relative",
+              overflow: "hidden",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                right: 0,
+                width: "200px",
+                height: "200px",
+                background: "radial-gradient(circle, rgba(51, 112, 166, 0.1) 0%, transparent 70%)",
+                borderRadius: "50%",
+                transform: "translate(30%, -30%)",
+              },
+            }}
+          >
           <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, alignItems: { xs: "flex-start", md: "center" }, position: "relative", zIndex: 1 }}>
             <Box sx={{ flex: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
@@ -232,6 +233,7 @@ export const CompaniesPage = () => {
             </Box>
           </Box>
         </Box>
+        )}
 
         {/* Filtros e Busca */}
         {location?.city && companies.length > 0 && (
