@@ -411,7 +411,7 @@ export const CompaniesPage = () => {
           <Box
             sx={{
               textAlign: "center",
-              py: { xs: 8, sm: 10, md: 12 },
+              py: { xs: 6, sm: 8, md: 10 },
               minHeight: 400,
               display: "flex",
               flexDirection: "column",
@@ -419,58 +419,297 @@ export const CompaniesPage = () => {
               justifyContent: "center",
             }}
           >
-            <Box
-              component="img"
-              src="/not_found.png"
-              alt="Nenhuma imobiliária encontrada"
-              sx={{
-                width: "100%",
-                maxWidth: { xs: 300, sm: 400 },
-                height: "auto",
-                opacity: 0.8,
-                mb: 3,
-              }}
-            />
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 600,
-                color: "text.primary",
-                mb: 2,
-                fontSize: { xs: "1.25rem", sm: "1.5rem" },
-              }}
-            >
-              {searchTerm
-                ? "Nenhuma imobiliária encontrada"
-                : "Nenhuma imobiliária disponível"}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: "text.secondary",
-                fontSize: { xs: "0.9rem", sm: "1rem" },
-                maxWidth: 400,
-              }}
-            >
-              {searchTerm
-                ? `Não encontramos imobiliárias com o termo "${searchTerm}". Tente outra busca.`
-                : location?.city
-                ? `Não há imobiliárias disponíveis em ${location.city} no momento.`
-                : "Não há imobiliárias disponíveis no momento."}
-            </Typography>
-            {searchTerm && (
-              <Chip
-                label="Limpar busca"
-                onClick={() => setSearchTerm("")}
+            {searchTerm ? (
+              <>
+                <Box
+                  component="img"
+                  src="/not_found.png"
+                  alt="Nenhuma imobiliária encontrada"
+                  sx={{
+                    width: "100%",
+                    maxWidth: { xs: 300, sm: 400 },
+                    height: "auto",
+                    opacity: 0.8,
+                    mb: 3,
+                  }}
+                />
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 600,
+                    color: "text.primary",
+                    mb: 2,
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
+                  }}
+                >
+                  Nenhuma imobiliária encontrada
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: { xs: "0.9rem", sm: "1rem" },
+                    maxWidth: 400,
+                    mb: 3,
+                  }}
+                >
+                  Não encontramos imobiliárias com o termo "{searchTerm}". Tente outra busca.
+                </Typography>
+                <Chip
+                  label="Limpar busca"
+                  onClick={() => setSearchTerm("")}
+                  sx={{
+                    bgcolor: "#3370A6",
+                    color: "white",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "#2a5a85" },
+                  }}
+                />
+              </>
+            ) : (
+              <Box
                 sx={{
-                  mt: 3,
-                  bgcolor: "#3370A6",
-                  color: "white",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "#2a5a85" },
+                  maxWidth: 700,
+                  width: "100%",
+                  mx: "auto",
                 }}
-              />
+              >
+                <Box
+                  sx={{
+                    width: { xs: 100, sm: 120 },
+                    height: { xs: 100, sm: 120 },
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg, rgba(51, 112, 166, 0.15) 0%, rgba(139, 180, 217, 0.15) 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 4,
+                    mx: "auto",
+                    border: "3px solid rgba(51, 112, 166, 0.2)",
+                  }}
+                >
+                  <BusinessIcon
+                    sx={{ fontSize: { xs: 50, sm: 60 }, color: "#3370A6" }}
+                  />
+                </Box>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    color: "text.primary",
+                    mb: 2,
+                    fontSize: { xs: "1.75rem", sm: "2.25rem" },
+                    textAlign: "center",
+                  }}
+                >
+                  Faça parte do nosso sistema de gestão
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: { xs: "1rem", sm: "1.125rem" },
+                    maxWidth: 600,
+                    mb: 4,
+                    lineHeight: 1.8,
+                    textAlign: "center",
+                    mx: "auto",
+                  }}
+                >
+                  Tenha suas propriedades no Dreams Keys e alcance mais clientes. Nosso sistema de gestão integrado facilita o gerenciamento dos seus imóveis e aumenta sua visibilidade no mercado.
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2.5,
+                    mt: 3,
+                    maxWidth: 600,
+                    width: "100%",
+                    mx: "auto",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 2.5,
+                      textAlign: "left",
+                      p: 3,
+                      borderRadius: 3,
+                      bgcolor: "rgba(51, 112, 166, 0.08)",
+                      border: "1px solid rgba(51, 112, 166, 0.15)",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        bgcolor: "rgba(51, 112, 166, 0.12)",
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 4px 12px rgba(51, 112, 166, 0.15)",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        minWidth: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        bgcolor: "#3370A6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mt: 0.5,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <CheckCircleIcon sx={{ color: "white", fontSize: 20 }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}
+                      >
+                        Gestão completa de propriedades
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary", lineHeight: 1.6 }}
+                      >
+                        Controle total sobre seus imóveis com ferramentas intuitivas e eficientes
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 2.5,
+                      textAlign: "left",
+                      p: 3,
+                      borderRadius: 3,
+                      bgcolor: "rgba(51, 112, 166, 0.08)",
+                      border: "1px solid rgba(51, 112, 166, 0.15)",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        bgcolor: "rgba(51, 112, 166, 0.12)",
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 4px 12px rgba(51, 112, 166, 0.15)",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        minWidth: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        bgcolor: "#3370A6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mt: 0.5,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <CheckCircleIcon sx={{ color: "white", fontSize: 20 }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}
+                      >
+                        Maior visibilidade para seus imóveis
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary", lineHeight: 1.6 }}
+                      >
+                        Seus imóveis aparecem para milhares de clientes potenciais em busca de propriedades
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 2.5,
+                      textAlign: "left",
+                      p: 3,
+                      borderRadius: 3,
+                      bgcolor: "rgba(51, 112, 166, 0.08)",
+                      border: "1px solid rgba(51, 112, 166, 0.15)",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        bgcolor: "rgba(51, 112, 166, 0.12)",
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 4px 12px rgba(51, 112, 166, 0.15)",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        minWidth: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        bgcolor: "#3370A6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mt: 0.5,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <CheckCircleIcon sx={{ color: "white", fontSize: 20 }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}
+                      >
+                        Ferramentas profissionais de gestão
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary", lineHeight: 1.6 }}
+                      >
+                        Recursos avançados para otimizar suas vendas e aluguéis com máxima eficiência
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                {location?.city && (
+                  <Box
+                    sx={{
+                      mt: 4,
+                      p: 3,
+                      borderRadius: 2,
+                      bgcolor: "rgba(51, 112, 166, 0.1)",
+                      border: "2px dashed rgba(51, 112, 166, 0.3)",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: "#3370A6",
+                        fontWeight: 700,
+                        mb: 1,
+                        fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                      }}
+                    >
+                      Seja o primeiro a entrar no sistema em {location.city}!
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      Aproveite a oportunidade de ser pioneiro e ganhe destaque na região
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             )}
           </Box>
         ) : (
