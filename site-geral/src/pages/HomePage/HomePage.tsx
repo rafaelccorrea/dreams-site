@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Grid } from '@mui/material'
+import { Grid, Box } from '@mui/material'
 import Lottie from 'lottie-react'
 import { AnimatedText } from '../../components/AnimatedText'
 import { HeroCard } from '../../components/HeroCard'
 import { PropertyList } from '../../components/PropertyList'
 import { FeaturedProperties } from '../../components/FeaturedProperties'
 import { ScrollToTop } from '../../components/ScrollToTop'
-import { Person } from '@mui/icons-material'
+import { Person, Business, ArrowForward } from '@mui/icons-material'
 import { PropertySearchFilters } from '../../services/propertyService'
 import {
   PageContainer,
@@ -217,20 +217,63 @@ export const HomePage = () => {
                 subtitle="Milhares de propriedades disponíveis. Seu novo lar está a um clique de distância."
                 delay={0.3}
               />
-              <ContactButton
-                variant="contained"
-                startIcon={<Person />}
-                onClick={handleContactBrokers}
+              <Box
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'primary.main',
-                  '&:hover': {
-                    backgroundColor: 'white',
-                  },
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                  mt: 2,
                 }}
               >
-                Contato com Corretores
-              </ContactButton>
+                <ContactButton
+                  variant="contained"
+                  startIcon={<Person />}
+                  onClick={handleContactBrokers}
+                  sx={{
+                    backgroundColor: 'white',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'white',
+                    },
+                    flex: { xs: '1 1 100%', sm: '0 1 auto' },
+                  }}
+                >
+                  Contato com Corretores
+                </ContactButton>
+                <ContactButton
+                  variant="contained"
+                  startIcon={<Business />}
+                  endIcon={<ArrowForward />}
+                  onClick={() => window.open('https://www.dreamkeys.com.br/sistema/', '_blank')}
+                  sx={{
+                    backgroundColor: '#3370A6',
+                    color: 'white',
+                    borderColor: '#3370A6',
+                    borderWidth: 2,
+                    fontWeight: 600,
+                    boxShadow: '0 0 8px rgba(51, 112, 166, 0.6), 0 0 12px rgba(51, 112, 166, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.1)',
+                    textShadow: '0 0 4px rgba(255, 255, 255, 0.3)',
+                    '&:hover': {
+                      backgroundColor: '#2a5a85',
+                      borderColor: '#3370A6',
+                      borderWidth: 2,
+                      boxShadow: '0 0 12px rgba(51, 112, 166, 0.9), 0 0 20px rgba(51, 112, 166, 0.6), inset 0 0 12px rgba(255, 255, 255, 0.15)',
+                      textShadow: '0 0 6px rgba(255, 255, 255, 0.5)',
+                      transform: 'translateY(-2px)',
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: 'white',
+                      filter: 'drop-shadow(0 0 3px rgba(255, 255, 255, 0.4))',
+                    },
+                    '&:hover .MuiSvgIcon-root': {
+                      filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.6))',
+                    },
+                    flex: { xs: '1 1 100%', sm: '0 1 auto' },
+                  }}
+                >
+                  Conhecer o Sistema
+                </ContactButton>
+              </Box>
             </LeftSection>
           </Grid>
           <Grid item xs={12} md={6}>
