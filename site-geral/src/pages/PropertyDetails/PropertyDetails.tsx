@@ -43,6 +43,7 @@ import {
 import {
   createPropertyOffer,
   listMyOffersByPropertyId,
+  checkPendingOffer,
 } from "../../services/propertyOffersService";
 import { getPublicPropertyById, getPublicPropertyImages } from "../../services/publicPropertyService";
 import { formatPrice, formatArea } from "../../utils/formatPrice";
@@ -76,6 +77,8 @@ export const PropertyDetails = () => {
   const [offerSuccess, setOfferSuccess] = useState<string | null>(null);
   const [myOffers, setMyOffers] = useState<PropertyOffer[]>([]);
   const [myOffersLoading, setMyOffersLoading] = useState(false);
+  const [hasPendingOffer, setHasPendingOffer] = useState(false);
+  const [checkingPendingOffer, setCheckingPendingOffer] = useState(false);
   
   // Verifica se a propriedade é do próprio usuário
   const isOwnProperty = isAuthenticated && myProperty && property && myProperty.id === property.id;
@@ -87,11 +90,30 @@ export const PropertyDetails = () => {
     return isNaN(num) ? null : num;
   };
 
-  const handleOpenOfferDialog = () => {
+  const handleOpenOfferDialog = async () => {
     if (!property) return;
     if (!isAuthenticated) {
       setLoginModalOpen(true);
       return;
+    }
+
+    // Verificar se já existe oferta pendente
+    setCheckingPendingOffer(true);
+    try {
+      const checkResult = await checkPendingOffer(property.id);
+      if (checkResult.hasPendingOffer) {
+        setOfferError(
+          "Você já possui uma oferta pendente para esta propriedade. Aguarde a resposta da imobiliária ou retire a oferta anterior antes de fazer uma nova."
+        );
+        setCheckingPendingOffer(false);
+        return;
+      }
+    } catch (err) {
+      // Se der erro na verificação, permite tentar criar mesmo assim
+      // O backend vai validar
+      console.error("Erro ao verificar oferta pendente:", err);
+    } finally {
+      setCheckingPendingOffer(false);
     }
 
     const hasSale = property.salePrice && Number(property.salePrice) > 0;
@@ -137,6 +159,8 @@ export const PropertyDetails = () => {
 
       setOfferSuccess("Oferta enviada com sucesso! Aguarde o retorno da imobiliária.");
       setOfferDialogOpen(false);
+      // Atualiza estado de oferta pendente
+      setHasPendingOffer(true);
       // Recarrega os dados da propriedade para atualizar contadores/ofertas
       if (property.id) {
         await loadProperty(property.id);
@@ -185,19 +209,31 @@ export const PropertyDetails = () => {
 
       setProperty(data);
 
-      // Se usuário autenticado, carrega ofertas dele para este imóvel
+      // Se usuário autenticado, carrega ofertas dele para este imóvel e verifica se há pendente
       if (isAuthenticated) {
         try {
           setMyOffersLoading(true);
           const offers = await listMyOffersByPropertyId(propertyId);
           setMyOffers(offers);
+          
+          // Verificar se há oferta pendente
+          try {
+            const checkResult = await checkPendingOffer(propertyId);
+            setHasPendingOffer(checkResult.hasPendingOffer);
+          } catch {
+            // Se falhar, verifica nas ofertas carregadas
+            const pendingOffer = offers.find(o => o.status === 'pending');
+            setHasPendingOffer(!!pendingOffer);
+          }
         } catch {
           setMyOffers([]);
+          setHasPendingOffer(false);
         } finally {
           setMyOffersLoading(false);
         }
       } else {
         setMyOffers([]);
+        setHasPendingOffer(false);
       }
 
       // Sempre busca todas as imagens se houver mais de uma
@@ -531,10 +567,9 @@ export const PropertyDetails = () => {
                   gap: { xs: 0.75, sm: 1 },
                   color: "text.secondary",
                   mb: { xs: 2, sm: 3 },
-                  flexWrap: "wrap",
                 }}
               >
-                <LocationOn sx={{ color: "#1976d2", fontSize: { xs: 18, sm: 20 } }} />
+                <LocationOn sx={{ color: "#1976d2", fontSize: { xs: 18, sm: 20 }, flexShrink: 0 }} />
                 <Typography variant="body1" sx={{ fontWeight: 500, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                   {property.address}, {property.neighborhood}, {property.city} -{" "}
                   {property.state}
@@ -622,9 +657,16 @@ export const PropertyDetails = () => {
                       variant="contained"
                       size="small"
                       onClick={handleOpenOfferDialog}
+                      disabled={hasPendingOffer || checkingPendingOffer}
                       sx={{ textTransform: "none", fontWeight: 600 }}
                     >
-                      {isAuthenticated ? "Fazer oferta" : "Entrar para fazer oferta"}
+                      {checkingPendingOffer
+                        ? "Verificando..."
+                        : hasPendingOffer
+                        ? "Oferta pendente"
+                        : isAuthenticated
+                        ? "Fazer oferta"
+                        : "Entrar para fazer oferta"}
                     </Button>
                   </Box>
                 )}

@@ -121,4 +121,31 @@ export async function listMyOffersByPropertyId(
   return data.offers || []
 }
 
+/**
+ * Verifica se há oferta pendente para uma propriedade
+ * Endpoint: GET /api/public/properties/offers/check/:propertyId
+ */
+export interface CheckPendingOfferResponse {
+  hasPendingOffer: boolean
+  pendingOffer?: PropertyOffer
+  message?: string
+}
 
+export async function checkPendingOffer(
+  propertyId: string
+): Promise<CheckPendingOfferResponse> {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    throw new Error('Você precisa estar autenticado para verificar ofertas.')
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/public/properties/offers/check/${propertyId}`,
+    {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    }
+  )
+
+  return handleResponse<CheckPendingOfferResponse>(response)
+}
