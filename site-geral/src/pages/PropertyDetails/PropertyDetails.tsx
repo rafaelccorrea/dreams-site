@@ -12,6 +12,13 @@ import {
   Avatar,
   Container,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Alert,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -31,9 +38,15 @@ import {
   getPropertyById,
   type Property,
   getPropertyImages,
+  type PropertyOffer,
 } from "../../services/propertyService";
+import {
+  createPropertyOffer,
+  listMyOffersByPropertyId,
+} from "../../services/propertyOffersService";
 import { getPublicPropertyById, getPublicPropertyImages } from "../../services/publicPropertyService";
 import { formatPrice, formatArea } from "../../utils/formatPrice";
+import { formatCurrency, unformatCurrency } from "../../utils/masks";
 import { PropertyDetailsShimmer } from "../../components/Shimmer";
 import { ImageCarousel } from "../../components/ImageCarousel";
 import { useAuth } from "../../hooks/useAuth";
@@ -41,6 +54,7 @@ import { usePublicProperty } from "../../hooks/usePublicProperty";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { FavoriteButton } from "../../components/FavoriteButton";
 import { ShareButton } from "../../components/ShareButton";
+import { LoginModal } from "../../components/LoginModal";
 
 export const PropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,9 +66,91 @@ export const PropertyDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setIsPublicProperty] = useState(false);
+  const [offerDialogOpen, setOfferDialogOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [offerType, setOfferType] = useState<"sale" | "rental">("sale");
+  const [offerValue, setOfferValue] = useState<string>("");
+  const [offerMessage, setOfferMessage] = useState<string>("");
+  const [offerLoading, setOfferLoading] = useState(false);
+  const [offerError, setOfferError] = useState<string | null>(null);
+  const [offerSuccess, setOfferSuccess] = useState<string | null>(null);
+  const [myOffers, setMyOffers] = useState<PropertyOffer[]>([]);
+  const [myOffersLoading, setMyOffersLoading] = useState(false);
   
   // Verifica se a propriedade é do próprio usuário
   const isOwnProperty = isAuthenticated && myProperty && property && myProperty.id === property.id;
+
+  const parseNumber = (value: string | number | null | undefined): number | null => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === "number") return value;
+    const num = Number(value);
+    return isNaN(num) ? null : num;
+  };
+
+  const handleOpenOfferDialog = () => {
+    if (!property) return;
+    if (!isAuthenticated) {
+      setLoginModalOpen(true);
+      return;
+    }
+
+    const hasSale = property.salePrice && Number(property.salePrice) > 0;
+    const hasRent = property.rentPrice && Number(property.rentPrice) > 0;
+
+    if (hasSale) {
+      setOfferType("sale");
+    } else if (hasRent) {
+      setOfferType("rental");
+    }
+
+    setOfferValue("");
+    setOfferMessage("");
+    setOfferError(null);
+    setOfferSuccess(null);
+    setOfferDialogOpen(true);
+  };
+
+  const handleOfferValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrency(e.target.value);
+    setOfferValue(formatted);
+  };
+
+  const handleOfferSubmit = async () => {
+    if (!property) return;
+    setOfferLoading(true);
+    setOfferError(null);
+
+    const valueNumber = unformatCurrency(offerValue);
+    if (isNaN(valueNumber) || valueNumber <= 0) {
+      setOfferError("Informe um valor de oferta válido.");
+      setOfferLoading(false);
+      return;
+    }
+
+    try {
+      await createPropertyOffer({
+        propertyId: property.id,
+        type: offerType,
+        offeredValue: valueNumber,
+        message: offerMessage || undefined,
+      });
+
+      setOfferSuccess("Oferta enviada com sucesso! Aguarde o retorno da imobiliária.");
+      setOfferDialogOpen(false);
+      // Recarrega os dados da propriedade para atualizar contadores/ofertas
+      if (property.id) {
+        await loadProperty(property.id);
+      }
+    } catch (err) {
+      setOfferError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao enviar oferta. Tente novamente."
+      );
+    } finally {
+      setOfferLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -88,6 +184,21 @@ export const PropertyDetails = () => {
       }
 
       setProperty(data);
+
+      // Se usuário autenticado, carrega ofertas dele para este imóvel
+      if (isAuthenticated) {
+        try {
+          setMyOffersLoading(true);
+          const offers = await listMyOffersByPropertyId(propertyId);
+          setMyOffers(offers);
+        } catch {
+          setMyOffers([]);
+        } finally {
+          setMyOffersLoading(false);
+        }
+      } else {
+        setMyOffers([]);
+      }
 
       // Sempre busca todas as imagens se houver mais de uma
       if (data.imageCount > 0) {
@@ -486,6 +597,37 @@ export const PropertyDetails = () => {
                     </Typography>
                   </Box>
                 )}
+                {property.acceptsNegotiation && (
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: { xs: 1.5, sm: 2 },
+                      borderRadius: 2,
+                      border: "1px dashed #1976d2",
+                      bgcolor: "rgba(25, 118, 210, 0.03)",
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600, color: "#1976d2", mb: 0.5 }}
+                    >
+                      Este imóvel aceita negociação
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+                      Você pode enviar uma oferta para compra ou aluguel, dentro dos
+                      limites definidos pela imobiliária.
+                    </Typography>
+
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={handleOpenOfferDialog}
+                      sx={{ textTransform: "none", fontWeight: 600 }}
+                    >
+                      {isAuthenticated ? "Fazer oferta" : "Entrar para fazer oferta"}
+                    </Button>
+                  </Box>
+                )}
               </Box>
 
               {/* Informações MCMV */}
@@ -808,6 +950,244 @@ export const PropertyDetails = () => {
                 {property.description || "Sem descrição disponível."}
               </Typography>
             </Box>
+
+            {/* Ofertas nesta propriedade (anônimas) */}
+            {property.offers && property.offers.length > 0 && (
+              <>
+                <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+                <Box sx={{ mb: { xs: 3, sm: 5 } }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 700,
+                      color: "#212121",
+                      mb: { xs: 1.5, sm: 2 },
+                      fontSize: { xs: "1.25rem", sm: "1.5rem" },
+                    }}
+                  >
+                    Ofertas neste imóvel
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", mb: 2 }}
+                  >
+                    Valores e status são exibidos sem identificar os ofertantes.
+                  </Typography>
+
+                  <Stack spacing={1.5}>
+                    {property.offers.map((offer) => (
+                      <Box
+                        key={offer.id}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          border: "1px solid #e0e0e0",
+                          bgcolor: "white",
+                        }}
+                      >
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="space-between"
+                          alignItems="center"
+                          sx={{ mb: 0.5, flexWrap: "wrap" }}
+                        >
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Chip
+                              size="small"
+                              label={offer.type === "sale" ? "Compra" : "Aluguel"}
+                              sx={{
+                                bgcolor:
+                                  offer.type === "sale"
+                                    ? "rgba(25, 118, 210, 0.08)"
+                                    : "rgba(76, 175, 80, 0.08)",
+                                color:
+                                  offer.type === "sale" ? "#1976d2" : "#2e7d32",
+                                fontWeight: 600,
+                              }}
+                            />
+                            <Chip
+                              size="small"
+                              label={
+                                offer.status === "pending"
+                                  ? "Pendente"
+                                  : offer.status === "accepted"
+                                  ? "Aceita"
+                                  : offer.status === "rejected"
+                                  ? "Recusada"
+                                  : offer.status === "withdrawn"
+                                  ? "Retirada"
+                                  : "Expirada"
+                              }
+                              sx={{
+                                bgcolor:
+                                  offer.status === "accepted"
+                                    ? "rgba(76, 175, 80, 0.12)"
+                                    : offer.status === "pending"
+                                    ? "rgba(255, 193, 7, 0.12)"
+                                    : "rgba(158, 158, 158, 0.08)",
+                                color:
+                                  offer.status === "accepted"
+                                    ? "#2e7d32"
+                                    : offer.status === "pending"
+                                    ? "#f9a825"
+                                    : "#616161",
+                                fontWeight: 600,
+                              }}
+                            />
+                          </Stack>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 700, color: "#212121" }}
+                          >
+                            {formatPrice(offer.offeredValue)}
+                          </Typography>
+                        </Stack>
+
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "text.secondary", display: "block" }}
+                        >
+                          {offer.createdAt
+                            ? new Date(offer.createdAt).toLocaleDateString(
+                                "pt-BR"
+                              )
+                            : ""}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              </>
+            )}
+
+            {/* Minhas ofertas para este imóvel */}
+            {isAuthenticated && myOffers.length > 0 && (
+              <>
+                <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+                <Box sx={{ mb: { xs: 3, sm: 5 } }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 700,
+                      color: "#212121",
+                      mb: { xs: 1.5, sm: 2 },
+                      fontSize: { xs: "1.25rem", sm: "1.5rem" },
+                    }}
+                  >
+                    Minhas ofertas para este imóvel
+                  </Typography>
+                  <Stack spacing={1.5}>
+                    {myOffers.map((offer) => (
+                      <Box
+                        key={offer.id}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          border: "1px solid #e0e0e0",
+                          bgcolor: "white",
+                        }}
+                      >
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="space-between"
+                          alignItems="center"
+                          sx={{ mb: 0.5, flexWrap: "wrap" }}
+                        >
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Chip
+                              size="small"
+                              label={offer.type === "sale" ? "Compra" : "Aluguel"}
+                              sx={{
+                                bgcolor:
+                                  offer.type === "sale"
+                                    ? "rgba(25, 118, 210, 0.08)"
+                                    : "rgba(76, 175, 80, 0.08)",
+                                color:
+                                  offer.type === "sale" ? "#1976d2" : "#2e7d32",
+                                fontWeight: 600,
+                              }}
+                            />
+                            <Chip
+                              size="small"
+                              label={
+                                offer.status === "pending"
+                                  ? "Pendente"
+                                  : offer.status === "accepted"
+                                  ? "Aceita"
+                                  : offer.status === "rejected"
+                                  ? "Recusada"
+                                  : offer.status === "withdrawn"
+                                  ? "Retirada"
+                                  : "Expirada"
+                              }
+                              sx={{
+                                bgcolor:
+                                  offer.status === "accepted"
+                                    ? "rgba(76, 175, 80, 0.12)"
+                                    : offer.status === "pending"
+                                    ? "rgba(255, 193, 7, 0.12)"
+                                    : "rgba(158, 158, 158, 0.08)",
+                                color:
+                                  offer.status === "accepted"
+                                    ? "#2e7d32"
+                                    : offer.status === "pending"
+                                    ? "#f9a825"
+                                    : "#616161",
+                                fontWeight: 600,
+                              }}
+                            />
+                          </Stack>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 700, color: "#212121" }}
+                          >
+                            {formatPrice(offer.offeredValue)}
+                          </Typography>
+                        </Stack>
+
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
+                        >
+                          Enviada em{" "}
+                          {offer.createdAt
+                            ? new Date(offer.createdAt).toLocaleDateString("pt-BR")
+                            : ""}
+                        </Typography>
+
+                        {offer.message && (
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "text.secondary", mt: 0.5 }}
+                          >
+                            {offer.message}
+                          </Typography>
+                        )}
+
+                        {offer.responseMessage && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color:
+                                offer.status === "accepted"
+                                  ? "#2e7d32"
+                                  : "#616161",
+                              mt: 0.5,
+                              fontStyle: "italic",
+                            }}
+                          >
+                            Resposta da imobiliária: {offer.responseMessage}
+                          </Typography>
+                        )}
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              </>
+            )}
 
             {property.features && property.features.length > 0 && (
               <>
@@ -1181,6 +1561,85 @@ export const PropertyDetails = () => {
           </Grid>
         </Grid>
       </Box>
+      {/* Modal de oferta */}
+      {property && (
+        <Dialog
+          open={offerDialogOpen}
+          onClose={() => !offerLoading && setOfferDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Fazer oferta para este imóvel</DialogTitle>
+          <DialogContent dividers>
+            {offerError && (
+              <Box sx={{ mb: 2 }}>
+                <Alert severity="error">{offerError}</Alert>
+              </Box>
+            )}
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              {property.salePrice &&
+                Number(property.salePrice) > 0 &&
+                property.rentPrice &&
+                Number(property.rentPrice) > 0 && (
+                  <TextField
+                    select
+                    label="Tipo de oferta"
+                    value={offerType}
+                    onChange={(e) =>
+                      setOfferType(e.target.value as "sale" | "rental")
+                    }
+                    fullWidth
+                  >
+                    <MenuItem value="sale">Compra</MenuItem>
+                    <MenuItem value="rental">Aluguel</MenuItem>
+                  </TextField>
+                )}
+
+              <TextField
+                label={
+                  offerType === "sale" ? "Valor da oferta de compra" : "Valor da oferta de aluguel"
+                }
+                type="text"
+                fullWidth
+                value={offerValue}
+                onChange={handleOfferValueChange}
+                placeholder="R$ 0,00"
+              />
+
+              <TextField
+                label="Mensagem (opcional)"
+                multiline
+                minRows={3}
+                fullWidth
+                value={offerMessage}
+                onChange={(e) => setOfferMessage(e.target.value)}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOfferDialogOpen(false)} disabled={offerLoading}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleOfferSubmit}
+              variant="contained"
+              disabled={offerLoading}
+            >
+              {offerLoading ? "Enviando..." : "Enviar oferta"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* Modal de login para usuários não autenticados */}
+      <LoginModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onLoginSuccess={() => {
+          setLoginModalOpen(false);
+          handleOpenOfferDialog();
+        }}
+      />
     </Box>
   );
 };

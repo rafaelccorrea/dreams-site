@@ -16,6 +16,7 @@ import { BrokerDetails } from './pages/BrokerDetails'
 import { LancamentosPage } from './pages/LancamentosPage'
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
+import { MyOffersPage } from './pages/MyOffersPage'
 import { MyPropertyPage } from './pages/MyPropertyPage'
 import { McmvPage } from './pages/McmvPage'
 import { LocalSearchPage } from './pages/LocalSearchPage'
@@ -188,6 +189,16 @@ function AppContent() {
               <LocationProtectedRoute>
                 <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
                   <FavoritesPage />
+                </MainContentWrapper>
+              </LocationProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/minhas-ofertas" 
+            element={
+              <LocationProtectedRoute>
+                <MainContentWrapper $showBackground={false} style={{ paddingTop: '50px' }}>
+                  <MyOffersPage />
                 </MainContentWrapper>
               </LocationProtectedRoute>
             } 

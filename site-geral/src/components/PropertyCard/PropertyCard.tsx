@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, Typography, Box, Chip, Tooltip } from '@mui/material'
 import styled from 'styled-components'
-import { Bed, Bathtub, SquareFoot, Home } from '@mui/icons-material'
+import { Bed, Bathtub, SquareFoot, Home, Handshake } from '@mui/icons-material'
 import { Property, getPropertyImages } from '../../services/propertyService'
 import { getPublicPropertyImages } from '../../services/publicPropertyService'
 import { formatPrice, formatArea } from '../../utils/formatPrice'
@@ -69,6 +69,82 @@ const McmvFlag = styled.div`
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     font-size: 0.65rem;
     padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  }
+`
+
+const NegotiationFlag = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white !important;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  font-weight: 700;
+  font-size: 0.75rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 85%);
+  cursor: help;
+  
+  svg,
+  svg * {
+    color: white !important;
+    fill: white !important;
+  }
+  
+  span {
+    color: white !important;
+  }
+  
+  * {
+    color: white !important;
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 0.65rem;
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  }
+`
+
+const NegotiationFlagWithMcmv = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white !important;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  font-weight: 700;
+  font-size: 0.75rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 85%);
+  cursor: help;
+  margin-top: 32px; /* Espaço para o flag MCMV acima */
+  
+  svg,
+  svg * {
+    color: white !important;
+    fill: white !important;
+  }
+  
+  span {
+    color: white !important;
+  }
+  
+  * {
+    color: white !important;
+  }
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 0.65rem;
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+    margin-top: 28px;
   }
 `
 
@@ -370,6 +446,39 @@ export const PropertyCard = ({ property, onClick, hideCompanyInfo = false, hideC
                 }} 
               />
               <span style={{ color: 'white' }}>MCMV</span>
+            </Box>
+          </Tooltip>
+        )}
+        {/* Flag Aceita Ofertas */}
+        {property.acceptsNegotiation && (
+          <Tooltip
+            title="Esta propriedade aceita ofertas e negociação"
+            arrow
+            placement="top"
+          >
+            <Box
+              component={property.isAvailableForMCMV ? NegotiationFlagWithMcmv : NegotiationFlag}
+              sx={{
+                '& svg': {
+                  color: 'white !important',
+                  fill: 'white !important',
+                },
+                '& path': {
+                  fill: 'white !important',
+                },
+                '& span': {
+                  color: 'white !important',
+                },
+              }}
+            >
+              <Handshake 
+                sx={{ 
+                  fontSize: 14, 
+                  color: 'white',
+                  fill: 'white',
+                }} 
+              />
+              <span style={{ color: 'white' }}>Aceita Ofertas</span>
             </Box>
           </Tooltip>
         )}

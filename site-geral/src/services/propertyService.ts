@@ -32,6 +32,27 @@ export interface McmvInfo {
   notes?: string | null // Observações adicionais sobre o MCMV
 }
 
+export type PropertyOfferStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'expired'
+
+export type PropertyOfferType = 'sale' | 'rental'
+
+export interface PropertyOffer {
+  id: string
+  propertyId: string
+  type: PropertyOfferType
+  status: PropertyOfferStatus
+  offeredValue: number
+  message?: string | null
+  responseMessage?: string | null
+  createdAt: string
+  updatedAt: string
+  user?: {
+    id: string
+    email: string
+    phone?: string | null
+  }
+}
+
 export interface Property {
   id: string
   code: string | null
@@ -90,6 +111,16 @@ export interface Property {
     phone?: string
     avatar?: string
   }
+  // Negociação / ofertas (novos campos opcionais)
+  acceptsNegotiation?: boolean
+  minSalePrice?: number | string | null
+  minRentPrice?: number | string | null
+  totalOffersCount?: number
+  pendingOffersCount?: number
+  acceptedOffersCount?: number
+  rejectedOffersCount?: number
+  hasPendingOffers?: boolean
+  offers?: PropertyOffer[]
 }
 
 export interface PropertyListResponse {

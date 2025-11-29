@@ -151,6 +151,7 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
     href: '/favoritos',
     submenu: [
       { label: 'Favoritos', href: '/favoritos' },
+      { label: 'Minhas Ofertas', href: '/minhas-ofertas' },
       { label: 'Minha Prop.', href: '/minha-propriedade' },
     ],
   } : null
