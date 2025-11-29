@@ -19,6 +19,7 @@ import {
   TextField,
   MenuItem,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -76,19 +77,11 @@ export const PropertyDetails = () => {
   const [offerError, setOfferError] = useState<string | null>(null);
   const [offerSuccess, setOfferSuccess] = useState<string | null>(null);
   const [myOffers, setMyOffers] = useState<PropertyOffer[]>([]);
-  const [myOffersLoading, setMyOffersLoading] = useState(false);
   const [hasPendingOffer, setHasPendingOffer] = useState(false);
   const [checkingPendingOffer, setCheckingPendingOffer] = useState(false);
   
   // Verifica se a propriedade é do próprio usuário
   const isOwnProperty = isAuthenticated && myProperty && property && myProperty.id === property.id;
-
-  const parseNumber = (value: string | number | null | undefined): number | null => {
-    if (value === null || value === undefined) return null;
-    if (typeof value === "number") return value;
-    const num = Number(value);
-    return isNaN(num) ? null : num;
-  };
 
   const handleOpenOfferDialog = async () => {
     if (!property) return;
@@ -157,8 +150,8 @@ export const PropertyDetails = () => {
         message: offerMessage || undefined,
       });
 
-      setOfferSuccess("Oferta enviada com sucesso! Aguarde o retorno da imobiliária.");
       setOfferDialogOpen(false);
+      setOfferSuccess("Oferta enviada com sucesso! Aguarde o retorno da imobiliária.");
       // Atualiza estado de oferta pendente
       setHasPendingOffer(true);
       // Recarrega os dados da propriedade para atualizar contadores/ofertas
@@ -212,7 +205,6 @@ export const PropertyDetails = () => {
       // Se usuário autenticado, carrega ofertas dele para este imóvel e verifica se há pendente
       if (isAuthenticated) {
         try {
-          setMyOffersLoading(true);
           const offers = await listMyOffersByPropertyId(propertyId);
           setMyOffers(offers);
           
@@ -228,8 +220,6 @@ export const PropertyDetails = () => {
         } catch {
           setMyOffers([]);
           setHasPendingOffer(false);
-        } finally {
-          setMyOffersLoading(false);
         }
       } else {
         setMyOffers([]);
@@ -1682,6 +1672,18 @@ export const PropertyDetails = () => {
           handleOpenOfferDialog();
         }}
       />
+
+      {/* Snackbar para mensagem de sucesso */}
+      <Snackbar
+        open={!!offerSuccess}
+        autoHideDuration={4000}
+        onClose={() => setOfferSuccess(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="success" onClose={() => setOfferSuccess(null)}>
+          {offerSuccess}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
