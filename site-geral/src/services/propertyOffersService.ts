@@ -127,7 +127,7 @@ export async function listMyOffersByPropertyId(
  */
 export interface CheckPendingOfferResponse {
   hasPendingOffer: boolean
-  pendingOffer?: PropertyOffer
+  offer?: PropertyOffer
   message?: string
 }
 

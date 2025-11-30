@@ -211,11 +211,13 @@ export const PropertyDetails = () => {
           // Verificar se há oferta pendente
           try {
             const checkResult = await checkPendingOffer(propertyId);
-            setHasPendingOffer(checkResult.hasPendingOffer);
-          } catch {
+            console.log("Resultado da verificação de oferta pendente:", checkResult);
+            setHasPendingOffer(checkResult.hasPendingOffer === true);
+          } catch (err) {
             // Se falhar, verifica nas ofertas carregadas
             const pendingOffer = offers.find(o => o.status === 'pending');
             setHasPendingOffer(!!pendingOffer);
+            console.error("Erro ao verificar oferta pendente:", err);
           }
         } catch {
           setMyOffers([]);
@@ -632,16 +634,29 @@ export const PropertyDetails = () => {
                       bgcolor: "rgba(25, 118, 210, 0.03)",
                     }}
                   >
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: "#1976d2", mb: 0.5 }}
-                    >
-                      Este imóvel aceita negociação
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-                      Você pode enviar uma oferta para compra ou aluguel, dentro dos
-                      limites definidos pela imobiliária.
-                    </Typography>
+                    {!hasPendingOffer && (
+                      <>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 600, color: "#1976d2", mb: 0.5 }}
+                        >
+                          Este imóvel aceita negociação
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+                          Você pode enviar uma oferta para compra ou aluguel, dentro dos
+                          limites definidos pela imobiliária.
+                        </Typography>
+                      </>
+                    )}
+
+                    {hasPendingOffer && (
+                      <Alert 
+                        severity="info" 
+                        sx={{ mb: 1.5, fontSize: "0.875rem" }}
+                      >
+                        Você já possui uma oferta pendente para esta propriedade. Aguarde a resposta da imobiliária.
+                      </Alert>
+                    )}
 
                     <Button
                       variant="contained"
