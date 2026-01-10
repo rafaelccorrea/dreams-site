@@ -153,7 +153,7 @@ export const CompaniesPage = () => {
           <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, alignItems: { xs: "flex-start", md: "center" }, position: "relative", zIndex: 1 }}>
             <Box sx={{ flex: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <BusinessIcon sx={{ fontSize: 28, color: "#3370A6" }} />
+                <BusinessIcon sx={{ fontSize: 28, color: "#A63126" }} />
                 <Typography
                   variant="h5"
                   sx={{
@@ -174,23 +174,23 @@ export const CompaniesPage = () => {
                   lineHeight: 1.6,
                 }}
               >
-                Tenha suas propriedades no Dreams Keys e alcance mais clientes. Nosso sistema de gestão integrado facilita o gerenciamento dos seus imóveis e aumenta sua visibilidade no mercado.
+                Tenha suas propriedades no Intellisys e alcance mais clientes. Nosso sistema de gestão integrado facilita o gerenciamento dos seus imóveis e aumenta sua visibilidade no mercado.
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CheckCircleIcon sx={{ fontSize: 18, color: "#3370A6" }} />
+                  <CheckCircleIcon sx={{ fontSize: 18, color: "#A63126" }} />
                   <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
                     Gestão completa de propriedades
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CheckCircleIcon sx={{ fontSize: 18, color: "#3370A6" }} />
+                  <CheckCircleIcon sx={{ fontSize: 18, color: "#A63126" }} />
                   <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
                     Maior visibilidade para seus imóveis
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CheckCircleIcon sx={{ fontSize: 18, color: "#3370A6" }} />
+                  <CheckCircleIcon sx={{ fontSize: 18, color: "#A63126" }} />
                   <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
                     Ferramentas profissionais de gestão
                   </Typography>
@@ -209,7 +209,7 @@ export const CompaniesPage = () => {
                   gap: 1,
                   px: { xs: 2.5, sm: 3 },
                   py: { xs: 1.25, sm: 1.5 },
-                  bgcolor: "#3370A6",
+                  bgcolor: "#A63126",
                   color: "white",
                   border: "none",
                   borderRadius: 2,
@@ -251,12 +251,12 @@ export const CompaniesPage = () => {
                     borderRadius: 2,
                     "&:hover": {
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#3370A6",
+                        borderColor: "#A63126",
                       },
                     },
                     "&.Mui-focused": {
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#3370A6",
+                        borderColor: "#A63126",
                         borderWidth: 2,
                       },
                     },
@@ -291,9 +291,9 @@ export const CompaniesPage = () => {
                   label="Todas"
                   onClick={() => setFilterVerified(false)}
                   sx={{
-                    bgcolor: !filterVerified ? "#3370A6" : "transparent",
-                    color: !filterVerified ? "white" : "#3370A6",
-                    border: !filterVerified ? "none" : "1px solid #3370A6",
+                    bgcolor: !filterVerified ? "#A63126" : "transparent",
+                    color: !filterVerified ? "white" : "#A63126",
+                    border: !filterVerified ? "none" : "1px solid #A63126",
                     fontWeight: 600,
                     cursor: "pointer",
                     "&:hover": {
@@ -306,16 +306,16 @@ export const CompaniesPage = () => {
                   icon={<VerifiedIcon sx={{ fontSize: 18 }} />}
                   onClick={() => setFilterVerified(true)}
                   sx={{
-                    bgcolor: filterVerified ? "#3370A6" : "transparent",
-                    color: filterVerified ? "white" : "#3370A6",
-                    border: filterVerified ? "none" : "1px solid #3370A6",
+                    bgcolor: filterVerified ? "#A63126" : "transparent",
+                    color: filterVerified ? "white" : "#A63126",
+                    border: filterVerified ? "none" : "1px solid #A63126",
                     fontWeight: 600,
                     cursor: "pointer",
                     "&:hover": {
                       bgcolor: filterVerified ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
                     },
                     "& .MuiChip-icon": {
-                      color: filterVerified ? "white" : "#3370A6",
+                      color: filterVerified ? "white" : "#A63126",
                     },
                   }}
                 />
@@ -341,7 +341,7 @@ export const CompaniesPage = () => {
                   sx={{
                     borderRadius: 2,
                     "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#3370A6",
+                      borderColor: "#A63126",
                     },
                   }}
                 >
@@ -384,7 +384,7 @@ export const CompaniesPage = () => {
               }}
             >
               <BusinessIcon
-                sx={{ fontSize: { xs: 40, sm: 50 }, color: "#3370A6" }}
+                sx={{ fontSize: { xs: 40, sm: 50 }, color: "#A63126" }}
               />
             </Box>
             <Typography
@@ -461,7 +461,7 @@ export const CompaniesPage = () => {
                   label="Limpar busca"
                   onClick={() => setSearchTerm("")}
                   sx={{
-                    bgcolor: "#3370A6",
+                    bgcolor: "#A63126",
                     color: "white",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -493,7 +493,7 @@ export const CompaniesPage = () => {
                   }}
                 >
                   <BusinessIcon
-                    sx={{ fontSize: { xs: 50, sm: 60 }, color: "#3370A6" }}
+                    sx={{ fontSize: { xs: 50, sm: 60 }, color: "#A63126" }}
                   />
                 </Box>
                 <Typography
@@ -520,7 +520,7 @@ export const CompaniesPage = () => {
                     mx: "auto",
                   }}
                 >
-                  Tenha suas propriedades no Dreams Keys e alcance mais clientes. Nosso sistema de gestão integrado facilita o gerenciamento dos seus imóveis e aumenta sua visibilidade no mercado.
+                  Tenha suas propriedades no Intellisys e alcance mais clientes. Nosso sistema de gestão integrado facilita o gerenciamento dos seus imóveis e aumenta sua visibilidade no mercado.
                 </Typography>
                 <Box
                   sx={{
@@ -556,7 +556,7 @@ export const CompaniesPage = () => {
                         minWidth: 32,
                         height: 32,
                         borderRadius: "50%",
-                        bgcolor: "#3370A6",
+                        bgcolor: "#A63126",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -604,7 +604,7 @@ export const CompaniesPage = () => {
                         minWidth: 32,
                         height: 32,
                         borderRadius: "50%",
-                        bgcolor: "#3370A6",
+                        bgcolor: "#A63126",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -652,7 +652,7 @@ export const CompaniesPage = () => {
                         minWidth: 32,
                         height: 32,
                         borderRadius: "50%",
-                        bgcolor: "#3370A6",
+                        bgcolor: "#A63126",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -692,7 +692,7 @@ export const CompaniesPage = () => {
                     <Typography
                       variant="h6"
                       sx={{
-                        color: "#3370A6",
+                        color: "#A63126",
                         fontWeight: 700,
                         mb: 1,
                         fontSize: { xs: "1.1rem", sm: "1.25rem" },

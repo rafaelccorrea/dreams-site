@@ -171,7 +171,7 @@ export const CompanyDetails = () => {
 
   // Atualizar título da página dinamicamente
   usePageTitle(
-    company ? `${company.name} - Imobiliária - Dream Keys` : undefined,
+    company ? `${company.name} - Imobiliária - Intellisys` : undefined,
     company ? `Perfil da imobiliária ${company.name}. Veja imóveis disponíveis e entre em contato.` : undefined
   )
 

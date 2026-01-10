@@ -1,34 +1,93 @@
 export const styledTheme = {
   colors: {
-    // Paleta principal - Tons de azul
-    primary: '#3370A6',
-    primaryDark: '#508BBF',
-    primaryLight: '#8BB4D9',
+    // Cores Primárias
+    primary: '#A63126',
+    primaryDark: '#8B251C',
+    primaryDarker: '#6B1D15',
+    primaryDarkest: '#4A140E',
+    primaryLight: '#C44336',
     
-    // Cores neutras da paleta
-    neutralLight: '#F0F0F2',
-    neutralMedium: '#C1C9D9',
+    // Cores Secundárias
+    secondary: '#592722',
+    secondaryDark: '#4A1F1B',
+    secondaryLight: '#7A3A34',
+    accent: '#A62E2E',
+    accentHover: '#D94A4A',
+    neutral: '#A6A6A6',
     
-    // Cores secundárias mantidas para feedback
-    secondary: '#dc004e',
-    secondaryDark: '#c51162',
-    secondaryLight: '#ff5983',
-    success: '#4caf50',
-    error: '#f44336',
-    warning: '#ff9800',
-    info: '#2196f3',
+    // Cores de Fundo
+    background: '#F2F2F2',
+    backgroundSecondary: '#E5E5E5',
+    backgroundTertiary: '#D9D9D9',
+    cardBackground: '#FFFFFF',
+    surface: '#FFFFFF',
+    inputBackground: '#FFFFFF',
     
-    // Background e surfaces
-    background: '#F0F0F2',
-    surface: '#C1C9D9',
-    surfaceDark: '#eeeeee',
-    
-    // Textos
-    textPrimary: '#212121',
-    textSecondary: '#757575',
-    textDisabled: '#bdbdbd',
+    // Cores de Texto
+    text: '#1F2937',
+    textSecondary: '#4B5563',
+    textLight: '#6B7280',
+    textDisabled: '#9CA3AF',
+    textPrimary: '#1F2937', // Alias para compatibilidade
     white: '#ffffff',
     black: '#000000',
+    
+    // Cores de Borda
+    border: '#D1D5DB',
+    borderLight: '#E5E7EB',
+    divider: '#E5E7EB',
+    
+    // Cores de Status
+    success: '#3FA66B',
+    successDark: '#2D8A4F',
+    successLight: '#4FC77D',
+    error: '#E05A5A',
+    errorDark: '#C44336',
+    warning: '#E6B84C',
+    warningDark: '#D4A43A',
+    info: '#4A90E2',
+    infoDark: '#357ABD',
+    danger: '#E05A5A',
+    
+    // Cores Específicas
+    green: '#3FA66B',
+    blue: '#4A90E2',
+    yellow: '#E6B84C',
+    purple: '#8B5CF6',
+    red: '#E05A5A',
+    
+    // Cores de Mensagens - Success
+    successBackground: '#F0FDF4',
+    successBorder: '#BBF7D0',
+    successText: '#16A34A',
+    
+    // Cores de Mensagens - Error
+    errorBackground: '#FEF2F2',
+    errorBorder: '#FECACA',
+    errorText: '#DC2626',
+    
+    // Cores de Mensagens - Warning
+    warningBackground: '#FFFBEB',
+    warningBorder: '#FED7AA',
+    warningText: '#D97706',
+    
+    // Cores de Mensagens - Info
+    infoBackground: '#EFF6FF',
+    infoBorder: '#BFDBFE',
+    infoText: '#2563EB',
+    
+    // Cores de Hover
+    hover: '#F9FAFB',
+    hoverDark: '#F3F4F6',
+    primaryHover: '#8B251C',
+    secondaryHover: '#4A1F1B',
+    dangerHover: '#C44336',
+    hoverBackground: '#F9FAFB',
+    
+    // Compatibilidade com código antigo
+    neutralLight: '#F2F2F2',
+    neutralMedium: '#A6A6A6',
+    surfaceDark: '#E5E5E5',
   },
   spacing: {
     xs: '0.5rem',   // 8px

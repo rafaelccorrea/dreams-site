@@ -341,7 +341,7 @@ export const PropertyDetails = () => {
 
   // Atualizar título da página dinamicamente
   usePageTitle(
-    property ? `${property.title || getTypeLabel(property.type)} - Dream Keys` : undefined,
+    property ? `${property.title || getTypeLabel(property.type)} - Intellisys` : undefined,
     property ? (() => {
       const priceText = property.salePrice && Number(property.salePrice) > 0
         ? formatPrice(property.salePrice)
@@ -514,7 +514,7 @@ export const PropertyDetails = () => {
                     icon={<Home sx={{ fontSize: 16 }} />}
                     label="Minha Casa Minha Vida"
                     sx={{
-                      bgcolor: "#4caf50",
+                      bgcolor: "#3FA66B",
                       color: "white",
                       fontWeight: 600,
                       fontSize: "0.875rem",
@@ -616,7 +616,7 @@ export const PropertyDetails = () => {
                       variant="h3"
                       sx={{
                         fontWeight: 700,
-                        color: "#4caf50",
+                        color: "#3FA66B",
                         fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                       }}
                     >
@@ -689,7 +689,7 @@ export const PropertyDetails = () => {
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5 }, mb: { xs: 1.5, sm: 2 }, flexWrap: "wrap" }}>
-                    <Home sx={{ color: "#4caf50", fontSize: { xs: 24, sm: 28 } }} />
+                    <Home sx={{ color: "#3FA66B", fontSize: { xs: 24, sm: 28 } }} />
                     <Typography
                       variant="h5"
                       sx={{
@@ -780,7 +780,7 @@ export const PropertyDetails = () => {
                           variant="h6"
                           sx={{
                             fontWeight: 700,
-                            color: "#4caf50",
+                            color: "#3FA66B",
                           }}
                         >
                           {formatPrice(property.mcmv.subsidy)}
@@ -806,7 +806,7 @@ export const PropertyDetails = () => {
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                           {property.mcmv.documentation.map((doc, index) => (
                             <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <CheckCircle sx={{ fontSize: 16, color: "#4caf50" }} />
+                              <CheckCircle sx={{ fontSize: 16, color: "#3FA66B" }} />
                               <Typography variant="body2" sx={{ color: "text.primary" }}>
                                 {doc}
                               </Typography>
@@ -950,7 +950,7 @@ export const PropertyDetails = () => {
                 </Box>
                 {property.totalArea && Number(property.totalArea) > 0 && (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <SquareFoot sx={{ fontSize: 28, color: "#4caf50" }} />
+                    <SquareFoot sx={{ fontSize: 28, color: "#3FA66B" }} />
                     <Box>
                       <Typography
                         variant="h6"

@@ -635,7 +635,7 @@ export const EligibilityCheck = ({ defaultCity, defaultState }: EligibilityCheck
                   required
                   sx={{
                     '&.Mui-checked': {
-                      color: '#3370A6',
+                      color: '#A63126',
                     },
                   }}
                 />

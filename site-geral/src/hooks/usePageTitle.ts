@@ -6,23 +6,23 @@ interface PageTitleConfig {
 }
 
 const pageTitles: PageTitleConfig = {
-  '/': 'Dream Keys - Encontre seu imóvel dos sonhos',
-  '/imoveis-para-comprar': 'Imóveis para Comprar - Dream Keys',
-  '/casas-a-venda': 'Casas à Venda - Dream Keys',
-  '/apartamentos-a-venda': 'Apartamentos à Venda - Dream Keys',
-  '/imoveis-comerciais-a-venda': 'Imóveis Comerciais à Venda - Dream Keys',
-  '/alugar': 'Imóveis para Alugar - Dream Keys',
-  '/casas-para-alugar': 'Casas para Locação - Dream Keys',
-  '/apartamentos-para-alugar': 'Apartamentos para Locação - Dream Keys',
-  '/imoveis-comerciais-para-alugar': 'Imóveis Comerciais para Locação - Dream Keys',
-  '/lancamentos': 'Lançamentos - Dream Keys',
-  '/minha-casa-minha-vida': 'Minha Casa Minha Vida - Dream Keys',
-  '/corretores': 'Corretores de Imóveis - Encontre Profissionais Certificados | Dream Keys',
-  '/imobiliarias': 'Imobiliárias - Encontre as Melhores do Brasil | Dream Keys',
-  '/favoritos': 'Meus Favoritos - Dream Keys',
-  '/minha-propriedade': 'Minha Propriedade - Dream Keys',
-  '/confirm-email': 'Confirmar Email - Dream Keys',
-  '/confirmar-email': 'Confirmar Email - Dream Keys',
+  '/': 'Intellisys - Encontre seu imóvel dos sonhos',
+  '/imoveis-para-comprar': 'Imóveis para Comprar - Intellisys',
+  '/casas-a-venda': 'Casas à Venda - Intellisys',
+  '/apartamentos-a-venda': 'Apartamentos à Venda - Intellisys',
+  '/imoveis-comerciais-a-venda': 'Imóveis Comerciais à Venda - Intellisys',
+  '/alugar': 'Imóveis para Alugar - Intellisys',
+  '/casas-para-alugar': 'Casas para Locação - Intellisys',
+  '/apartamentos-para-alugar': 'Apartamentos para Locação - Intellisys',
+  '/imoveis-comerciais-para-alugar': 'Imóveis Comerciais para Locação - Intellisys',
+  '/lancamentos': 'Lançamentos - Intellisys',
+  '/minha-casa-minha-vida': 'Minha Casa Minha Vida - Intellisys',
+  '/corretores': 'Corretores de Imóveis - Encontre Profissionais Certificados | Intellisys',
+  '/imobiliarias': 'Imobiliárias - Encontre as Melhores do Brasil | Intellisys',
+  '/favoritos': 'Meus Favoritos - Intellisys',
+  '/minha-propriedade': 'Minha Propriedade - Intellisys',
+  '/confirm-email': 'Confirmar Email - Intellisys',
+  '/confirmar-email': 'Confirmar Email - Intellisys',
 }
 
 const pageDescriptions: PageTitleConfig = {
@@ -54,28 +54,28 @@ const getPageTitle = (pathname: string): string => {
   // Verificar rotas com parâmetros
   if (pathname.startsWith('/imovel/')) {
     const id = pathname.split('/imovel/')[1]
-    return `Imóvel ${id} - Dream Keys`
+    return `Imóvel ${id} - Intellisys`
   }
 
   if (pathname.startsWith('/corretor/')) {
     const id = pathname.split('/corretor/')[1]
-    return `Corretor ${id} - Dream Keys`
+    return `Corretor ${id} - Intellisys`
   }
 
   if (pathname.startsWith('/imobiliaria/')) {
     const id = pathname.split('/imobiliaria/')[1]
-    return `Imobiliária ${id} - Dream Keys`
+    return `Imobiliária ${id} - Intellisys`
   }
 
   // Título padrão
-  return 'Dream Keys - Encontre seu imóvel dos sonhos'
+  return 'Intellisys - Encontre seu imóvel dos sonhos'
 }
 
 const getPageDescription = (pathname: string): string => {
   if (pageDescriptions[pathname]) {
     return pageDescriptions[pathname]
   }
-  return 'Encontre seu imóvel dos sonhos na Dream Keys.'
+  return 'Encontre seu imóvel dos sonhos na Intellisys.'
 }
 
 export const usePageTitle = (customTitle?: string, customDescription?: string, customImage?: string) => {

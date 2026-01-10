@@ -10,7 +10,7 @@ const StyledIconButton = styled(IconButton)`
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
     transform: scale(1.1);
-    color: ${({ theme }) => theme.colors.primary || '#3370A6'};
+    color: ${({ theme }) => theme.colors.primary || '#A63126'};
   }
 `
 

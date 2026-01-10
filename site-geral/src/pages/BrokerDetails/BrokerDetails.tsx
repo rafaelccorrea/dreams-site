@@ -126,7 +126,7 @@ export const BrokerDetails = () => {
 
   // Atualizar título da página dinamicamente
   usePageTitle(
-    broker ? `${broker.name} - Corretor - Dream Keys` : undefined,
+    broker ? `${broker.name} - Corretor - Intellisys` : undefined,
     broker ? `Perfil do corretor ${broker.name}${broker.company ? ` da ${broker.company.name}` : ''}. Veja imóveis disponíveis e entre em contato.` : undefined
   )
 

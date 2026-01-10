@@ -189,7 +189,7 @@ export const LocalSearchPage = () => {
       parts.push(`em ${cityName}`)
     }
     
-    return `${parts.join(' ')} - Dream Keys`
+    return `${parts.join(' ')} - Intellisys`
   }
 
   const getPageDescription = () => {
@@ -225,7 +225,7 @@ export const LocalSearchPage = () => {
     const schemaLocalBusiness = {
       '@context': 'https://schema.org',
       '@type': 'RealEstateAgent',
-      name: 'Dream Keys',
+      name: 'Intellisys',
       description: pageDescription,
       url: `https://www.dreamkeys.com.br/${citySlug}`,
       address: {
@@ -298,7 +298,7 @@ export const LocalSearchPage = () => {
 
         <PageHeader>
           <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-            {getPageTitle().replace(' - Dream Keys', '')}
+            {getPageTitle().replace(' - Intellisys', '')}
           </Typography>
           <Typography variant="body1" color="text.secondary">
             {getPageDescription()}

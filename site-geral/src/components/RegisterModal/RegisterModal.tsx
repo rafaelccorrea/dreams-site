@@ -150,8 +150,8 @@ export const RegisterModal = ({ open, onClose, onLoginClick }: RegisterModalProp
         <LoginModalContainer>
           <LogoContainer>
             <img 
-              src="/logo-dream.png" 
-              alt="Dream Keys Logo" 
+              src="/intellisys.png" 
+              alt="Intellisys Logo" 
               style={{ 
                 height: '120px',
                 width: 'auto',

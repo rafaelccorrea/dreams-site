@@ -46,7 +46,7 @@ export const CompanyCard = ({ company, onClick }: CompanyCardProps) => {
       {/* Logo Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #3370A6 0%, #8BB4D9 100%)',
+          background: 'linear-gradient(135deg, #A63126 0%, #C44336 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

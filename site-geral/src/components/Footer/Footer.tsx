@@ -13,8 +13,8 @@ export const Footer = () => {
           <FooterSection>
             <LogoContainer>
               <img 
-                src="/logo-dream.png" 
-                alt="Dream Keys Logo" 
+                src="/intellisys.png" 
+                alt="Intellisys Logo" 
                 style={{ 
                   width: 'auto',
                   maxWidth: '100%',
@@ -24,7 +24,7 @@ export const Footer = () => {
               />
             </LogoContainer>
             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 2 }}>
-              © {currentYear} Dream Keys. Todos os direitos reservados.
+              © {currentYear} Intellisys. Todos os direitos reservados.
             </Typography>
           </FooterSection>
 

@@ -337,7 +337,7 @@ export const NavLink = styled(Link)`
 `
 
 export const McmvNavLink = styled(NavLink)`
-  color: #3370A6 !important;
+  color: ${({ theme }) => theme.colors.primary} !important;
   font-weight: 600;
   animation: heartbeat 1.5s ease-in-out infinite;
 
@@ -369,13 +369,13 @@ export const McmvNavLink = styled(NavLink)`
   }
 
   &:hover {
-    color: #508BBF !important;
+    color: ${({ theme }) => theme.colors.primaryLight} !important;
     animation: none;
     transform: scale(1.05);
   }
 
   &.active {
-    color: #3370A6 !important;
+    color: ${({ theme }) => theme.colors.primary} !important;
     animation: none !important;
     transform: none !important;
   }
@@ -496,8 +496,8 @@ export const MobileMenuItem = styled.button<{ $isOpen?: boolean }>`
   padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.lg}`};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   border: none;
-  background: ${({ $isOpen }) => 
-    $isOpen ? 'rgba(51, 112, 166, 0.08)' : 'transparent'};
+  background: ${({ $isOpen, theme }) => 
+    $isOpen ? 'rgba(166, 49, 38, 0.08)' : 'transparent'};
   color: ${({ theme }) => theme.colors.textPrimary};
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   font-weight: 600;
@@ -519,7 +519,7 @@ export const MobileMenuItem = styled.button<{ $isOpen?: boolean }>`
 
   &:hover {
     background: ${({ $isOpen }) => 
-      $isOpen ? 'rgba(51, 112, 166, 0.12)' : 'rgba(0, 0, 0, 0.04)'};
+      $isOpen ? 'rgba(166, 49, 38, 0.12)' : 'rgba(0, 0, 0, 0.04)'};
     color: ${({ theme }) => theme.colors.primary};
   }
 
@@ -595,7 +595,7 @@ export const MobileSubmenuItem = styled(Link)`
   }
 
   &:hover {
-    background: rgba(51, 112, 166, 0.06);
+    background: rgba(166, 49, 38, 0.06);
     color: ${({ theme }) => theme.colors.primary};
     padding-left: ${({ theme }) => `calc(${theme.spacing.md} + 8px)`};
     
@@ -607,7 +607,7 @@ export const MobileSubmenuItem = styled(Link)`
   &.active {
     color: ${({ theme }) => theme.colors.primary};
     font-weight: 600;
-    background: rgba(51, 112, 166, 0.08);
+    background: rgba(166, 49, 38, 0.08);
     
     &::before {
       opacity: 1;
@@ -630,8 +630,8 @@ export const MobileUserInfo = styled.div`
   padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.lg}`};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: linear-gradient(135deg, rgba(51, 112, 166, 0.05) 0%, rgba(80, 139, 191, 0.03) 100%);
-  border: 1px solid rgba(51, 112, 166, 0.1);
+  background: linear-gradient(135deg, rgba(166, 49, 38, 0.05) 0%, rgba(196, 67, 54, 0.03) 100%);
+  border: 1px solid rgba(166, 49, 38, 0.1);
 `
 
 export const MobileUserName = styled.div`
@@ -720,7 +720,7 @@ export const MobileNavLink = styled(Link)`
 
   &.active {
     color: ${({ theme }) => theme.colors.primary};
-    background: rgba(51, 112, 166, 0.08);
+    background: rgba(166, 49, 38, 0.08);
     font-weight: 600;
   }
 
@@ -730,7 +730,7 @@ export const MobileNavLink = styled(Link)`
 `
 
 export const MobileMcmvNavLink = styled(MobileNavLink)`
-  color: #3370A6 !important;
+  color: ${({ theme }) => theme.colors.primary} !important;
   font-weight: 600;
   animation: heartbeat 1.5s ease-in-out infinite;
 
@@ -762,13 +762,13 @@ export const MobileMcmvNavLink = styled(MobileNavLink)`
   }
 
   &:hover {
-    color: #508BBF !important;
+    color: ${({ theme }) => theme.colors.primaryLight} !important;
     animation: none;
     transform: scale(1.01);
   }
 
   &.active {
-    color: #3370A6 !important;
+    color: ${({ theme }) => theme.colors.primary} !important;
     animation: none !important;
     transform: none !important;
   }

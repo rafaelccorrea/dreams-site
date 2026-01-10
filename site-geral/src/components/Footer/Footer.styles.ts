@@ -120,13 +120,13 @@ export const FooterInfoItem = styled(Box)`
 `
 
 export const FooterLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryLight || '#8BB4D9'} !important;
+  color: ${({ theme }) => theme.colors.primaryLight || '#C44336'} !important;
   text-decoration: none !important;
   transition: all ${({ theme }) => theme.transitions.base};
   position: relative;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.primary || '#3370A6'} !important;
+    color: ${({ theme }) => theme.colors.primary || '#A63126'} !important;
     transform: translateX(2px);
   }
 
@@ -137,7 +137,7 @@ export const FooterLink = styled(Link)`
     left: 0;
     width: 0;
     height: 1px;
-    background: ${({ theme }) => theme.colors.primaryLight || '#8BB4D9'};
+    background: ${({ theme }) => theme.colors.primaryLight || '#C44336'};
     transition: width ${({ theme }) => theme.transitions.base};
   }
 

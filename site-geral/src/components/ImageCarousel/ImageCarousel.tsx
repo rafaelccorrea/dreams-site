@@ -333,7 +333,7 @@ const ModalThumbnail = styled.div<{ $isActive: boolean }>`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   overflow: hidden;
   cursor: pointer;
-  border: 3px solid ${({ $isActive }) => ($isActive ? '#3370A6' : 'transparent')};
+  border: 3px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.primary : 'transparent')};
   transition: all 0.3s ease;
   opacity: ${({ $isActive }) => ($isActive ? 1 : 0.7)};
 

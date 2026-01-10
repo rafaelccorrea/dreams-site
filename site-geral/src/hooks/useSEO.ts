@@ -11,7 +11,7 @@ interface SEOConfig {
 }
 
 const SITE_URL = 'https://www.dreamkeys.com.br'
-const DEFAULT_IMAGE = `${SITE_URL}/logo-dream.png`
+const DEFAULT_IMAGE = `${SITE_URL}/intellisys.png`
 
 const updateMetaTag = (name: string, content: string, attribute: string = 'name') => {
   let element = document.querySelector(`meta[${attribute}="${name}"]`) as HTMLMetaElement
@@ -38,7 +38,7 @@ export const useSEO = (config: SEOConfig) => {
   const currentUrl = `${SITE_URL}${location.pathname}${location.search}`
 
   useEffect(() => {
-    const title = config.title || 'Dream Keys - Encontre seu imóvel dos sonhos'
+    const title = config.title || 'Intellisys - Encontre seu imóvel dos sonhos'
     const description = config.description || 'Encontre casas, apartamentos e imóveis comerciais para compra e locação. Sua plataforma completa de imóveis.'
     const image = config.image || DEFAULT_IMAGE
     const url = config.url || currentUrl
@@ -60,7 +60,7 @@ export const useSEO = (config: SEOConfig) => {
     updateMetaTag('og:image', image, 'property')
     updateMetaTag('og:url', url, 'property')
     updateMetaTag('og:type', type, 'property')
-    updateMetaTag('og:site_name', 'Dream Keys', 'property')
+    updateMetaTag('og:site_name', 'Intellisys', 'property')
     updateMetaTag('og:locale', 'pt_BR', 'property')
 
     // Twitter Cards
@@ -80,7 +80,7 @@ export const useSEO = (config: SEOConfig) => {
       inLanguage: 'pt-BR',
       isPartOf: {
         '@type': 'WebSite',
-        name: 'Dream Keys',
+        name: 'Intellisys',
         url: SITE_URL
       }
     }

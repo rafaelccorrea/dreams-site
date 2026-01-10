@@ -246,16 +246,16 @@ export const HomePage = () => {
                   endIcon={<ArrowForward />}
                   onClick={() => window.open('https://www.dreamkeys.com.br/sistema/', '_blank')}
                   sx={{
-                    backgroundColor: '#3370A6',
+                    backgroundColor: '#A63126',
                     color: 'white',
-                    borderColor: '#3370A6',
+                    borderColor: '#A63126',
                     borderWidth: 2,
                     fontWeight: 600,
-                    boxShadow: '0 0 8px rgba(51, 112, 166, 0.6), 0 0 12px rgba(51, 112, 166, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 0 8px rgba(166, 49, 38, 0.6), 0 0 12px rgba(166, 49, 38, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.1)',
                     textShadow: '0 0 4px rgba(255, 255, 255, 0.3)',
                     '&:hover': {
-                      backgroundColor: '#2a5a85',
-                      borderColor: '#3370A6',
+                      backgroundColor: '#8B251C',
+                      borderColor: '#A63126',
                       borderWidth: 2,
                       boxShadow: '0 0 12px rgba(51, 112, 166, 0.9), 0 0 20px rgba(51, 112, 166, 0.6), inset 0 0 12px rgba(255, 255, 255, 0.15)',
                       textShadow: '0 0 6px rgba(255, 255, 255, 0.5)',

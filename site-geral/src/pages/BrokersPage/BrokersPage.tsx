@@ -138,12 +138,12 @@ export const BrokersPage = () => {
                     borderRadius: 2,
                     "&:hover": {
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#3370A6",
+                        borderColor: "#A63126",
                       },
                     },
                     "&.Mui-focused": {
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#3370A6",
+                        borderColor: "#A63126",
                         borderWidth: 2,
                       },
                     },
@@ -178,9 +178,9 @@ export const BrokersPage = () => {
                   label="Todos"
                   onClick={() => setFilterBy("all")}
                   sx={{
-                    bgcolor: filterBy === "all" ? "#3370A6" : "transparent",
-                    color: filterBy === "all" ? "white" : "#3370A6",
-                    border: filterBy === "all" ? "none" : "1px solid #3370A6",
+                    bgcolor: filterBy === "all" ? "#A63126" : "transparent",
+                    color: filterBy === "all" ? "white" : "#A63126",
+                    border: filterBy === "all" ? "none" : "1px solid #A63126",
                     fontWeight: 600,
                     cursor: "pointer",
                     "&:hover": {
@@ -193,16 +193,16 @@ export const BrokersPage = () => {
                   icon={<StarIcon sx={{ fontSize: 18 }} />}
                   onClick={() => setFilterBy("most-properties")}
                   sx={{
-                    bgcolor: filterBy === "most-properties" ? "#3370A6" : "transparent",
-                    color: filterBy === "most-properties" ? "white" : "#3370A6",
-                    border: filterBy === "most-properties" ? "none" : "1px solid #3370A6",
+                    bgcolor: filterBy === "most-properties" ? "#A63126" : "transparent",
+                    color: filterBy === "most-properties" ? "white" : "#A63126",
+                    border: filterBy === "most-properties" ? "none" : "1px solid #A63126",
                     fontWeight: 600,
                     cursor: "pointer",
                     "&:hover": {
                       bgcolor: filterBy === "most-properties" ? "#2a5a85" : "rgba(51, 112, 166, 0.08)",
                     },
                     "& .MuiChip-icon": {
-                      color: filterBy === "most-properties" ? "white" : "#3370A6",
+                      color: filterBy === "most-properties" ? "white" : "#A63126",
                     },
                   }}
                 />
@@ -228,7 +228,7 @@ export const BrokersPage = () => {
                   sx={{
                     borderRadius: 2,
                     "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#3370A6",
+                      borderColor: "#A63126",
                     },
                   }}
                 >
@@ -272,7 +272,7 @@ export const BrokersPage = () => {
               }}
             >
               <LocationOnIcon
-                sx={{ fontSize: { xs: 40, sm: 50 }, color: "#3370A6" }}
+                sx={{ fontSize: { xs: 40, sm: 50 }, color: "#A63126" }}
               />
             </Box>
             <Typography
@@ -371,7 +371,7 @@ export const BrokersPage = () => {
                   setSortBy("name");
                 }}
                 sx={{
-                  bgcolor: "#3370A6",
+                  bgcolor: "#A63126",
                   color: "white",
                   fontWeight: 600,
                   cursor: "pointer",

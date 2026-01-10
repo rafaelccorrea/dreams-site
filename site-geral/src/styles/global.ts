@@ -8,29 +8,94 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   :root {
-    /* Cores principais - Paleta azul */
-    --primary-color: #3370A6;
-    --primary-dark: #508BBF;
-    --primary-light: #8BB4D9;
-    --secondary-color: #dc004e;
-    --secondary-dark: #c51162;
-    --secondary-light: #ff5983;
+    /* Cores Primárias */
+    --primary-color: #A63126;
+    --primary: #A63126;
+    --primary-dark: #8B251C;
+    --primary-darker: #6B1D15;
+    --primary-darkest: #4A140E;
+    --primary-light: #C44336;
 
-    /* Cores neutras da paleta */
-    --background: #F0F0F2;
-    --surface: #C1C9D9;
-    --surface-dark: #eeeeee;
-    --neutral-light: #F0F0F2;
-    --neutral-medium: #C1C9D9;
-    --text-primary: #212121;
-    --text-secondary: #757575;
-    --text-disabled: #bdbdbd;
+    /* Cores Secundárias */
+    --secondary-color: #592722;
+    --secondary: #592722;
+    --secondary-dark: #4A1F1B;
+    --secondary-light: #7A3A34;
+    --accent: #A62E2E;
+    --accent-hover: #D94A4A;
+    --neutral: #A6A6A6;
 
-    /* Cores de feedback */
-    --success: #4caf50;
-    --error: #f44336;
-    --warning: #ff9800;
-    --info: #2196f3;
+    /* Cores de Fundo */
+    --background: #F2F2F2;
+    --background-secondary: #E5E5E5;
+    --background-tertiary: #D9D9D9;
+    --card-background: #FFFFFF;
+    --surface: #FFFFFF;
+    --input-background: #FFFFFF;
+
+    /* Cores de Texto */
+    --text: #1F2937;
+    --text-primary: #1F2937;
+    --text-secondary: #4B5563;
+    --text-light: #6B7280;
+    --text-disabled: #9CA3AF;
+
+    /* Cores de Borda */
+    --border: #D1D5DB;
+    --border-light: #E5E7EB;
+    --divider: #E5E7EB;
+
+    /* Cores de Status */
+    --success: #3FA66B;
+    --success-dark: #2D8A4F;
+    --success-light: #4FC77D;
+    --error: #E05A5A;
+    --error-dark: #C44336;
+    --warning: #E6B84C;
+    --warning-dark: #D4A43A;
+    --info: #4A90E2;
+    --info-dark: #357ABD;
+    --danger: #E05A5A;
+
+    /* Cores Específicas */
+    --green: #3FA66B;
+    --blue: #4A90E2;
+    --yellow: #E6B84C;
+    --purple: #8B5CF6;
+    --red: #E05A5A;
+
+    /* Cores de Mensagens - Success */
+    --success-background: #F0FDF4;
+    --success-border: #BBF7D0;
+    --success-text: #16A34A;
+
+    /* Cores de Mensagens - Error */
+    --error-background: #FEF2F2;
+    --error-border: #FECACA;
+    --error-text: #DC2626;
+
+    /* Cores de Mensagens - Warning */
+    --warning-background: #FFFBEB;
+    --warning-border: #FED7AA;
+    --warning-text: #D97706;
+
+    /* Cores de Mensagens - Info */
+    --info-background: #EFF6FF;
+    --info-border: #BFDBFE;
+    --info-text: #2563EB;
+
+    /* Cores de Hover */
+    --hover: #F9FAFB;
+    --hover-dark: #F3F4F6;
+    --primary-hover: #8B251C;
+    --secondary-hover: #4A1F1B;
+    --danger-hover: #C44336;
+    --hover-background: #F9FAFB;
+
+    /* Compatibilidade com código antigo */
+    --neutral-light: #F2F2F2;
+    --neutral-medium: #A6A6A6;
+    --surface-dark: #E5E5E5;
 
     /* Espaçamentos */
     --spacing-xs: 0.5rem;   /* 8px */
@@ -144,12 +209,12 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   a {
-    color: var(--primary-color);
+    color: var(--primary);
     text-decoration: none;
     transition: color var(--transition-fast);
 
     &:hover {
-      color: var(--primary-dark);
+      color: var(--primary-hover);
     }
   }
 
@@ -167,24 +232,24 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--surface);
+    background: var(--background-secondary);
     border-radius: var(--radius-sm);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
+    background: var(--primary);
     border-radius: var(--radius-full);
-    border: 2px solid var(--surface);
+    border: 2px solid var(--background-secondary);
 
     &:hover {
-      background: var(--primary-dark);
+      background: var(--primary-hover);
     }
   }
 
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--primary-color) var(--surface);
+    scrollbar-color: var(--primary) var(--background-secondary);
   }
 
   /* Selection */
@@ -196,7 +261,7 @@ export const GlobalStyle = createGlobalStyle`
   /* Code */
   code {
     font-family: 'Fira Code', 'Courier New', monospace;
-    background-color: var(--surface);
+    background-color: var(--background-secondary);
     padding: 0.2rem 0.4rem;
     border-radius: var(--radius-sm);
     font-size: 0.875rem;

@@ -212,8 +212,8 @@ export const LoginModal = ({
         >
           <LogoContainer>
             <img 
-              src="/logo-dream.png" 
-              alt="Dream Keys Logo" 
+              src="/intellisys.png" 
+              alt="Intellisys Logo" 
               style={{ 
                 height: '100px',
                 width: 'auto',

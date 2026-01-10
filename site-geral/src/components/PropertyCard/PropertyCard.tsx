@@ -39,7 +39,7 @@ const McmvFlag = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.success} 0%, ${({ theme }) => theme.colors.successDark} 100%);
   color: white !important;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
   font-weight: 700;
@@ -76,7 +76,7 @@ const NegotiationFlag = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.warning} 0%, ${({ theme }) => theme.colors.warningDark} 100%);
   color: white !important;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
   font-weight: 700;
@@ -113,7 +113,7 @@ const NegotiationFlagWithMcmv = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.warning} 0%, ${({ theme }) => theme.colors.warningDark} 100%);
   color: white !important;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
   font-weight: 700;

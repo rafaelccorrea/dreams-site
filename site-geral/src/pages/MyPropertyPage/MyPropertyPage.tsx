@@ -757,7 +757,7 @@ export const MyPropertyPage = () => {
                                 variant="h3"
                                 sx={{
                                   fontWeight: 700,
-                                  color: "#4caf50",
+                                  color: "#3FA66B",
                                   fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                                 }}
                               >

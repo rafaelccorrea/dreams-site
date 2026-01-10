@@ -71,7 +71,7 @@ export const BrokerCard = ({ broker, onClick }: BrokerCardProps) => {
           pt: 3,
           pb: { xs: 5, sm: 6 },
           px: 3,
-          background: 'linear-gradient(135deg, #3370A6 0%, #8BB4D9 100%)',
+          background: 'linear-gradient(135deg, #A63126 0%, #C44336 100%)',
           position: 'relative',
         }}
       >

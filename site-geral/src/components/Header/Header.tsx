@@ -165,8 +165,8 @@ export const Header = ({ currentPath = '/' }: HeaderProps) => {
             <LogoContainer onClick={handleLogoClick}>
               <ShootingStar />
               <img 
-                src="/logo-dream.png" 
-                alt="Dream Keys Logo" 
+                src="/intellisys.png" 
+                alt="Intellisys Logo" 
                 className="logo-header"
                 style={{ 
                   width: 'auto',
