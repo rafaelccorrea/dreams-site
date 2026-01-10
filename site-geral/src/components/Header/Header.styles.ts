@@ -496,7 +496,7 @@ export const MobileMenuItem = styled.button<{ $isOpen?: boolean }>`
   padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.lg}`};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   border: none;
-  background: ${({ $isOpen, theme }) => 
+  background: ${({ $isOpen }) => 
     $isOpen ? 'rgba(166, 49, 38, 0.08)' : 'transparent'};
   color: ${({ theme }) => theme.colors.textPrimary};
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
