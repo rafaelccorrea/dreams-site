@@ -168,6 +168,8 @@ const LeadDistributionFormPage = lazy(
 const LeadDistributionAnalysisPage = lazy(
   () => import('./pages/LeadDistributionAnalysisPage')
 );
+const ZezinConfigPage = lazy(() => import('./pages/ZezinConfigPage'));
+const ZezinAskPage = lazy(() => import('./pages/ZezinAskPage'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const CreateAppointmentPage = lazy(
   () => import('./pages/CreateAppointmentPage')
@@ -1634,6 +1636,30 @@ const AppContent: React.FC = () => {
                                 <LeadDistributionAnalysisPage />
                               </PermissionRoute>
                             </ModuleRoute>
+                          </ProtectedRoute>
+                        </ProtectedRouteWithPermissions>
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path='/integrations/zezin/config'
+                    element={
+                      <ErrorBoundary>
+                        <ProtectedRouteWithPermissions>
+                          <ProtectedRoute>
+                            <ZezinConfigPage />
+                          </ProtectedRoute>
+                        </ProtectedRouteWithPermissions>
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path='/integrations/zezin/ask'
+                    element={
+                      <ErrorBoundary>
+                        <ProtectedRouteWithPermissions>
+                          <ProtectedRoute>
+                            <ZezinAskPage />
                           </ProtectedRoute>
                         </ProtectedRouteWithPermissions>
                       </ErrorBoundary>

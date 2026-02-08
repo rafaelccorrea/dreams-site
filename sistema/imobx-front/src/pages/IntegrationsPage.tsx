@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { IntegrationsShimmer } from '../components/shimmer/IntegrationsShimmer';
 import { whatsappApi } from '../services/whatsappApi';
+import { zezinApi } from '../services/zezinApi';
 import { metaCampaignApi } from '../services/metaCampaignApi';
 import { grupoZapApi } from '../services/grupoZapApi';
 import { leadDistributionApi } from '../services/leadDistributionApi';
@@ -21,6 +22,7 @@ import {
   MdArrowBack,
   MdCampaign,
   MdHome,
+  MdSmartToy,
 } from 'react-icons/md';
 import { FaWhatsapp, FaFacebookF } from 'react-icons/fa';
 import type { WhatsAppConfig } from '../types/whatsapp';
@@ -183,6 +185,9 @@ const IntegrationCard = styled.div<{
     if (props.$integrationId === 'lead-distribution' && props.$isConfigured) {
       return 'linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0.02) 100%)';
     }
+    if (props.$integrationId === 'zezin' && props.$isConfigured) {
+      return 'linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, rgba(99, 102, 241, 0.02) 100%)';
+    }
     return props.theme.colors.cardBackground;
   }};
   border: 2px solid
@@ -195,6 +200,8 @@ const IntegrationCard = styled.div<{
         return '#00A651';
       if (props.$integrationId === 'lead-distribution' && props.$isConfigured)
         return '#6366F1';
+      if (props.$integrationId === 'zezin' && props.$isConfigured)
+        return '#8B5CF6';
       return props.theme.colors.border;
     }};
   border-radius: 16px;
@@ -263,6 +270,21 @@ const IntegrationCard = styled.div<{
       transition: opacity 0.3s ease;
     }
   `}
+  ${props =>
+    props.$integrationId === 'zezin' &&
+    `
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #8B5CF6 0%, #6366F1 100%);
+      opacity: ${props.$isConfigured ? 1 : 0.4};
+      transition: opacity 0.3s ease;
+    }
+  `}
 
   @media (max-width: 768px) {
     padding: 20px;
@@ -285,6 +307,8 @@ const IntegrationCard = styled.div<{
         return '0 12px 32px rgba(0, 166, 81, 0.18)';
       if (props.$integrationId === 'lead-distribution' && props.$isConfigured)
         return '0 12px 32px rgba(99, 102, 241, 0.18)';
+      if (props.$integrationId === 'zezin' && props.$isConfigured)
+        return '0 12px 32px rgba(139, 92, 246, 0.18)';
       return '0 12px 32px rgba(0, 0, 0, 0.12)';
     }};
     border-color: ${props => {
@@ -296,6 +320,8 @@ const IntegrationCard = styled.div<{
         return props.$isConfigured ? '#00A651' : props.theme.colors.primary;
       if (props.$integrationId === 'lead-distribution')
         return props.$isConfigured ? '#6366F1' : props.theme.colors.primary;
+      if (props.$integrationId === 'zezin')
+        return props.$isConfigured ? '#8B5CF6' : props.theme.colors.primary;
       return props.$isConfigured ? '#10B981' : props.theme.colors.primary;
     }};
 
@@ -331,6 +357,8 @@ const IntegrationIcon = styled.div<{ $color: string; $integrationId?: string }>`
       return 'linear-gradient(135deg, #00A651 0%, #008C4A 100%)';
     if (props.$integrationId === 'lead-distribution')
       return 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)';
+    if (props.$integrationId === 'zezin')
+      return 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)';
     return `${props.$color}20`;
   }};
   display: flex;
@@ -347,6 +375,8 @@ const IntegrationIcon = styled.div<{ $color: string; $integrationId?: string }>`
       return '0 4px 12px rgba(0, 166, 81, 0.35)';
     if (props.$integrationId === 'lead-distribution')
       return '0 4px 12px rgba(99, 102, 241, 0.35)';
+    if (props.$integrationId === 'zezin')
+      return '0 4px 12px rgba(139, 92, 246, 0.35)';
     return 'none';
   }};
   transition: all 0.3s ease;
@@ -354,7 +384,8 @@ const IntegrationIcon = styled.div<{ $color: string; $integrationId?: string }>`
     props.$integrationId === 'whatsapp' ||
     props.$integrationId === 'meta-campaign' ||
     props.$integrationId === 'grupo-zap' ||
-    props.$integrationId === 'lead-distribution'
+    props.$integrationId === 'lead-distribution' ||
+    props.$integrationId === 'zezin'
       ? 'white'
       : 'inherit'};
 
@@ -661,6 +692,8 @@ const IntegrationsPage: React.FC = () => {
   const [grupoZapConfigured, setGrupoZapConfigured] = useState(false);
   const [leadDistributionConfigured, setLeadDistributionConfigured] =
     useState(false);
+  const [zezinAvailable, setZezinAvailable] = useState(false);
+  const [zezinConfigConfigured, setZezinConfigConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Verificar permissões e roles
@@ -790,6 +823,14 @@ const IntegrationsPage: React.FC = () => {
           setLeadDistributionConfigured(false);
         }
       }
+      try {
+        const zezinAvailability = await zezinApi.getAvailability();
+        setZezinAvailable(zezinAvailability.available);
+        setZezinConfigConfigured(zezinAvailability.configConfigured);
+      } catch {
+        setZezinAvailable(false);
+        setZezinConfigConfigured(false);
+      }
     } catch (error) {
       console.error('Erro ao carregar integrações:', error);
     } finally {
@@ -859,6 +900,23 @@ const IntegrationsPage: React.FC = () => {
             isConfigured: leadDistributionConfigured,
             onConfigure: () =>
               navigate('/integrations/lead-distribution/config'),
+          },
+        ]
+      : []),
+    // Zezin – Assistente de IA (admin + plano Pro + módulo AI)
+    ...(zezinAvailable
+      ? [
+          {
+            id: 'zezin',
+            name: 'Zezin – Assistente de IA',
+            description:
+              zezinConfigConfigured
+                ? 'Assistente virtual ativo! Use a página "Perguntar ao Zezin" ou envie mensagem para o número no WhatsApp: o Zezin responde com base nos dados da empresa (metas, vendas, leads, clientes).'
+                : 'Assistente virtual com IA. Configure número e token WhatsApp; depois use a página ou envie mensagem para o número no WhatsApp e receba respostas. Exclusivo admin no plano Pro.',
+            icon: <MdSmartToy size={28} color='white' />,
+            iconColor: '#8B5CF6',
+            isConfigured: zezinConfigConfigured,
+            onConfigure: () => navigate('/integrations/zezin/config'),
           },
         ]
       : []),
@@ -1304,13 +1362,14 @@ const IntegrationsPage: React.FC = () => {
                       <div>
                         Esta integração precisa ser configurada antes de ser
                         utilizada.
-                        {((integration.id === 'whatsapp' && canManageConfig) ||
+                        {                        ((integration.id === 'whatsapp' && canManageConfig) ||
                           (integration.id === 'meta-campaign' &&
                             canManageMetaCampaign) ||
                           (integration.id === 'grupo-zap' &&
                             canManageGrupoZap) ||
                           (integration.id === 'lead-distribution' &&
-                            canManageLeadDistribution)) &&
+                            canManageLeadDistribution) ||
+                          (integration.id === 'zezin' && zezinAvailable)) &&
                           ' Clique no card para configurar.'}
                       </div>
                     </WarningMessage>
@@ -1323,8 +1382,32 @@ const IntegrationsPage: React.FC = () => {
                     canManageMetaCampaign) ||
                   (integration.id === 'grupo-zap' && canManageGrupoZap) ||
                   (integration.id === 'lead-distribution' &&
-                    canManageLeadDistribution) ? (
+                    canManageLeadDistribution) ||
+                  (integration.id === 'zezin' && zezinAvailable) ? (
                     <>
+                      {integration.id === 'zezin' &&
+                        integration.isConfigured && (
+                          <ConfigButtonsContainer>
+                            <ConfigButton
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                navigate('/integrations/zezin/ask');
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                }}
+                              >
+                                <MdSmartToy size={18} />
+                                <span>Perguntar ao Zezin</span>
+                              </div>
+                              <MdArrowForward size={16} />
+                            </ConfigButton>
+                          </ConfigButtonsContainer>
+                        )}
                       {integration.id === 'whatsapp' &&
                         integration.isConfigured &&
                         isAdminOrManager && (
@@ -1411,6 +1494,8 @@ const IntegrationsPage: React.FC = () => {
                             navigate('/integrations/grupo-zap/config');
                           } else if (integration.id === 'lead-distribution') {
                             navigate('/integrations/lead-distribution/config');
+                          } else if (integration.id === 'zezin') {
+                            navigate('/integrations/zezin/config');
                           } else {
                             integration.onConfigure();
                           }

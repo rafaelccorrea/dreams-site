@@ -17,6 +17,7 @@ import { SubscriptionNotification } from '../SubscriptionNotification';
 import { PermissionsNotificationManager } from '../permissions/PermissionsNotificationManager';
 import { ChatWindows } from '../chat/ChatWindows';
 import { FloatingChatButton } from '../chat/FloatingChatButton';
+import { FloatingZezinButton } from '../chat/FloatingZezinButton';
 import { ChatProvider } from '../../contexts/ChatContext';
 
 interface LayoutProps {
@@ -59,6 +60,7 @@ const LayoutShell: React.FC<LayoutProps> = ({ children }) => {
           <SubscriptionNotification />
           <PermissionsNotificationManager />
           <ChatWindows />
+          <FloatingZezinButton />
           <FloatingChatButton />
         </ChatProvider>
       </ModalProvider>

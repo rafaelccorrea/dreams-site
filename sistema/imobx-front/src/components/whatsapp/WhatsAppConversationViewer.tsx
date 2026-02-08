@@ -1325,12 +1325,18 @@ export const WhatsAppConversationViewer: React.FC<
               setTimeout(() => scrollToBottom(), 100);
             }
 
-            // Preservar mensagens temporárias (pending) ao recarregar
-            const pendingMessages = prev.filter(
-              msg => msg.status === 'pending' && msg.id.startsWith('temp-')
+            // Preservar mensagens temporárias (pending) e recém-enviadas (sent) que ainda não vieram do servidor
+            const serverWaIds = new Set(
+              sorted.map(m => m.whatsappMessageId).filter(Boolean)
             );
-            // Combinar mensagens pendentes com as novas do servidor
-            const combined = [...pendingMessages, ...sorted];
+            const messagesToPreserve = prev.filter(
+              msg =>
+                (msg.status === 'pending' && msg.id.startsWith('temp-')) ||
+                (msg.status === 'sent' &&
+                  msg.whatsappMessageId &&
+                  !serverWaIds.has(msg.whatsappMessageId))
+            );
+            const combined = [...messagesToPreserve, ...sorted];
             // Remover duplicatas baseado no ID (priorizando mensagens do servidor)
             // Priorizar contactName do servidor (backend busca e salva automaticamente v1.10)
             // Usar contactName da prop apenas como fallback se servidor não retornar
@@ -1342,27 +1348,33 @@ export const WhatsAppConversationViewer: React.FC<
                     m.whatsappMessageId === msg.whatsappMessageId)
               );
               if (!existing) {
-                // Se mensagem do servidor não tem contactName, usar da prop como fallback
-                // Backend v1.10 busca e salva contactName automaticamente, então normalmente já vem
-                if (!msg.contactName && contactName) {
-                  msg.contactName = contactName;
-                }
+                if (!msg.contactName && contactName) msg.contactName = contactName;
                 acc.push(msg);
               } else {
-                // Priorizar contactName do servidor (backend busca automaticamente)
-                // Se servidor retornou contactName, usar ele (mais confiável)
-                if (msg.contactName) {
-                  existing.contactName = msg.contactName;
-                } else if (!existing.contactName && contactName) {
-                  // Se nem servidor nem existente têm, usar da prop como fallback
-                  existing.contactName = contactName;
+                // Se a mensagem que está chegando é do servidor (id real), substituir a otimista
+                if (!msg.id.startsWith('temp-')) {
+                  const idx = acc.findIndex(
+                    m =>
+                      m.id === existing.id ||
+                      (msg.whatsappMessageId &&
+                        m.whatsappMessageId === msg.whatsappMessageId)
+                  );
+                  if (idx >= 0)
+                    acc[idx] = {
+                      ...msg,
+                      contactName:
+                        msg.contactName ||
+                        existing.contactName ||
+                        contactName,
+                    };
+                } else {
+                  if (msg.contactName) existing.contactName = msg.contactName;
+                  else if (!existing.contactName && contactName)
+                    existing.contactName = contactName;
                 }
-                // Não atualizar mediaUrl automaticamente para evitar loops
-                // URLs assinadas são renovadas pelo backend quando necessário
               }
               return acc;
             }, [] as WhatsAppMessage[]);
-            // Ordenar novamente
             return unique.sort(
               (a, b) =>
                 new Date(a.createdAt).getTime() -
@@ -1372,12 +1384,18 @@ export const WhatsAppConversationViewer: React.FC<
         } else {
           // Modo normal: atualizar sempre
           setMessages(prev => {
-            // Preservar mensagens temporárias (pending) ao recarregar
-            const pendingMessages = prev.filter(
-              msg => msg.status === 'pending' && msg.id.startsWith('temp-')
+            // Preservar mensagens temporárias (pending) e recém-enviadas (sent) que ainda não vieram do servidor
+            const serverWaIds = new Set(
+              sorted.map(m => m.whatsappMessageId).filter(Boolean)
             );
-            // Combinar mensagens pendentes com as novas do servidor
-            const combined = [...pendingMessages, ...sorted];
+            const messagesToPreserve = prev.filter(
+              msg =>
+                (msg.status === 'pending' && msg.id.startsWith('temp-')) ||
+                (msg.status === 'sent' &&
+                  msg.whatsappMessageId &&
+                  !serverWaIds.has(msg.whatsappMessageId))
+            );
+            const combined = [...messagesToPreserve, ...sorted];
             // Remover duplicatas baseado no ID (priorizando mensagens do servidor)
             // Priorizar contactName do servidor (backend busca e salva automaticamente v1.10)
             // Usar contactName da prop apenas como fallback se servidor não retornar
@@ -1389,25 +1407,32 @@ export const WhatsAppConversationViewer: React.FC<
                     m.whatsappMessageId === msg.whatsappMessageId)
               );
               if (!existing) {
-                // Se mensagem do servidor não tem contactName, usar da prop como fallback
-                // Backend v1.10 busca e salva contactName automaticamente, então normalmente já vem
-                if (!msg.contactName && contactName) {
-                  msg.contactName = contactName;
-                }
+                if (!msg.contactName && contactName) msg.contactName = contactName;
                 acc.push(msg);
               } else {
-                // Priorizar contactName do servidor (backend busca automaticamente)
-                // Se servidor retornou contactName, usar ele (mais confiável)
-                if (msg.contactName) {
-                  existing.contactName = msg.contactName;
-                } else if (!existing.contactName && contactName) {
-                  // Se nem servidor nem existente têm, usar da prop como fallback
-                  existing.contactName = contactName;
+                if (!msg.id.startsWith('temp-')) {
+                  const idx = acc.findIndex(
+                    m =>
+                      m.id === existing.id ||
+                      (msg.whatsappMessageId &&
+                        m.whatsappMessageId === msg.whatsappMessageId)
+                  );
+                  if (idx >= 0)
+                    acc[idx] = {
+                      ...msg,
+                      contactName:
+                        msg.contactName ||
+                        existing.contactName ||
+                        contactName,
+                    };
+                } else {
+                  if (msg.contactName) existing.contactName = msg.contactName;
+                  else if (!existing.contactName && contactName)
+                    existing.contactName = contactName;
                 }
               }
               return acc;
             }, [] as WhatsAppMessage[]);
-            // Ordenar novamente
             return unique.sort(
               (a, b) =>
                 new Date(a.createdAt).getTime() -
@@ -1612,17 +1637,16 @@ export const WhatsAppConversationViewer: React.FC<
         // clientId não é necessário - sistema cria automaticamente se necessário (v1.8)
       });
 
-      // Atualizar mensagem temporária com dados reais, preservando contactName
+      // Atualizar mensagem temporária: marcar como enviada mantendo id temp (evita sumir no reload)
       setMessages(prev =>
         prev.map(msg =>
           msg.id === tempMessageId
             ? {
                 ...msg,
-                id: response.messageId || msg.id,
                 whatsappMessageId: response.messageId,
                 status: 'sent',
                 createdAt: new Date(),
-                contactName: contactName || msg.contactName, // Preservar contactName
+                contactName: contactName || msg.contactName,
               }
             : msg
         )

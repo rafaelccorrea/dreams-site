@@ -89,6 +89,10 @@ class WhatsAppApiService {
   /**
    * Enviar mensagem de texto ou imagem
    *
+   * O backend espera multipart/form-data (POST /whatsapp/send):
+   * - to (obrigatório), message (string, pode ser '' se só imagem), image (arquivo), imageUrl, clientId
+   * - Pelo menos um entre message (com conteúdo) e image/imageUrl é obrigatório
+   *
    * NOTA v1.8 - Funcionalidades Automáticas:
    * - Todas as mensagens enviadas são automaticamente salvas no banco de dados
    * - Se clientId não for fornecido, o sistema busca ou cria automaticamente um cliente pelo número
@@ -101,12 +105,30 @@ class WhatsAppApiService {
     try {
       console.log('📤 [WhatsAppApi] Enviando mensagem:', {
         to: data.to,
-        messageLength: data.message.length,
+        messageLength: (data.message ?? '').length,
         hasClientId: !!data.clientId,
         hasImage: !!(data.image || data.imageUrl),
       });
 
-      const response = await api.post(`${this.baseUrl}/send`, data);
+      const formData = new FormData();
+      formData.append('to', data.to);
+      formData.append('message', data.message ?? '');
+
+      if (data.image) {
+        formData.append('image', data.image);
+      }
+      if (data.imageUrl) {
+        formData.append('imageUrl', data.imageUrl);
+      }
+      if (data.clientId) {
+        formData.append('clientId', data.clientId);
+      }
+
+      // Timeout maior para envio com imagem: upload + S3 + WhatsApp API + salvar no banco pode levar > 30s
+      const timeoutMs = data.image ? 90000 : 30000;
+      const response = await api.post(`${this.baseUrl}/send`, formData, {
+        timeout: timeoutMs,
+      });
       console.log(
         '✅ [WhatsAppApi] Mensagem enviada com sucesso:',
         response.data

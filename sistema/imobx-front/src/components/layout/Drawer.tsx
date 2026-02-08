@@ -79,6 +79,7 @@ import {
   MdAutoAwesome,
   MdExtension,
   MdCampaign,
+  MdSmartToy,
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -408,6 +409,16 @@ const getNavigationItems = (userRole: string): NavigationItem[] => {
           menuGroup: 'Integração',
         },
       ],
+    },
+
+    // Zezin – item solto, apenas admin/master
+    {
+      id: 'zezin',
+      icon: MdSmartToy,
+      title: 'Zezin',
+      path: '/integrations/zezin/ask',
+      roleRequired: ['admin', 'master'],
+      menuGroup: 'Integração',
     },
 
     // ========== ANÁLISES ==========
