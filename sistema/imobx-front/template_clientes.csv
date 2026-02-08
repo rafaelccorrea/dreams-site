@@ -1,0 +1,5 @@
+nome,email,cpf,telefone_principal,telefone_secundario,whatsapp,endereco,numero,complemento,bairro,cidade,estado,cep,valor_minimo,valor_maximo,tipo_interesse,observacoes
+João Silva,joao.silva@example.com,12345678901,11987654321,11912345678,11987654321,Rua das Flores,123,Apto 401,Jardim Paulista,São Paulo,SP,01234567,100000,500000,comprador,Cliente interessado em apartamentos de 2 quartos
+Maria Oliveira,maria.o@example.com,98765432100,21998765432,,21998765432,Avenida Principal,456,,Centro,Rio de Janeiro,RJ,20000000,,800000,vendedor,Proprietária de casa no centro
+Pedro Santos,pedro@example.com,11122233344,11999887766,11988776655,11999887766,Rua dos Lírios,789,Casa,Jardim América,Belo Horizonte,MG,30123456,200000,600000,comprador,Interessado em casas com garagem
+Ana Costa,ana.costa@example.com,55566677788,11977665544,,11977665544,Av. Paulista,1000,Sala 50,Bela Vista,São Paulo,SP,01310100,,,locador,Proprietária de apartamento para locação

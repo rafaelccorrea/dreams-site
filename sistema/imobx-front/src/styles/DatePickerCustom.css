@@ -1,0 +1,198 @@
+/* Customização do Date Picker Nativo */
+
+/* Chrome/Edge - Calendário */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator,
+input[type='month']::-webkit-calendar-picker-indicator,
+input[type='week']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator:hover,
+input[type='time']::-webkit-calendar-picker-indicator:hover,
+input[type='datetime-local']::-webkit-calendar-picker-indicator:hover,
+input[type='month']::-webkit-calendar-picker-indicator:hover,
+input[type='week']::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: rgba(96, 165, 250, 0.1);
+  transform: scale(1.1);
+}
+
+/* Firefox */
+input[type='date']::-moz-calendar-picker-indicator,
+input[type='time']::-moz-calendar-picker-indicator,
+input[type='datetime-local']::-moz-calendar-picker-indicator {
+  cursor: pointer;
+  filter: brightness(0.8);
+  transition: all 0.2s ease;
+}
+
+input[type='date']::-moz-calendar-picker-indicator:hover,
+input[type='time']::-moz-calendar-picker-indicator:hover,
+input[type='datetime-local']::-moz-calendar-picker-indicator:hover {
+  filter: brightness(1);
+}
+
+/* Modo Dark - Inversão do ícone */
+[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator,
+[data-theme='dark'] input[type='time']::-webkit-calendar-picker-indicator,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-calendar-picker-indicator,
+[data-theme='dark'] input[type='month']::-webkit-calendar-picker-indicator,
+[data-theme='dark'] input[type='week']::-webkit-calendar-picker-indicator {
+  filter: invert(0.9) brightness(1.1);
+}
+
+[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator:hover,
+[data-theme='dark'] input[type='time']::-webkit-calendar-picker-indicator:hover,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-calendar-picker-indicator:hover,
+[data-theme='dark']
+  input[type='month']::-webkit-calendar-picker-indicator:hover,
+[data-theme='dark']
+  input[type='week']::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1) brightness(1.2);
+  background-color: rgba(96, 165, 250, 0.2);
+}
+
+/* Texto dos campos de data no modo dark */
+[data-theme='dark'] input[type='date'],
+[data-theme='dark'] input[type='time'],
+[data-theme='dark'] input[type='datetime-local'],
+[data-theme='dark'] input[type='month'],
+[data-theme='dark'] input[type='week'] {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit,
+[data-theme='dark'] input[type='time']::-webkit-datetime-edit,
+[data-theme='dark'] input[type='datetime-local']::-webkit-datetime-edit,
+[data-theme='dark'] input[type='month']::-webkit-datetime-edit,
+[data-theme='dark'] input[type='week']::-webkit-datetime-edit {
+  color: #f9fafb;
+}
+
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-fields-wrapper,
+[data-theme='dark'] input[type='time']::-webkit-datetime-edit-fields-wrapper,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-datetime-edit-fields-wrapper {
+  color: #f9fafb;
+}
+
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-text,
+[data-theme='dark'] input[type='time']::-webkit-datetime-edit-text,
+[data-theme='dark'] input[type='datetime-local']::-webkit-datetime-edit-text {
+  color: #d1d5db;
+  padding: 0 2px;
+}
+
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-month-field,
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-day-field,
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-year-field,
+[data-theme='dark'] input[type='time']::-webkit-datetime-edit-hour-field,
+[data-theme='dark'] input[type='time']::-webkit-datetime-edit-minute-field,
+[data-theme='dark'] input[type='time']::-webkit-datetime-edit-ampm-field,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-datetime-edit-month-field,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-datetime-edit-day-field,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-datetime-edit-year-field,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-datetime-edit-hour-field,
+[data-theme='dark']
+  input[type='datetime-local']::-webkit-datetime-edit-minute-field {
+  color: #f9fafb;
+  background-color: transparent;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-month-field:focus,
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-day-field:focus,
+[data-theme='dark'] input[type='date']::-webkit-datetime-edit-year-field:focus,
+[data-theme='dark'] input[type='time']::-webkit-datetime-edit-hour-field:focus,
+[data-theme='dark']
+  input[type='time']::-webkit-datetime-edit-minute-field:focus {
+  background-color: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+}
+
+/* Modo Light - Cores vibrantes */
+input[type='date']::-webkit-datetime-edit-month-field:focus,
+input[type='date']::-webkit-datetime-edit-day-field:focus,
+input[type='date']::-webkit-datetime-edit-year-field:focus,
+input[type='time']::-webkit-datetime-edit-hour-field:focus,
+input[type='time']::-webkit-datetime-edit-minute-field:focus {
+  background-color: rgba(28, 78, 255, 0.1);
+  color: #1c4eff;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+/* Estilo para quando há valor selecionado - Bolinha azul clara */
+input[type='date']:not(:placeholder-shown),
+input[type='time']:not(:placeholder-shown),
+input[type='datetime-local']:not(:placeholder-shown),
+input[type='month']:not(:placeholder-shown),
+input[type='week']:not(:placeholder-shown) {
+  position: relative;
+}
+
+input[type='date']:not(:placeholder-shown)::before,
+input[type='time']:not(:placeholder-shown)::before,
+input[type='datetime-local']:not(:placeholder-shown)::before,
+input[type='month']:not(:placeholder-shown)::before,
+input[type='week']:not(:placeholder-shown)::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #60a5fa;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(96, 165, 250, 0.6);
+}
+
+/* Firefox - Indicador de valor */
+input[type='date']:not([value=''])::-moz-calendar-picker-indicator,
+input[type='time']:not([value=''])::-moz-calendar-picker-indicator {
+  filter: hue-rotate(220deg) brightness(1.2);
+}
+
+/* Animação suave ao abrir calendário */
+input[type='date']:active,
+input[type='time']:active,
+input[type='datetime-local']:active,
+input[type='month']:active,
+input[type='week']:active {
+  transform: scale(0.99);
+  transition: transform 0.1s ease;
+}
+
+/* Estilos melhorados para campos vazios */
+input[type='date']:invalid,
+input[type='time']:invalid,
+input[type='datetime-local']:invalid {
+  color: var(--color-text-secondary, #9ca3af);
+}
+
+input[type='date']:valid,
+input[type='time']:valid,
+input[type='datetime-local']:valid {
+  color: var(--color-text, #4b5563);
+}
+
+[data-theme='dark'] input[type='date']:valid,
+[data-theme='dark'] input[type='time']:valid,
+[data-theme='dark'] input[type='datetime-local']:valid {
+  color: #f9fafb;
+}

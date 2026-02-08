@@ -1,0 +1,141 @@
+{
+  "light": {
+    "primary": {
+      "primary": "#1c4eff",
+      "primaryDark": "#153abf",
+      "primaryDarker": "#0e2780",
+      "primaryDarkest": "#0a1f5c",
+      "primaryLight": "#3b82f6"
+    },
+    "secondary": {
+      "secondary": "#6B7280"
+    },
+    "text": {
+      "text": "#4B5563",
+      "textSecondary": "#6B7280",
+      "textLight": "#9CA3AF"
+    },
+    "background": {
+      "background": "#ffffff",
+      "backgroundSecondary": "#f1f5f9",
+      "backgroundTertiary": "#f8fafc",
+      "cardBackground": "#ffffff",
+      "surface": "#ffffff"
+    },
+    "border": {
+      "border": "#e1e5e9",
+      "borderLight": "#f1f5f9"
+    },
+    "status": {
+      "success": "#10b981",
+      "error": "#ef4444",
+      "warning": "#f59e0b",
+      "info": "#3b82f6"
+    },
+    "colors": {
+      "green": "#10b981",
+      "blue": "#3b82f6",
+      "yellow": "#f59e0b",
+      "purple": "#8b5cf6",
+      "red": "#ef4444"
+    },
+    "hover": {
+      "hover": "#f8fafc",
+      "hoverDark": "#f1f5f9"
+    },
+    "messages": {
+      "success": {
+        "background": "#f0fdf4",
+        "border": "#bbf7d0",
+        "text": "#16a34a"
+      },
+      "error": {
+        "background": "#fef2f2",
+        "border": "#fecaca",
+        "text": "#dc2626"
+      },
+      "warning": {
+        "background": "#fffbeb",
+        "border": "#fed7aa",
+        "text": "#d97706"
+      },
+      "info": {
+        "background": "#eff6ff",
+        "border": "#bfdbfe",
+        "text": "#2563eb"
+      }
+    },
+    "shadow": "0 2px 8px rgba(0, 0, 0, 0.1)"
+  },
+  "dark": {
+    "primary": {
+      "primary": "#60a5fa",
+      "primaryDark": "#3b82f6",
+      "primaryDarker": "#2563eb",
+      "primaryDarkest": "#1d4ed8",
+      "primaryLight": "#93c5fd"
+    },
+    "secondary": {
+      "secondary": "#6B7280"
+    },
+    "text": {
+      "text": "#f9fafb",
+      "textSecondary": "#ffffff",
+      "textLight": "#9ca3af"
+    },
+    "background": {
+      "background": "#111827",
+      "backgroundSecondary": "#1f2937",
+      "backgroundTertiary": "#374151",
+      "cardBackground": "#1f2937",
+      "surface": "#1f2937"
+    },
+    "border": {
+      "border": "#374151",
+      "borderLight": "#4b5563"
+    },
+    "status": {
+      "success": "#34d399",
+      "error": "#ef4444",
+      "warning": "#fcd34d",
+      "info": "#60a5fa"
+    },
+    "colors": {
+      "green": "#34d399",
+      "blue": "#60a5fa",
+      "yellow": "#fcd34d",
+      "purple": "#a78bfa",
+      "red": "#ef4444"
+    },
+    "hover": {
+      "hover": "#374151",
+      "hoverDark": "#4b5563"
+    },
+    "messages": {
+      "success": {
+        "background": "#064e3b",
+        "border": "#065f46",
+        "text": "#34d399"
+      },
+      "error": {
+        "background": "#450a0a",
+        "border": "#7f1d1d",
+        "text": "#fca5a5"
+      },
+      "warning": {
+        "background": "#451a03",
+        "border": "#78350f",
+        "text": "#fcd34d"
+      },
+      "info": {
+        "background": "#1e3a8a",
+        "border": "#1e40af",
+        "text": "#60a5fa"
+      }
+    },
+    "shadow": "0 2px 8px rgba(0, 0, 0, 0.3)"
+  }
+}
+
+
+

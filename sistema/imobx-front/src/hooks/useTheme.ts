@@ -1,0 +1,3 @@
+import { useTheme as useThemeHook } from '../contexts/ThemeContext';
+
+export const useTheme = useThemeHook;
