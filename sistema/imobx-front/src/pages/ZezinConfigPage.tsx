@@ -22,23 +22,30 @@ import type {
 const PageContainer = styled.div`
   min-height: 100vh;
   width: 100%;
-  max-width: 720px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 48px 40px 64px;
+  padding: 32px 40px 64px;
   box-sizing: border-box;
   overflow-x: hidden;
+  background: ${props => props.theme.colors.background};
+
+  @media (max-width: 1024px) {
+    padding: 28px 28px 48px;
+  }
 
   @media (max-width: 768px) {
-    padding: 32px 24px 48px;
+    padding: 24px 20px 40px;
   }
 
   @media (max-width: 480px) {
-    padding: 24px 20px 40px;
+    padding: 20px 16px 32px;
   }
 `;
 
 const PageHeader = styled.header`
-  margin-bottom: 48px;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
 `;
 
 const HeaderTop = styled.div`
@@ -69,13 +76,14 @@ const BackButton = styled.button`
   font-size: 0.9375rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover {
-    background: ${props => props.theme.colors.primary};
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
     color: white;
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 4px 12px ${props => props.theme.colors.primary}30;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+    transform: translateY(-1px);
   }
 `;
 
@@ -83,6 +91,8 @@ const TitleSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 `;
 
 const Title = styled.h1`
@@ -107,27 +117,84 @@ const Subtitle = styled.p`
   color: ${props => props.theme.colors.textSecondary};
   margin: 0;
   line-height: 1.6;
-  max-width: 520px;
+  max-width: 640px;
+`;
+
+const MainGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 32px;
+  align-items: start;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+`;
+
+const MainContent = styled.div`
+  min-width: 0;
+`;
+
+const Sidebar = styled.aside`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 24px;
+
+  @media (max-width: 1024px) {
+    position: static;
+    order: -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
 `;
 
 const ConfigCard = styled.div`
   background: ${props => props.theme.colors.cardBackground || '#fff'};
   border-radius: 20px;
-  padding: 40px;
-  margin-bottom: 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 36px 40px;
+  margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   border: 1px solid ${props => props.theme.colors.border};
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
 
   @media (max-width: 768px) {
     padding: 28px 24px;
-    margin-bottom: 28px;
     border-radius: 16px;
   }
 
   @media (max-width: 480px) {
     padding: 24px 20px;
-    margin-bottom: 24px;
   }
+`;
+
+const SidebarCard = styled.div`
+  background: ${props => props.theme.colors.cardBackground || '#fff'};
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid ${props => props.theme.colors.border};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  @media (max-width: 1024px) {
+    flex: 1;
+    min-width: 280px;
+  }
+`;
+
+const SidebarCardTitle = styled.h3`
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: ${props => props.theme.colors.textSecondary};
+  margin: 0 0 12px 0;
 `;
 
 const Section = styled.div`
@@ -241,31 +308,31 @@ const HelpText = styled.div`
   line-height: 1.55;
 `;
 
-const InfoBox = styled.div<{ $variant?: 'info' | 'success' | 'warning' }>`
-  padding: 20px 24px;
+const InfoBox = styled.div<{ $variant?: 'info' | 'success' | 'warning'; $compact?: boolean }>`
+  padding: ${props => (props.$compact ? '16px 20px' : '20px 24px')};
   border-radius: 14px;
-  font-size: 0.9375rem;
+  font-size: ${props => (props.$compact ? '0.875rem' : '0.9375rem')};
   line-height: 1.6;
-  margin-bottom: 32px;
+  margin-bottom: ${props => (props.$compact ? '0' : '32px')};
 
   ${props => {
     if (props.$variant === 'success') {
       return `
-        background: #10B98115;
-        border: 1px solid #10B98130;
-        color: #10B981;
+        background: #10B98112;
+        border: 1px solid #10B98125;
+        color: #059669;
       `;
     }
     if (props.$variant === 'warning') {
       return `
-        background: #F59E0B15;
-        border: 1px solid #F59E0B30;
-        color: #F59E0B;
+        background: #F59E0B12;
+        border: 1px solid #F59E0B25;
+        color: #D97706;
       `;
     }
     return `
-      background: #6366F115;
-      border: 1px solid #6366F130;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.2);
       color: #6366F1;
     `;
   }}
@@ -297,14 +364,14 @@ const FooterActions = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-top: 40px;
-  padding-top: 32px;
+  margin-top: 36px;
+  padding-top: 28px;
   border-top: 1px solid ${props => props.theme.colors.border};
 
   @media (max-width: 768px) {
     flex-direction: column-reverse;
-    margin-top: 32px;
-    padding-top: 28px;
+    margin-top: 28px;
+    padding-top: 24px;
   }
 `;
 
@@ -550,15 +617,8 @@ const ZezinConfigPage: React.FC = () => {
         <form onSubmit={handleSubmit}>
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
-          <InfoBox $variant="info">
-            <strong>Zezin na página e no WhatsApp</strong>
-            <p style={{ margin: '12px 0 0 0' }}>
-              Além de usar a página &quot;Perguntar ao Zezin&quot;, você (e quem tiver o número) pode
-              enviar qualquer mensagem para este número no WhatsApp. O Zezin responde com base nos
-              dados da empresa (metas, vendas, leads, clientes, etc.) direto no chat.
-            </p>
-          </InfoBox>
-
+          <MainGrid>
+            <MainContent>
           <ConfigCard>
           {existingConfig && (
             <InfoBox $variant="success" style={{ marginBottom: 28 }}>
@@ -696,6 +756,22 @@ const ZezinConfigPage: React.FC = () => {
               )}
             </Button>
           </FooterActions>
+            </MainContent>
+
+            <Sidebar>
+              <SidebarCard>
+                <SidebarCardTitle>Como funciona</SidebarCardTitle>
+                <InfoBox $variant="info" $compact>
+                  <strong style={{ display: 'block', marginBottom: 8 }}>Zezin na página e no WhatsApp</strong>
+                  <p style={{ margin: 0 }}>
+                    Além de usar a página &quot;Perguntar ao Zezin&quot;, você (e quem tiver o número) pode
+                    enviar qualquer mensagem para este número no WhatsApp. O Zezin responde com base nos
+                    dados da empresa (metas, vendas, leads, clientes, etc.) direto no chat.
+                  </p>
+                </InfoBox>
+              </SidebarCard>
+            </Sidebar>
+          </MainGrid>
         </form>
       </PageContainer>
     </Layout>

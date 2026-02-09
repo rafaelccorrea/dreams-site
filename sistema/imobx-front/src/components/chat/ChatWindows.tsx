@@ -1264,11 +1264,12 @@ export const ChatWindows: React.FC = () => {
 
       isProcessing = true;
 
-      const { roomId, forceOpen } = event.detail || {};
+      const { roomId, forceOpen, initialMessage } = event.detail || {};
 
       console.log('📬 [ChatWindows] Evento open-chat recebido:', {
         roomId,
         forceOpen,
+        initialMessage: !!initialMessage,
         isOnChatPage,
         roomsCount: rooms.length,
       });
@@ -1284,20 +1285,25 @@ export const ChatWindows: React.FC = () => {
         return;
       }
 
-      if (roomId) {
-        console.log('✅ [ChatWindows] Abrindo chat:', roomId);
-        handleOpenChat(roomId).catch(error => {
-          console.error('❌ [ChatWindows] Erro ao abrir chat:', error);
-        });
-      } else if (rooms.length > 0) {
-        // Se não passou roomId, abrir primeira sala (geralmente suporte)
-        console.log(
-          '✅ [ChatWindows] Abrindo primeira sala disponível:',
-          rooms[0].id
-        );
-        handleOpenChat(rooms[0].id).catch(error => {
-          console.error('❌ [ChatWindows] Erro ao abrir primeira sala:', error);
-        });
+      const roomToOpen = roomId || (rooms.length > 0 ? rooms[0].id : null);
+      if (roomToOpen) {
+        if (roomId) {
+          console.log('✅ [ChatWindows] Abrindo chat:', roomId);
+        } else {
+          console.log(
+            '✅ [ChatWindows] Abrindo primeira sala disponível:',
+            roomToOpen
+          );
+        }
+        handleOpenChat(roomToOpen)
+          .then(() => {
+            if (initialMessage && typeof initialMessage === 'string') {
+              setMessageInputs(prev => ({ ...prev, [roomToOpen]: initialMessage }));
+            }
+          })
+          .catch(error => {
+            console.error('❌ [ChatWindows] Erro ao abrir chat:', error);
+          });
       } else {
         console.warn('⚠️ [ChatWindows] Nenhuma sala disponível para abrir');
       }

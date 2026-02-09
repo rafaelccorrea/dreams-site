@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import {
   MdSave,
   MdArrowBack,
@@ -12,6 +12,10 @@ import {
   MdCheckCircle,
   MdWarning,
   MdContentCopy,
+  MdAdd,
+  MdRemove,
+  MdSupport,
+  MdSmartToy,
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Layout } from '../components/layout/Layout';
@@ -322,23 +326,204 @@ const InfoBox = styled.div<{ $variant?: 'info' | 'success' | 'warning' }>`
   ${props => {
     if (props.$variant === 'success') {
       return `
-        background: #10B98115;
-        border: 1px solid #10B98130;
-        color: #10B981;
+        background: ${props.theme.colors.success}15;
+        border: 1px solid ${props.theme.colors.success}30;
+        color: ${props.theme.colors.success};
       `;
     } else if (props.$variant === 'warning') {
       return `
-        background: #F59E0B15;
-        border: 1px solid #F59E0B30;
-        color: #F59E0B;
+        background: ${props.theme.colors.warning}15;
+        border: 1px solid ${props.theme.colors.warning}30;
+        color: ${props.theme.colors.warning};
       `;
     }
     return `
-      background: #3B82F615;
-      border: 1px solid #3B82F630;
-      color: #666;
+      background: ${props.theme.colors.infoBackground};
+      border: 1px solid ${props.theme.colors.infoBorder};
+      color: ${props.theme.colors.textSecondary};
     `;
   }}
+`;
+
+const FormLabelText = styled.div`
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: ${p => p.theme.colors.text};
+`;
+
+const FormHintText = styled.div`
+  font-size: 0.875rem;
+  color: ${p => p.theme.colors.textSecondary};
+  line-height: 1.5;
+`;
+
+const FormWarningStrong = styled.strong`
+  display: block;
+  margin-top: 4px;
+  color: ${p => p.theme.colors.warning};
+`;
+
+const ChatbotSection = styled.div`
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid ${p => p.theme.colors.border};
+  background: ${p => p.theme.colors.cardBackground};
+  color: ${p => p.theme.colors.text};
+`;
+
+const ChatbotMessageRow = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+`;
+
+const ChatbotMessageInput = styled.input`
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid ${p => p.theme.colors.border};
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: ${p => p.theme.colors.inputBackground};
+  color: ${p => p.theme.colors.text};
+
+  &::placeholder {
+    color: ${p => p.theme.colors.textLight};
+  }
+`;
+
+const ChatbotAddBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid ${p => p.theme.colors.border};
+  background: ${p => p.theme.colors.cardBackground};
+  color: ${p => p.theme.colors.text};
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-top: 4px;
+
+  &:hover {
+    background: ${p => p.theme.colors.backgroundSecondary};
+  }
+`;
+
+const ChatbotRemoveBtn = styled.button`
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: ${p => p.theme.colors.textSecondary};
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: ${p => p.theme.colors.error}20;
+    color: ${p => p.theme.colors.error};
+  }
+`;
+
+const PredefinedMessageItem = styled.button<{ $selected?: boolean }>`
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid ${p => (p.$selected ? p.theme.colors.primary : p.theme.colors.border)};
+  background: ${p => (p.$selected ? p.theme.colors.primary + '12' : p.theme.colors.cardBackground)};
+  color: ${p => p.theme.colors.text};
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: ${p => p.theme.colors.primary};
+    background: ${p => p.theme.colors.primary + '08'};
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const PreAttendOptionCard = styled.div`
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid ${p => p.theme.colors.border};
+  background: ${p => p.theme.colors.cardBackground};
+  color: ${p => p.theme.colors.text};
+`;
+
+const SupportChatBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  margin-top: 12px;
+  border-radius: 8px;
+  border: 1px solid ${p => p.theme.colors.primary};
+  background: ${p => p.theme.colors.primary};
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+`;
+
+const MAX_CHATBOT_MESSAGES = 5;
+
+const CHATBOT_PREDEFINED_MESSAGES: string[] = [
+  'Olá! Obrigado pelo contato. Em breve nossa equipe responderá.',
+  'Recebemos sua mensagem. Um de nossos corretores vai retornar em breve.',
+  'Olá! Para te atender melhor, você está buscando imóvel para comprar ou alugar?',
+  'Obrigado pelo interesse! Estamos analisando e em breve entraremos em contato.',
+  'Oi! Em que bairro ou cidade você tem interesse?',
+  'Agradecemos o contato. Nossa equipe está disponível em horário comercial.',
+  'Olá! Como podemos te ajudar hoje?',
+  'Recebemos seu contato. Retornaremos o mais breve possível.',
+  'Obrigado por falar conosco. Em instantes um corretor irá te atender.',
+  'Olá! Estamos aqui para ajudar. Em breve responderemos.',
+];
+
+const AutoActionsSection = styled.div`
+  margin-bottom: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  background: ${p => p.theme.colors.infoBackground};
+  border: 1px solid ${p => p.theme.colors.infoBorder};
+`;
+
+const AutoActionsTitle = styled.h3`
+  margin: 0 0 16px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: ${p => p.theme.colors.info};
+`;
+
+const OptionalLabel = styled.span`
+  color: ${p => p.theme.colors.textSecondary};
+  font-weight: normal;
+`;
+
+const ValidationWarningBox = styled.div`
+  margin-top: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  background: ${p => p.theme.colors.warningBackground};
+  border: 1px solid ${p => p.theme.colors.warningBorder};
+  strong { color: ${p => p.theme.colors.warning}; font-size: 0.875rem; }
+  ul { margin: 4px 0 0 0; padding-left: 20px; font-size: 0.875rem; color: ${p => p.theme.colors.textSecondary}; }
+  li { margin-bottom: 4px; }
 `;
 
 const StatusBadge = styled.span<{ $isActive: boolean }>`
@@ -365,10 +550,11 @@ const StatusBadge = styled.span<{ $isActive: boolean }>`
 const ValidationResult = styled.div<{ $isValid: boolean }>`
   padding: 16px;
   border-radius: 12px;
-  border: 2px solid ${props => (props.$isValid ? '#10B981' : '#EF4444')};
-  background: ${props => (props.$isValid ? '#10B98115' : '#EF444415')};
+  border: 2px solid ${props => (props.$isValid ? props.theme.colors.success : props.theme.colors.error)};
+  background: ${props => (props.$isValid ? props.theme.colors.success + '15' : props.theme.colors.error + '15')};
   margin-bottom: 20px;
   font-size: 0.875rem;
+  color: ${p => p.theme.colors.text};
 `;
 
 const DangerZone = styled.div`
@@ -577,6 +763,7 @@ const PermissionDeniedText = styled.p`
 `;
 
 const WhatsAppConfigPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const permissionsContext = usePermissionsContextOptional();
   const [config, setConfig] = useState<CreateWhatsAppConfigRequest>({
@@ -585,6 +772,8 @@ const WhatsAppConfigPage: React.FC = () => {
     autoCreateClient: false,
     autoCreateTask: false,
     enableAIPreAttend: false,
+    chatbotEnabled: true,
+    chatbotMessages: [],
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -637,6 +826,8 @@ const WhatsAppConfigPage: React.FC = () => {
         autoCreateClient: data.autoCreateClient ?? false,
         autoCreateTask: data.autoCreateTask ?? false,
         enableAIPreAttend: data.enableAIPreAttend ?? false,
+        chatbotEnabled: data.chatbotEnabled !== false,
+        chatbotMessages: Array.isArray(data.chatbotMessages) ? data.chatbotMessages : [],
       });
     } catch (error: any) {
       if (error.response?.status === 403) {
@@ -654,6 +845,8 @@ const WhatsAppConfigPage: React.FC = () => {
           autoCreateClient: false,
           autoCreateTask: false,
           enableAIPreAttend: false,
+          chatbotEnabled: true,
+          chatbotMessages: [],
         }));
       } else {
         console.error('Erro ao carregar configuração:', error);
@@ -1158,16 +1351,7 @@ const WhatsAppConfigPage: React.FC = () => {
                     disabled={saving || deleting || validating}
                   />
                   {validating && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '0.875rem',
-                        color: '#666',
-                        marginTop: '4px',
-                      }}
-                    >
+                    <FormHintText style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                       <LoadingSpinner
                         style={{
                           width: '14px',
@@ -1176,7 +1360,7 @@ const WhatsAppConfigPage: React.FC = () => {
                         }}
                       />
                       Verificando...
-                    </div>
+                    </FormHintText>
                   )}
                 </FormGroup>
 
@@ -1194,7 +1378,7 @@ const WhatsAppConfigPage: React.FC = () => {
                         >
                           <span style={{ fontSize: '1.25rem' }}>✅</span>
                           <strong
-                            style={{ color: '#10B981', fontSize: '1rem' }}
+                            style={{ color: theme.colors?.success || '#10B981', fontSize: '1rem' }}
                           >
                             Dados corretos
                           </strong>
@@ -1204,7 +1388,7 @@ const WhatsAppConfigPage: React.FC = () => {
                             style={{
                               marginTop: '12px',
                               fontSize: '0.875rem',
-                              color: '#666',
+                              color: theme.colors?.textSecondary || '#666',
                             }}
                           >
                             <div style={{ marginBottom: '6px' }}>
@@ -1224,11 +1408,11 @@ const WhatsAppConfigPage: React.FC = () => {
                                   color:
                                     validationResult.phoneNumberInfo
                                       .qualityRating === 'HIGH'
-                                      ? '#10B981'
+                                      ? (theme.colors?.success || '#10B981')
                                       : validationResult.phoneNumberInfo
                                             .qualityRating === 'MEDIUM'
-                                        ? '#F59E0B'
-                                        : '#EF4444',
+                                        ? (theme.colors?.warning || '#F59E0B')
+                                        : (theme.colors?.error || '#EF4444'),
                                   fontWeight: '600',
                                 }}
                               >
@@ -1240,43 +1424,16 @@ const WhatsAppConfigPage: React.FC = () => {
                         )}
                         {validationResult.warnings &&
                           validationResult.warnings.length > 0 && (
-                            <div
-                              style={{
-                                marginTop: '12px',
-                                padding: '8px',
-                                background: '#F59E0B20',
-                                borderRadius: '8px',
-                                border: '1px solid #F59E0B40',
-                              }}
-                            >
-                              <strong
-                                style={{
-                                  color: '#F59E0B',
-                                  fontSize: '0.875rem',
-                                }}
-                              >
-                                ⚠️ Avisos:
-                              </strong>
-                              <ul
-                                style={{
-                                  margin: '4px 0 0 0',
-                                  paddingLeft: '20px',
-                                  fontSize: '0.875rem',
-                                  color: '#666',
-                                }}
-                              >
+                            <ValidationWarningBox>
+                              <strong>⚠️ Avisos:</strong>
+                              <ul>
                                 {validationResult.warnings.map(
                                   (warning: string, idx: number) => (
-                                    <li
-                                      key={idx}
-                                      style={{ marginBottom: '4px' }}
-                                    >
-                                      {warning}
-                                    </li>
+                                    <li key={idx}>{warning}</li>
                                   )
                                 )}
                               </ul>
-                            </div>
+                            </ValidationWarningBox>
                           )}
                       </div>
                     ) : (
@@ -1291,7 +1448,7 @@ const WhatsAppConfigPage: React.FC = () => {
                         >
                           <span style={{ fontSize: '1.25rem' }}>❌</span>
                           <strong
-                            style={{ color: '#EF4444', fontSize: '1rem' }}
+                            style={{ color: theme.colors?.error || '#EF4444', fontSize: '1rem' }}
                           >
                             Dados incorretos
                           </strong>
@@ -1303,7 +1460,7 @@ const WhatsAppConfigPage: React.FC = () => {
                                 margin: '8px 0 0 0',
                                 paddingLeft: '20px',
                                 fontSize: '0.875rem',
-                                color: '#EF4444',
+                                color: theme.colors?.error || '#EF4444',
                               }}
                             >
                               {validationResult.errors.map(
@@ -1317,43 +1474,16 @@ const WhatsAppConfigPage: React.FC = () => {
                           )}
                         {validationResult.warnings &&
                           validationResult.warnings.length > 0 && (
-                            <div
-                              style={{
-                                marginTop: '12px',
-                                padding: '8px',
-                                background: '#F59E0B20',
-                                borderRadius: '8px',
-                                border: '1px solid #F59E0B40',
-                              }}
-                            >
-                              <strong
-                                style={{
-                                  color: '#F59E0B',
-                                  fontSize: '0.875rem',
-                                }}
-                              >
-                                ⚠️ Avisos:
-                              </strong>
-                              <ul
-                                style={{
-                                  margin: '4px 0 0 0',
-                                  paddingLeft: '20px',
-                                  fontSize: '0.875rem',
-                                  color: '#666',
-                                }}
-                              >
+                            <ValidationWarningBox>
+                              <strong>⚠️ Avisos:</strong>
+                              <ul>
                                 {validationResult.warnings.map(
                                   (warning: string, idx: number) => (
-                                    <li
-                                      key={idx}
-                                      style={{ marginBottom: '4px' }}
-                                    >
-                                      {warning}
-                                    </li>
+                                    <li key={idx}>{warning}</li>
                                   )
                                 )}
                               </ul>
-                            </div>
+                            </ValidationWarningBox>
                           )}
                       </div>
                     )}
@@ -1487,9 +1617,7 @@ const WhatsAppConfigPage: React.FC = () => {
                 <FormGroup>
                   <Label>
                     Número de Telefone{' '}
-                    <span style={{ color: '#666', fontWeight: 'normal' }}>
-                      (opcional)
-                    </span>
+                    <OptionalLabel>(opcional)</OptionalLabel>
                   </Label>
                   <Input
                     type='text'
@@ -1512,9 +1640,7 @@ const WhatsAppConfigPage: React.FC = () => {
                 <FormGroup>
                   <Label>
                     Nome do negócio{' '}
-                    <span style={{ color: '#666', fontWeight: 'normal' }}>
-                      (opcional)
-                    </span>
+                    <OptionalLabel>(opcional)</OptionalLabel>
                   </Label>
                   <Input
                     type='text'
@@ -1565,206 +1691,161 @@ const WhatsAppConfigPage: React.FC = () => {
                     </div>
                   </HelpText>
                   {loadingProjects && (
-                    <div
-                      style={{
-                        marginTop: '8px',
-                        fontSize: '0.875rem',
-                        color: '#666',
-                      }}
-                    >
+                    <FormHintText style={{ marginTop: '8px' }}>
                       Carregando funis...
-                    </div>
+                    </FormHintText>
                   )}
                 </FormGroup>
 
-                <div
-                  style={{
-                    marginBottom: '24px',
-                    padding: '20px',
-                    background: '#3B82F610',
-                    borderRadius: '12px',
-                    border: '1px solid #3B82F630',
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: '0 0 16px 0',
-                      fontSize: '1.125rem',
-                      fontWeight: '600',
-                      color: '#3B82F6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    ⚙️ O que o sistema pode fazer sozinho
-                  </h3>
+                <AutoActionsSection>
+                  <AutoActionsTitle>Pré-atendimento</AutoActionsTitle>
+                  <FormHintText style={{ marginBottom: '16px' }}>
+                    Dois módulos diferentes: Chatbot (mensagens que você escolhe) ou Pré-atendimento com IA (módulo pago, ativação pelo suporte).
+                  </FormHintText>
+
+                  <PreAttendOptionCard>
+                    <FormLabelText style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <MdSmartToy size={20} />
+                      Chatbot
+                    </FormLabelText>
+                    <FormHintText style={{ marginBottom: '12px' }}>
+                      Resposta automática com mensagens pré-definidas que você escolhe. Ative e selecione até 5 mensagens na ordem de envio.
+                    </FormHintText>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', cursor: 'pointer' }}>
+                      <input
+                        type='checkbox'
+                        checked={config.chatbotEnabled !== false}
+                        onChange={e => setConfig({ ...config, chatbotEnabled: e.target.checked })}
+                        disabled={saving || deleting}
+                      />
+                      <span style={{ fontWeight: 500 }}>Ativar Chatbot</span>
+                    </label>
+                    <FormHintText style={{ marginBottom: '8px' }}>Suas mensagens (máx. {MAX_CHATBOT_MESSAGES}) – ordem de envio:</FormHintText>
+                    <div style={{ marginBottom: '10px' }}>
+                      {(config.chatbotMessages || []).map((item, index) => (
+                        <ChatbotMessageRow key={index}>
+                          <ChatbotMessageInput value={item.text || ''} readOnly disabled style={{ background: 'var(--color-background-secondary)', cursor: 'default' }} />
+                          <ChatbotRemoveBtn
+                            type='button'
+                            onClick={() => {
+                              const list = (config.chatbotMessages || []).filter((_, i) => i !== index);
+                              setConfig({ ...config, chatbotMessages: list });
+                            }}
+                            disabled={saving || deleting}
+                            title='Remover'
+                          >
+                            <MdRemove size={20} />
+                          </ChatbotRemoveBtn>
+                        </ChatbotMessageRow>
+                      ))}
+                    </div>
+                    {(config.chatbotMessages?.length ?? 0) < MAX_CHATBOT_MESSAGES && (
+                        <>
+                          <FormHintText style={{ marginBottom: '6px' }}>Escolha uma mensagem para adicionar:</FormHintText>
+                          <div>
+                            {CHATBOT_PREDEFINED_MESSAGES.filter(
+                              pred => !(config.chatbotMessages || []).some(m => m?.text?.trim() === pred.trim())
+                            ).map((text, idx) => (
+                              <PredefinedMessageItem
+                                key={idx}
+                                type='button'
+                                onClick={() => {
+                                  const list = [...(config.chatbotMessages || []), { text }];
+                                  if (list.length <= MAX_CHATBOT_MESSAGES) setConfig({ ...config, chatbotMessages: list });
+                                }}
+                                disabled={saving || deleting || (config.chatbotMessages?.length ?? 0) >= MAX_CHATBOT_MESSAGES}
+                              >
+                                {text}
+                              </PredefinedMessageItem>
+                            ))}
+                          </div>
+                        </>
+                    )}
+                    {(config.chatbotMessages?.length ?? 0) === 0 && (
+                      <FormHintText style={{ marginTop: '8px' }}>
+                        Se não escolher nenhuma, o sistema envia: &quot;Obrigado pelo contato. Em breve nossa equipe responderá.&quot;
+                      </FormHintText>
+                    )}
+                  </PreAttendOptionCard>
+
+                  <PreAttendOptionCard>
+                    <FormLabelText style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <MdSmartToy size={20} style={{ opacity: 0.9 }} />
+                      Pré-atendimento com IA (módulo pago)
+                    </FormLabelText>
+                    <FormHintText style={{ marginBottom: '8px' }}>
+                      A IA qualifica o lead e responde automaticamente no WhatsApp. Este módulo não pode ser ativado por aqui: é pago e a ativação é feita pelo suporte.
+                    </FormHintText>
+                    {config.enableAIPreAttend ? (
+                      <FormHintText style={{ color: 'var(--color-success)', fontWeight: 500 }}>
+                        Pré-atendimento com IA está ativo para sua empresa.
+                      </FormHintText>
+                    ) : (
+                      <>
+                        <FormHintText>
+                          Quer ativar? Entre em contato com o suporte; a mensagem abaixo será enviada no chat.
+                        </FormHintText>
+                        <SupportChatBtn
+                          type='button'
+                          onClick={() => {
+                            window.dispatchEvent(
+                              new CustomEvent('open-chat', {
+                                detail: {
+                                  initialMessage:
+                                    'Olá! Gostaria de saber mais sobre o módulo de Pré-atendimento com IA no WhatsApp (qualificação de leads e respostas automáticas). Podem me informar como ativar e valores?',
+                                },
+                              })
+                            );
+                          }}
+                        >
+                          <MdSupport size={20} />
+                          Falar com suporte sobre a IA
+                        </SupportChatBtn>
+                      </>
+                    )}
+                  </PreAttendOptionCard>
+
+                  <AutoActionsTitle style={{ marginTop: '24px' }}>⚙️ O que o sistema pode fazer sozinho</AutoActionsTitle>
 
                   <FormGroup style={{ marginBottom: '20px' }}>
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
-                        cursor: 'pointer',
-                      }}
-                    >
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
                       <input
                         type='checkbox'
                         checked={config.autoCreateClient ?? false}
-                        onChange={e =>
-                          setConfig({
-                            ...config,
-                            autoCreateClient: e.target.checked,
-                          })
-                        }
+                        onChange={e => setConfig({ ...config, autoCreateClient: e.target.checked })}
                         disabled={saving || deleting}
                         style={{ marginTop: '2px' }}
                       />
                       <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            fontWeight: '500',
-                            marginBottom: '4px',
-                            color: '#333',
-                          }}
-                        >
-                          Criar cliente automaticamente
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '0.875rem',
-                            color: '#666',
-                            lineHeight: '1.5',
-                          }}
-                        >
-                          Se ativado, ao receber uma mensagem o sistema cria um
-                          cliente sozinho, usando os dados da conversa.
-                          <strong
-                            style={{
-                              display: 'block',
-                              marginTop: '4px',
-                              color: '#F59E0B',
-                            }}
-                          >
-                            Recomendado: deixar desativado para você decidir
-                            quando cadastrar cada cliente.
-                          </strong>
-                        </div>
+                        <FormLabelText>Criar cliente automaticamente</FormLabelText>
+                        <FormHintText>
+                          Se ativado, ao receber uma mensagem o sistema cria um cliente sozinho, usando os dados da conversa.
+                          <FormWarningStrong>Recomendado: deixar desativado para você decidir quando cadastrar cada cliente.</FormWarningStrong>
+                        </FormHintText>
                       </div>
                     </label>
                   </FormGroup>
 
                   <FormGroup style={{ marginBottom: '20px' }}>
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
-                        cursor: 'pointer',
-                      }}
-                    >
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
                       <input
                         type='checkbox'
                         checked={config.autoCreateTask ?? false}
-                        onChange={e =>
-                          setConfig({
-                            ...config,
-                            autoCreateTask: e.target.checked,
-                          })
-                        }
+                        onChange={e => setConfig({ ...config, autoCreateTask: e.target.checked })}
                         disabled={saving || deleting}
                         style={{ marginTop: '2px' }}
                       />
                       <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            fontWeight: '500',
-                            marginBottom: '4px',
-                            color: '#333',
-                          }}
-                        >
-                          Criar tarefa no funil automaticamente
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '0.875rem',
-                            color: '#666',
-                            lineHeight: '1.5',
-                          }}
-                        >
-                          Se ativado, ao receber uma mensagem o sistema cria uma
-                          tarefa no funil sozinho.
-                          <strong
-                            style={{
-                              display: 'block',
-                              marginTop: '4px',
-                              color: '#F59E0B',
-                            }}
-                          >
-                            Recomendado: deixar desativado para você decidir
-                            quando criar cada tarefa.
-                          </strong>
-                        </div>
+                        <FormLabelText>Criar tarefa no funil automaticamente</FormLabelText>
+                        <FormHintText>
+                          Se ativado, ao receber uma mensagem o sistema cria uma tarefa no funil sozinho.
+                          <FormWarningStrong>Recomendado: deixar desativado para você decidir quando criar cada tarefa.</FormWarningStrong>
+                        </FormHintText>
                       </div>
                     </label>
                   </FormGroup>
 
-                  <FormGroup>
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <input
-                        type='checkbox'
-                        checked={config.enableAIPreAttend ?? false}
-                        onChange={e =>
-                          setConfig({
-                            ...config,
-                            enableAIPreAttend: e.target.checked,
-                          })
-                        }
-                        disabled={saving || deleting}
-                        style={{ marginTop: '2px' }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            fontWeight: '500',
-                            marginBottom: '4px',
-                            color: '#333',
-                          }}
-                        >
-                          Resposta automática no primeiro contato
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '0.875rem',
-                            color: '#666',
-                            lineHeight: '1.5',
-                          }}
-                        >
-                          Se ativado, o sistema analisa a mensagem e pode enviar
-                          uma resposta automática no primeiro contato.
-                          <strong
-                            style={{
-                              display: 'block',
-                              marginTop: '4px',
-                              color: '#F59E0B',
-                            }}
-                          >
-                            Recomendado: ativar só se quiser que o sistema
-                            responda sozinho no início da conversa.
-                          </strong>
-                        </div>
-                      </div>
-                    </label>
-                  </FormGroup>
-                </div>
+                </AutoActionsSection>
 
                 <FormGroup>
                   <label

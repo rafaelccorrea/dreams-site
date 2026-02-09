@@ -586,6 +586,14 @@ const getNavigationItems = (userRole: string): NavigationItem[] => {
       roleRequired: ['master'],
       menuGroup: 'Administrativo',
     },
+    {
+      id: 'admin-whatsapp-pre-attendance',
+      icon: FaWhatsapp,
+      title: 'WhatsApp (Chatbot/IA)',
+      path: '/admin/whatsapp-pre-attendance',
+      roleRequired: ['master'],
+      menuGroup: 'Administrativo',
+    },
   ];
 
   // Adicionar gerenciamento de assinaturas sempre visível para admin e master (após Auditoria)

@@ -203,6 +203,8 @@ export interface WhatsAppConfig {
   autoCreateClient?: boolean; // Se deve criar cliente automaticamente ao receber mensagem
   autoCreateTask?: boolean; // Se deve criar tarefa Kanban automaticamente ao receber mensagem
   enableAIPreAttend?: boolean; // Se a IA deve fazer pré-atendimento (coletar dados e fornecer follow-up)
+  chatbotEnabled?: boolean; // Chatbot padrão (mensagens configuráveis)
+  chatbotMessages?: Array<{ text: string }>; // Mensagens do chatbot (ordem de envio)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -219,6 +221,8 @@ export interface CreateWhatsAppConfigRequest {
   autoCreateClient?: boolean; // Se deve criar cliente automaticamente ao receber mensagem
   autoCreateTask?: boolean; // Se deve criar tarefa Kanban automaticamente ao receber mensagem
   enableAIPreAttend?: boolean; // Se a IA deve fazer pré-atendimento (coletar dados e fornecer follow-up)
+  chatbotEnabled?: boolean;
+  chatbotMessages?: Array<{ text: string }>;
 }
 
 export interface UpdateWhatsAppConfigRequest {
@@ -233,6 +237,8 @@ export interface UpdateWhatsAppConfigRequest {
   autoCreateClient?: boolean; // Se deve criar cliente automaticamente ao receber mensagem
   autoCreateTask?: boolean; // Se deve criar tarefa Kanban automaticamente ao receber mensagem
   enableAIPreAttend?: boolean; // Se a IA deve fazer pré-atendimento (coletar dados e fornecer follow-up)
+  chatbotEnabled?: boolean;
+  chatbotMessages?: Array<{ text: string }>;
 }
 
 export interface UnreadCountResponse {

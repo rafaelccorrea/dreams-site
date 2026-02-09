@@ -242,6 +242,9 @@ const EditCompetitionPage = lazy(() => import('./pages/EditCompetitionPage'));
 const AddPrizesPage = lazy(() => import('./pages/AddPrizesPage'));
 const PrizesPage = lazy(() => import('./pages/PrizesPage'));
 const AuditPage = lazy(() => import('./pages/AuditPage'));
+const AdminWhatsAppPreAttendancePage = lazy(
+  () => import('./pages/AdminWhatsAppPreAttendancePage')
+);
 const CreateKeyPage = lazy(() => import('./pages/CreateKeyPage'));
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
 const ClientDetailsPage = lazy(() => import('./pages/ClientDetailsPage'));
@@ -2198,6 +2201,20 @@ const AppContent: React.FC = () => {
                           <ProtectedRoute>
                             <MasterRoute>
                               <AuditPage />
+                            </MasterRoute>
+                          </ProtectedRoute>
+                        </ProtectedRouteWithPermissions>
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path='/admin/whatsapp-pre-attendance'
+                    element={
+                      <ErrorBoundary>
+                        <ProtectedRouteWithPermissions>
+                          <ProtectedRoute>
+                            <MasterRoute>
+                              <AdminWhatsAppPreAttendancePage />
                             </MasterRoute>
                           </ProtectedRoute>
                         </ProtectedRouteWithPermissions>
