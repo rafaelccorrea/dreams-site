@@ -52,6 +52,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   public_analytics: 'Analytics do Site Público',
   'public-analytics': 'Analytics do Site Público',
   analytics: 'Analytics e Relatórios',
+  condominium: 'Gestão de Condomínios',
+  whatsapp: 'WhatsApp',
+  integrations: 'Integrações',
 
   // Mapeamentos por código (plural) - variações comuns
   users: 'Gestão de Usuários',
@@ -64,6 +67,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   assets: 'Gestão Patrimonial',
   commissions: 'Gestão de Comissões',
   rewards: 'Gestão de Prêmios',
+  condominiums: 'Gestão de Condomínios',
 
   // Mapeamentos por nome legível (mantém o mesmo)
   Calendário: 'Calendário e Agendamentos',
@@ -149,6 +153,9 @@ const CATEGORY_ICONS: Record<string, string> = {
   appointment: '📅',
   competition: '🏅',
   prize: '🎁',
+  condominium: '🏢',
+  whatsapp: '💬',
+  integrations: '🔌',
 };
 
 /**
