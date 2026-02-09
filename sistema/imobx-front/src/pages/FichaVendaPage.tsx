@@ -3445,7 +3445,11 @@ const FichaVendaPage: React.FC = () => {
         <FichaVendaContainer
           style={{
             padding:
-              windowWidth > 768 ? '0 48px 64px 48px' : '0 24px 48px 24px',
+              windowWidth > 768
+                ? '0 48px 64px 48px'
+                : windowWidth <= 480
+                  ? '0 12px 40px 12px'
+                  : '0 24px 48px 24px',
             maxWidth: '100%',
             boxSizing: 'border-box',
           }}

@@ -7,9 +7,11 @@ import {
   MdSave,
 } from 'react-icons/md';
 
-// Container principal
+// Container principal (responsivo: mobile e web)
 export const FichaVendaContainer = styled.div`
   min-height: 100vh;
+  min-width: 0;
+  max-width: 100%;
   background: ${props => props.theme.colors.background};
   padding: 0;
   width: 100%;
@@ -208,6 +210,7 @@ export const SectionHeaderLeft = styled.div`
   gap: 16px;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 `;
 
 export const SectionIcon = styled.div`
@@ -275,10 +278,11 @@ export const ExpandIcon = styled.div<{ $isExpanded: boolean }>`
     props.$isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'};
 `;
 
-// Conteúdo da seção
+// Conteúdo da seção (min-width: 0 para não estourar em telas pequenas)
 export const SectionContent = styled.div<{ $isExpanded: boolean }>`
   max-height: ${props => (props.$isExpanded ? '5000px' : '0')};
   overflow: hidden;
+  min-width: 0;
   transition:
     max-height 0.4s ease,
     padding 0.3s ease;
@@ -297,16 +301,21 @@ export const SectionContent = styled.div<{ $isExpanded: boolean }>`
   }
 `;
 
-// Grid de formulário
+// Grid de formulário (itens com min-width: 0 para não estourar em mobile)
 export const FormGrid = styled.div<{ $columns?: number }>`
   display: grid;
-  grid-template-columns: repeat(${props => props.$columns || 2}, 1fr);
+  grid-template-columns: repeat(${props => props.$columns || 2}, minmax(0, 1fr));
   gap: 24px;
+  min-width: 0;
+
+  & > * {
+    min-width: 0;
+  }
 
   @media (max-width: 1024px) {
     grid-template-columns: repeat(
       ${props => Math.min(props.$columns || 2, 2)},
-      1fr
+      minmax(0, 1fr)
     );
     gap: 20px;
   }
@@ -1603,8 +1612,11 @@ export const ModalButton = styled.button<{
 // --- Responsivo: área de conteúdo e contra propostas (mobile-first) ---
 export const PageContentWrap = styled.div`
   max-width: 1400px;
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
   padding: 0 16px 80px 16px;
+  box-sizing: border-box;
 
   @media (min-width: 480px) {
     padding: 0 24px 100px 24px;
@@ -1612,6 +1624,10 @@ export const PageContentWrap = styled.div`
 
   @media (min-width: 768px) {
     padding: 0 32px 120px 32px;
+  }
+
+  @media (max-width: 380px) {
+    padding: 0 10px 72px 10px;
   }
 `;
 
