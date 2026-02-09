@@ -582,6 +582,7 @@ export const PropostaAssinaturasModal: React.FC<
   const [loadingLinkId, setLoadingLinkId] = useState<string | null>(null);
 
   const [documentName, setDocumentName] = useState('');
+  const [documentNameTouched, setDocumentNameTouched] = useState(false);
   const [documentMessage, setDocumentMessage] = useState('');
   const [refusable, setRefusable] = useState(true);
   const [sortable, setSortable] = useState(true);
@@ -604,9 +605,13 @@ export const PropostaAssinaturasModal: React.FC<
         userTipo
       );
       setSignatures(list);
-      if (list.length === 0 && !documentName) {
-        setDocumentName(`Proposta de Compra ${proposalNumber}`);
-        setDocumentMessage('Por favor, assine a proposta.');
+      if (list.length === 0) {
+        setDocumentName(prev =>
+          prev.trim() ? prev : `Proposta de Compra ${proposalNumber}`
+        );
+        setDocumentMessage(prev =>
+          prev.trim() ? prev : 'Por favor, assine a proposta.'
+        );
       }
     } catch (err: any) {
       showError(err?.message || 'Erro ao carregar assinaturas.');
@@ -614,7 +619,7 @@ export const PropostaAssinaturasModal: React.FC<
     } finally {
       setLoading(false);
     }
-  }, [proposalId, isOpen, proposalNumber, userCpf, userTipo, documentName]);
+  }, [proposalId, isOpen, proposalNumber, userCpf, userTipo]);
 
   useEffect(() => {
     if (isOpen && proposalId) loadSignatures();
@@ -653,8 +658,9 @@ export const PropostaAssinaturasModal: React.FC<
 
   const handleSend = async () => {
     const nameTrim = documentName.trim();
+    setDocumentNameTouched(true);
     if (!nameTrim) {
-      showError('Informe o nome do documento.');
+      showError('Nome do documento é obrigatório.');
       return;
     }
     const signersPayload: AssinaturaSignerInput[] = signers
@@ -818,13 +824,29 @@ export const PropostaAssinaturasModal: React.FC<
               {!alreadySent && (
                 <>
                   <FormGroup>
-                    <Label>Nome do documento</Label>
+                    <Label>
+                      Nome do documento <span style={{ color: colors.primary }}>*</span>
+                    </Label>
                     <Input
                       type='text'
                       value={documentName}
                       onChange={e => setDocumentName(e.target.value)}
+                      onBlur={() => setDocumentNameTouched(true)}
                       placeholder='Ex: Proposta de Compra 2025-001'
+                      required
+                      aria-required="true"
+                      style={{
+                        borderColor:
+                          documentNameTouched && !documentName.trim()
+                            ? colors.danger
+                            : undefined,
+                      }}
                     />
+                    {documentNameTouched && !documentName.trim() && (
+                      <HelperText style={{ color: colors.danger, marginTop: 4 }}>
+                        Nome do documento é obrigatório.
+                      </HelperText>
+                    )}
                   </FormGroup>
                   <FormGroup>
                     <Label>Mensagem ao signatário (opcional)</Label>
