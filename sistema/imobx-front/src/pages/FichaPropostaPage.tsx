@@ -24,6 +24,7 @@ import {
   MdDescription,
   MdAdd,
   MdDelete,
+  MdEmail,
 } from 'react-icons/md';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
@@ -134,6 +135,7 @@ import {
   listarPropostas,
   buscarPropostaPorId,
   getUrlPdfProposta,
+  reenviarEmailProposta,
   type CreatePurchaseProposalDto,
   type PropostaListItem,
   type PropostaStatus,
@@ -507,6 +509,12 @@ const FichaPropostaPage: React.FC = () => {
       defaultRecipientEmail?: string;
       defaultRecipientName?: string;
     } | null>(null);
+  const [reenviarEmailModal, setReenviarEmailModal] = useState<{
+    propostaId: string;
+    numero: string;
+  } | null>(null);
+  const [reenviarEmailText, setReenviarEmailText] = useState('');
+  const [isReenviandoEmail, setIsReenviandoEmail] = useState(false);
   const [contraPropostaForm, setContraPropostaForm] = useState<{
     sellerName: string;
     corretorName: string;
@@ -1558,6 +1566,39 @@ const FichaPropostaPage: React.FC = () => {
     } catch (err: any) {
       console.error('Erro ao buscar proposta:', err);
       showError(err?.message || 'Erro ao carregar proposta.');
+    }
+  };
+
+  const handleSubmitReenviarEmail = async () => {
+    if (!reenviarEmailModal || !userCpf || !userTipo) return;
+    const emails = reenviarEmailText
+      .split(/[\n,;]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => e.length > 0);
+    const validEmails = emails.filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+    if (validEmails.length === 0) {
+      showError('Digite ao menos um email válido (separados por vírgula ou um por linha).');
+      return;
+    }
+    setIsReenviandoEmail(true);
+    try {
+      const result = await reenviarEmailProposta(
+        reenviarEmailModal.propostaId,
+        userTipo === 'gestor' ? userCpf : undefined,
+        userTipo === 'corretor' ? userCpf : undefined,
+        validEmails
+      );
+      if (result.success) {
+        showSuccess(result.message ?? 'Email reenviado com sucesso.');
+        setReenviarEmailModal(null);
+        setReenviarEmailText('');
+      } else {
+        showError(result.message ?? 'Falha ao reenviar email.');
+      }
+    } catch (err: any) {
+      showError(err?.message ?? 'Erro ao reenviar email.');
+    } finally {
+      setIsReenviandoEmail(false);
     }
   };
 
@@ -2960,6 +3001,110 @@ const FichaPropostaPage: React.FC = () => {
           }
           onSent={() => carregarContraPropostas(pageContraPropostas)}
         />
+      )}
+
+      {reenviarEmailModal && (
+        <ModalOverlay
+          $isOpen={!!reenviarEmailModal}
+          onClick={() => {
+            if (!isReenviandoEmail) {
+              setReenviarEmailModal(null);
+              setReenviarEmailText('');
+            }
+          }}
+        >
+          <ModalContainer
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '480px' }}
+          >
+            <ModalHeader>
+              <ModalTitle>
+                <MdEmail />
+                Reenviar email – Proposta {reenviarEmailModal.numero}
+              </ModalTitle>
+              <ModalCloseButton
+                onClick={() => {
+                  if (!isReenviandoEmail) {
+                    setReenviarEmailModal(null);
+                    setReenviarEmailText('');
+                  }
+                }}
+              >
+                <MdClose />
+              </ModalCloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <p
+                style={{
+                  color: 'var(--color-text)',
+                  marginBottom: '12px',
+                  fontSize: '0.95rem',
+                  lineHeight: '1.5',
+                }}
+              >
+                O PDF da proposta será enviado para os emails informados. Digite
+                um ou mais emails (separados por vírgula ou um por linha).
+              </p>
+              <textarea
+                value={reenviarEmailText}
+                onChange={e => setReenviarEmailText(e.target.value)}
+                placeholder="ex: email1@exemplo.com, email2@exemplo.com"
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '0.95rem',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                }}
+                disabled={isReenviandoEmail}
+              />
+            </ModalBody>
+            <ModalFooter>
+              <ModalButton
+                $variant='secondary'
+                onClick={() => {
+                  if (!isReenviandoEmail) {
+                    setReenviarEmailModal(null);
+                    setReenviarEmailText('');
+                  }
+                }}
+                disabled={isReenviandoEmail}
+              >
+                <MdClose />
+                Cancelar
+              </ModalButton>
+              <ModalButton
+                $variant='primary'
+                onClick={handleSubmitReenviarEmail}
+                disabled={isReenviandoEmail || !reenviarEmailText.trim()}
+              >
+                {isReenviandoEmail ? (
+                  <>
+                    <div
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid white',
+                        borderTop: '2px solid transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite',
+                      }}
+                    />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <MdEmail />
+                    Reenviar PDF
+                  </>
+                )}
+              </ModalButton>
+            </ModalFooter>
+          </ModalContainer>
+        </ModalOverlay>
       )}
 
       {showContraPropostaModal && (
@@ -4387,6 +4532,32 @@ const FichaPropostaPage: React.FC = () => {
                                         }}
                                       >
                                         Baixar PDF
+                                      </Button>
+                                      <Button
+                                        type='button'
+                                        $variant='secondary'
+                                        onClick={e => {
+                                          e.stopPropagation();
+                                          setReenviarEmailModal({
+                                            propostaId: proposta.id,
+                                            numero: proposta.numero,
+                                          });
+                                          setReenviarEmailText('');
+                                        }}
+                                        style={{
+                                          width: '100%',
+                                          padding: isMobilePropostas
+                                            ? '10px 12px'
+                                            : '8px 12px',
+                                          fontSize: '0.875rem',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px',
+                                          minHeight: '44px',
+                                        }}
+                                      >
+                                        <MdEmail size={18} /> Reenviar email
                                       </Button>
                                       <Button
                                         type='button'

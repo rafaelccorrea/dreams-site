@@ -709,3 +709,30 @@ export const obterLinkAssinaturaProposta = async (
     } as ApiError;
   }
 };
+
+/**
+ * Reenvia o PDF da proposta por email para os endereços informados.
+ * Requer gestorCpf ou corretorCpf (mesma regra do GET PDF).
+ * POST /api/ficha-proposta/:id/reenviar-email?gestorCpf=... ou ?corretorCpf=...
+ */
+export const reenviarEmailProposta = async (
+  propostaId: string,
+  gestorCpf: string | undefined,
+  corretorCpf: string | undefined,
+  emails: string[]
+): Promise<{ success: boolean; message: string }> => {
+  if (!gestorCpf?.trim() && !corretorCpf?.trim()) {
+    throw {
+      success: false,
+      message: 'Informe gestorCpf ou corretorCpf para reenviar o email',
+    } as ApiError;
+  }
+  const params = new URLSearchParams();
+  if (gestorCpf?.trim()) params.append('gestorCpf', gestorCpf.trim().replace(/\D/g, ''));
+  if (corretorCpf?.trim()) params.append('corretorCpf', corretorCpf.trim().replace(/\D/g, ''));
+  const response = await publicApi.post<{ success: boolean; message: string }>(
+    `/api/ficha-proposta/${propostaId}/reenviar-email?${params.toString()}`,
+    { emails }
+  );
+  return response.data;
+};

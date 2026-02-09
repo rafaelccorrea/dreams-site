@@ -125,6 +125,7 @@ import {
   atualizarFichaVendaPorId,
   listarFichasVenda,
   baixarPdfFichaVenda,
+  reenviarEmailFichaVenda,
 } from '../services/fichaVendaApi';
 import type {
   CreateSaleFormDto,
@@ -625,6 +626,9 @@ const FichaVendaPage: React.FC = () => {
   const [filtroDataFimFicha, setFiltroDataFimFicha] = useState<string>('');
   const [filtroSearchFicha, setFiltroSearchFicha] = useState<string>('');
   const [loadingFichas, setLoadingFichas] = useState(false);
+  const [showReenviarEmailModal, setShowReenviarEmailModal] = useState(false);
+  const [reenviarEmailText, setReenviarEmailText] = useState('');
+  const [isReenviandoEmail, setIsReenviandoEmail] = useState(false);
   // Estados para seções colapsáveis e "outro" em mídia/profissão (usados em resetForm)
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
@@ -1351,8 +1355,13 @@ const FichaVendaPage: React.FC = () => {
         }
         setFichaAccessDenied(false);
         setLoadedFichaFormNumber(data.formNumber ?? data.numero ?? null);
+        // Garantir que o status retornado pela API (rascunho | disponivel) seja refletido na UI
+        const statusFromApi =
+          (data && typeof data === 'object' && 'status' in data
+            ? (data as { status: StatusFichaProposta }).status
+            : undefined);
         setLoadedFichaStatus(
-          (data as { status?: StatusFichaProposta }).status ?? 'rascunho'
+          statusFromApi === 'disponivel' ? 'disponivel' : 'rascunho'
         );
         const defaults = getDefaultValues();
         const fromApi = apiDataToFormData(data);
@@ -2443,13 +2452,22 @@ const FichaVendaPage: React.FC = () => {
       setShowConfirmModal(false);
       setPendingPayload(null);
       if (pendingPayload?.status === 'disponivel') {
-        setLoadedFichaStatus('disponivel');
         setFinalizarAoSalvar(false);
+        // Limpar tudo e ir para nova ficha em branco
+        resetForm();
+        setLoadedFichaFormNumber(null);
+        setLoadedFichaStatus(null);
+        localStorage.removeItem('ficha_venda_draft');
+        setShowShareModal(false);
+        setHasLoadedFichaById(true);
+        navigate('/ficha-venda', { replace: true });
       }
 
       showSuccess(`✅ ${response.message}`, { autoClose: 5000 });
 
-      if (isEdicao) {
+      if (pendingPayload?.status === 'disponivel') {
+        // Já tratado acima: nova ficha em branco
+      } else if (isEdicao) {
         // Continuar preenchimento: manter formulário e URL
         setHasLoadedFichaById(true);
       } else {
@@ -2815,6 +2833,46 @@ const FichaVendaPage: React.FC = () => {
     } catch (err: any) {
       console.error('Erro ao baixar PDF:', err);
       showError(err?.message ?? 'Erro ao baixar PDF.');
+    }
+  };
+
+  const handleOpenReenviarEmail = () => {
+    setReenviarEmailText('');
+    setShowReenviarEmailModal(true);
+  };
+
+  const handleCloseReenviarEmail = () => {
+    if (!isReenviandoEmail) {
+      setShowReenviarEmailModal(false);
+      setReenviarEmailText('');
+    }
+  };
+
+  const handleSubmitReenviarEmail = async () => {
+    if (!fichaIdFromUrl || !userCpf || userTipo !== 'gestor') return;
+    const emails = reenviarEmailText
+      .split(/[\n,;]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => e.length > 0);
+    const validEmails = emails.filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+    if (validEmails.length === 0) {
+      showError('Digite ao menos um email válido (separados por vírgula ou um por linha).');
+      return;
+    }
+    setIsReenviandoEmail(true);
+    try {
+      const result = await reenviarEmailFichaVenda(fichaIdFromUrl, userCpf, validEmails);
+      if (result.success) {
+        showSuccess(result.message ?? 'Email reenviado com sucesso.');
+        setShowReenviarEmailModal(false);
+        setReenviarEmailText('');
+      } else {
+        showError(result.message ?? 'Falha ao reenviar email.');
+      }
+    } catch (err: any) {
+      showError(err?.message ?? 'Erro ao reenviar email.');
+    } finally {
+      setIsReenviandoEmail(false);
     }
   };
 
@@ -8082,15 +8140,28 @@ const FichaVendaPage: React.FC = () => {
                     {/* Grupo secundário: Baixar PDF, Compartilhar, Limpar */}
                     <FooterSecondaryGroup>
                       {fichaIdFromUrl && userCpf && userTipo === 'gestor' && (
-                        <Button
-                          type='button'
-                          $variant='secondary'
-                          onClick={handleBaixarPdf}
-                          disabled={isSubmitting}
-                        >
-                          <MdPictureAsPdf size={18} />
-                          Baixar PDF
-                        </Button>
+                        <>
+                          <Button
+                            type='button'
+                            $variant='secondary'
+                            onClick={handleBaixarPdf}
+                            disabled={isSubmitting}
+                          >
+                            <MdPictureAsPdf size={18} />
+                            Baixar PDF
+                          </Button>
+                          {isFichaFinalizada && (
+                            <Button
+                              type='button'
+                              $variant='secondary'
+                              onClick={handleOpenReenviarEmail}
+                              disabled={isSubmitting}
+                            >
+                              <MdEmail size={18} />
+                              Reenviar email
+                            </Button>
+                          )}
+                        </>
                       )}
                       {!isFichaFinalizada && (
                         <>
@@ -8500,6 +8571,95 @@ const FichaVendaPage: React.FC = () => {
                           <>
                             <MdCheckCircle />
                             Confirmar e Enviar
+                          </>
+                        )}
+                      </ModalButton>
+                    </ModalFooter>
+                  </ModalContainer>
+                </ModalOverlay>
+              )}
+
+              {/* Modal Reenviar email (ficha finalizada) */}
+              {showReenviarEmailModal && (
+                <ModalOverlay
+                  $isOpen={showReenviarEmailModal}
+                  onClick={handleCloseReenviarEmail}
+                >
+                  <ModalContainer
+                    onClick={e => e.stopPropagation()}
+                    style={{ maxWidth: '480px' }}
+                  >
+                    <ModalHeader>
+                      <ModalTitle>
+                        <MdEmail />
+                        Reenviar email
+                      </ModalTitle>
+                      <ModalCloseButton onClick={handleCloseReenviarEmail}>
+                        <MdClose />
+                      </ModalCloseButton>
+                    </ModalHeader>
+                    <ModalBody>
+                      <p
+                        style={{
+                          color: 'var(--color-text)',
+                          marginBottom: '12px',
+                          fontSize: '0.95rem',
+                          lineHeight: '1.5',
+                        }}
+                      >
+                        O PDF da ficha de venda será enviado para os emails
+                        informados. Digite um ou mais emails (separados por
+                        vírgula ou um por linha).
+                      </p>
+                      <textarea
+                        value={reenviarEmailText}
+                        onChange={e => setReenviarEmailText(e.target.value)}
+                        placeholder="ex: email1@exemplo.com, email2@exemplo.com"
+                        rows={4}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          fontSize: '0.95rem',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: '8px',
+                          resize: 'vertical',
+                          fontFamily: 'inherit',
+                        }}
+                        disabled={isReenviandoEmail}
+                      />
+                    </ModalBody>
+                    <ModalFooter>
+                      <ModalButton
+                        $variant='secondary'
+                        onClick={handleCloseReenviarEmail}
+                        disabled={isReenviandoEmail}
+                      >
+                        <MdClose />
+                        Cancelar
+                      </ModalButton>
+                      <ModalButton
+                        $variant='primary'
+                        onClick={handleSubmitReenviarEmail}
+                        disabled={isReenviandoEmail || !reenviarEmailText.trim()}
+                      >
+                        {isReenviandoEmail ? (
+                          <>
+                            <div
+                              style={{
+                                width: '16px',
+                                height: '16px',
+                                border: '2px solid white',
+                                borderTop: '2px solid transparent',
+                                borderRadius: '50%',
+                                animation: 'spin 0.8s linear infinite',
+                              }}
+                            />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <MdEmail />
+                            Reenviar PDF
                           </>
                         )}
                       </ModalButton>

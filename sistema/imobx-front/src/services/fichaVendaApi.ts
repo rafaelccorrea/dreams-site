@@ -432,3 +432,27 @@ export const baixarPdfFichaVenda = async (
   a.click();
   URL.revokeObjectURL(a.href);
 };
+
+/**
+ * Reenvia o PDF da ficha de venda por email para os endereços informados.
+ * Somente gestor da ficha pode reenviar.
+ * POST /api/ficha-venda/:id/reenviar-email?gestorCpf=...
+ */
+export const reenviarEmailFichaVenda = async (
+  id: string,
+  gestorCpf: string,
+  emails: string[]
+): Promise<{ success: boolean; message: string }> => {
+  const cpf = gestorCpf.replace(/\D/g, '');
+  if (!cpf) {
+    throw {
+      success: false,
+      message: 'gestorCpf é obrigatório para reenviar o email',
+    } as ApiError;
+  }
+  const response = await publicApi.post<{ success: boolean; message: string }>(
+    `/api/ficha-venda/${id}/reenviar-email?gestorCpf=${encodeURIComponent(cpf)}`,
+    { emails }
+  );
+  return response.data;
+};
