@@ -1126,6 +1126,7 @@ export const ChatWindows: React.FC = () => {
     loadRooms,
     connected,
     deleteMessage,
+    createOrGetRoom,
   } = useChat();
   const unreadCount = useChatUnreadCount();
   const { getCurrentUser } = useAuth();
@@ -1249,19 +1250,12 @@ export const ChatWindows: React.FC = () => {
     [joinRoom, scrollToBottom]
   );
 
-  // Escutar eventos para abrir chat
+  // Escutar eventos para abrir chat (incl. "Falar com suporte" com initialMessage para master)
   useEffect(() => {
-    let isProcessing = false; // Flag para evitar processamento simultâneo
+    let isProcessing = false;
 
     const handleOpenChatEvent = (event: CustomEvent) => {
-      // Evitar processamento simultâneo do mesmo evento
-      if (isProcessing) {
-        console.log(
-          '⏭️ [ChatWindows] Evento já sendo processado, ignorando...'
-        );
-        return;
-      }
-
+      if (isProcessing) return;
       isProcessing = true;
 
       const { roomId, forceOpen, initialMessage } = event.detail || {};
@@ -1274,44 +1268,46 @@ export const ChatWindows: React.FC = () => {
         roomsCount: rooms.length,
       });
 
-      // Não abrir window se estiver na página de chat, a menos que forceOpen seja true
       if (isOnChatPage && !forceOpen) {
-        console.log(
-          '🔕 [ChatWindows] Ignorando abertura de window (está na página de chat)'
-        );
-        setTimeout(() => {
-          isProcessing = false;
-        }, 100);
+        setTimeout(() => { isProcessing = false; }, 100);
         return;
       }
 
-      const roomToOpen = roomId || (rooms.length > 0 ? rooms[0].id : null);
-      if (roomToOpen) {
-        if (roomId) {
-          console.log('✅ [ChatWindows] Abrindo chat:', roomId);
-        } else {
-          console.log(
-            '✅ [ChatWindows] Abrindo primeira sala disponível:',
-            roomToOpen
-          );
-        }
-        handleOpenChat(roomToOpen)
-          .then(() => {
-            if (initialMessage && typeof initialMessage === 'string') {
-              setMessageInputs(prev => ({ ...prev, [roomToOpen]: initialMessage }));
-            }
-          })
-          .catch(error => {
-            console.error('❌ [ChatWindows] Erro ao abrir chat:', error);
-          });
-      } else {
-        console.warn('⚠️ [ChatWindows] Nenhuma sala disponível para abrir');
-      }
+      const run = async () => {
+        try {
+          let roomToOpen: string | null = roomId || null;
 
-      // Resetar flag após um pequeno delay
-      setTimeout(() => {
-        isProcessing = false;
-      }, 100);
+          // Mensagem para suporte: abrir sala de suporte (criar se não existir), inclusive para master
+          if (initialMessage && typeof initialMessage === 'string' && !roomId) {
+            let supportRoom = rooms.find((r: ChatRoom) => r.type === 'support');
+            if (!supportRoom) {
+              try {
+                supportRoom = await createOrGetRoom({ type: 'support' });
+              } catch (err) {
+                console.error('❌ [ChatWindows] Erro ao criar sala de suporte:', err);
+              }
+            }
+            if (supportRoom) roomToOpen = supportRoom.id;
+          }
+
+          if (!roomToOpen && rooms.length > 0) roomToOpen = rooms[0].id;
+
+          if (roomToOpen) {
+            await handleOpenChat(roomToOpen);
+            if (initialMessage && typeof initialMessage === 'string') {
+              setMessageInputs(prev => ({ ...prev, [roomToOpen!]: initialMessage }));
+            }
+          } else {
+            console.warn('⚠️ [ChatWindows] Nenhuma sala disponível para abrir');
+          }
+        } catch (error) {
+          console.error('❌ [ChatWindows] Erro ao abrir chat:', error);
+        } finally {
+          setTimeout(() => { isProcessing = false; }, 100);
+        }
+      };
+
+      run();
     };
 
     window.addEventListener('open-chat', handleOpenChatEvent as EventListener);
@@ -1322,7 +1318,7 @@ export const ChatWindows: React.FC = () => {
         handleOpenChatEvent as EventListener
       );
     };
-  }, [handleOpenChat, isOnChatPage, rooms]);
+  }, [handleOpenChat, isOnChatPage, rooms, createOrGetRoom]);
 
   // Salas já são carregadas pelo useChat, não precisa carregar aqui novamente
 

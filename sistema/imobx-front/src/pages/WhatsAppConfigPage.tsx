@@ -450,6 +450,123 @@ const PredefinedMessageItem = styled.button<{ $selected?: boolean }>`
   }
 `;
 
+const ChatbotTemplateGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+`;
+
+const ChatbotTemplateCard = styled.button<{ $selected?: boolean }>`
+  display: block;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid ${p => (p.$selected ? p.theme.colors.primary : p.theme.colors.border)};
+  background: ${p => (p.$selected ? p.theme.colors.primary + '12' : p.theme.colors.cardBackground)};
+  color: ${p => p.theme.colors.text};
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: ${p => p.theme.colors.primary};
+    background: ${p => p.theme.colors.primary + '08'};
+  }
+`;
+
+const ChatbotTemplateCardSub = styled.span`
+  display: block;
+  font-weight: normal;
+  font-size: 0.8rem;
+  color: ${p => p.theme.colors.textSecondary};
+  margin-top: 4px;
+`;
+
+const ChatbotSlotRow = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: ${p => p.theme.colors.background};
+  border: 1px solid ${p => p.theme.colors.border};
+`;
+
+const ChatbotSlotLabel = styled.span`
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: ${p => p.theme.colors.textSecondary};
+  min-width: 36px;
+`;
+
+const ChatbotSlotText = styled.div`
+  flex: 1;
+  font-size: 0.875rem;
+  color: ${p => p.theme.colors.text};
+  line-height: 1.4;
+`;
+
+const ChatbotReplaceBtn = styled.button`
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid ${p => p.theme.colors.primary};
+  background: transparent;
+  color: ${p => p.theme.colors.primary};
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: ${p => p.theme.colors.primary};
+    color: white;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ChatbotReplaceDropdown = styled.div`
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: ${p => p.theme.colors.surface};
+  border: 1px solid ${p => p.theme.colors.border};
+  max-height: 220px;
+  overflow-y: auto;
+`;
+
+const ChatbotReplaceOption = styled.button`
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: ${p => p.theme.colors.text};
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    background: ${p => p.theme.colors.primary + '15'};
+    border-color: ${p => p.theme.colors.border};
+  }
+`;
+
 const PreAttendOptionCard = styled.div`
   margin-bottom: 20px;
   padding: 16px;
@@ -482,7 +599,15 @@ const SupportChatBtn = styled.button`
 
 const MAX_CHATBOT_MESSAGES = 5;
 
-const CHATBOT_PREDEFINED_MESSAGES: string[] = [
+/**
+ * Config pronta "Ver imóveis": backend envia 3 imóveis por vez, até 12 no total,
+ * depois oferece contato direto com corretor (SDR). Alinhado a WHATSAPP_AI_PROPERTY_BATCH_SIZE=3 e WHATSAPP_AI_MAX_PROPERTIES=12.
+ */
+const VER_IMOVEIS_BATCH_SIZE = 3;
+const VER_IMOVEIS_MAX_TOTAL = 12;
+
+/** Opções disponíveis para colocar em cada posição (trocar mensagem mantendo a ordem). Inclui "Ver imóveis" com a config pronta (3 em 3, até 12, depois SDR). */
+const CHATBOT_OPTIONS_FOR_REPLACE: string[] = [
   'Olá! Obrigado pelo contato. Em breve nossa equipe responderá.',
   'Recebemos sua mensagem. Um de nossos corretores vai retornar em breve.',
   'Olá! Para te atender melhor, você está buscando imóvel para comprar ou alugar?',
@@ -493,6 +618,52 @@ const CHATBOT_PREDEFINED_MESSAGES: string[] = [
   'Recebemos seu contato. Retornaremos o mais breve possível.',
   'Obrigado por falar conosco. Em instantes um corretor irá te atender.',
   'Olá! Estamos aqui para ajudar. Em breve responderemos.',
+  `Quer ver opções? Responda *Ver imóveis* — enviamos ${VER_IMOVEIS_BATCH_SIZE} por vez, até ${VER_IMOVEIS_MAX_TOTAL}, e depois você fala direto com um corretor.`,
+  'Enquanto analisamos, quer que eu já te envie opções? Responda *Ver imóveis* (enviamos de 3 em 3, até 12, e aí um corretor te atende).',
+];
+
+/** Templates prontos com ordem das mensagens. O usuário escolhe um e depois pode só trocar uma mensagem por outra na mesma posição. */
+const CHATBOT_TEMPLATES: { id: string; name: string; messages: string[] }[] = [
+  {
+    id: 'rapido',
+    name: 'Atendimento rápido',
+    messages: [
+      'Olá! Obrigado pelo contato. Em breve nossa equipe responderá.',
+      'Recebemos sua mensagem. Um de nossos corretores vai retornar em breve.',
+    ],
+  },
+  {
+    id: 'qualificacao',
+    name: 'Qualificação (compra/aluguel e local)',
+    messages: [
+      'Olá! Obrigado pelo contato.',
+      'Para te atender melhor, você está buscando imóvel para comprar ou alugar?',
+      'Oi! Em que bairro ou cidade você tem interesse?',
+      'Obrigado pelo interesse! Estamos analisando e em breve entraremos em contato.',
+    ],
+  },
+  {
+    id: 'completo',
+    name: 'Completo (Ver imóveis: 3 por vez, até 12, depois SDR)',
+    messages: [
+      'Olá! Obrigado pelo contato.',
+      'Para te atender melhor, você está buscando imóvel para comprar ou alugar?',
+      'Oi! Em que bairro ou cidade você tem interesse?',
+      `Quer ver opções? Responda *Ver imóveis* — enviamos ${VER_IMOVEIS_BATCH_SIZE} por vez, até ${VER_IMOVEIS_MAX_TOTAL}, e depois você fala direto com um corretor.`,
+      'Obrigado! Em breve nossa equipe também entrará em contato.',
+    ],
+  },
+  {
+    id: 'cinco-generico',
+    name: 'Cinco mensagens genéricas',
+    messages: [
+      'Olá! Obrigado pelo contato. Em breve nossa equipe responderá.',
+      'Recebemos sua mensagem. Um de nossos corretores vai retornar em breve.',
+      'Olá! Como podemos te ajudar hoje?',
+      'Obrigado por falar conosco. Em instantes um corretor irá te atender.',
+      'Agradecemos o contato. Nossa equipe está disponível em horário comercial.',
+    ],
+  },
 ];
 
 const AutoActionsSection = styled.div`
@@ -788,6 +959,8 @@ const WhatsAppConfigPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projects, setProjects] = useState<KanbanProject[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  /** Índice da posição em que o dropdown "Trocar mensagem" está aberto (null = fechado). */
+  const [chatbotReplaceSlot, setChatbotReplaceSlot] = useState<number | null>(null);
 
   const canManageConfig =
     permissionsContext?.hasPermission('whatsapp:manage_config') ?? false;
@@ -1699,82 +1872,137 @@ const WhatsAppConfigPage: React.FC = () => {
 
                 <AutoActionsSection>
                   <AutoActionsTitle>Pré-atendimento</AutoActionsTitle>
-                  <FormHintText style={{ marginBottom: '16px' }}>
-                    Dois módulos diferentes: Chatbot (mensagens que você escolhe) ou Pré-atendimento com IA (módulo pago, ativação pelo suporte).
-                  </FormHintText>
 
-                  <PreAttendOptionCard>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px', padding: '16px', borderRadius: '12px', background: (config.chatbotEnabled || config.enableAIPreAttend) ? 'var(--color-primary)08' : 'var(--color-background-secondary)', border: '1px solid var(--color-border)' }}>
+                    <input
+                      type='checkbox'
+                      checked={config.chatbotEnabled === true || config.enableAIPreAttend === true}
+                      onChange={e => {
+                        const want = e.target.checked;
+                        if (want) {
+                          setConfig({ ...config, chatbotEnabled: true, enableAIPreAttend: false });
+                        } else {
+                          setConfig({ ...config, chatbotEnabled: false, enableAIPreAttend: false });
+                        }
+                      }}
+                      disabled={saving || deleting}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontWeight: 600, fontSize: '1rem' }}>Quer ativar pré-atendimento automático?</span>
+                      <FormHintText style={{ marginTop: '4px', marginBottom: 0 }}>
+                        Se sim, é obrigatório escolher um: Chatbot (padrão) ou Pré-atendimento com IA. Por padrão usamos Chatbot.
+                      </FormHintText>
+                    </div>
+                  </label>
+
+                  {!(config.chatbotEnabled || config.enableAIPreAttend) && (
+                    <FormHintText style={{ marginBottom: '16px', padding: '12px', borderRadius: '8px', background: 'var(--color-background-secondary)' }}>
+                      Ative o pré-atendimento acima para configurar Chatbot ou IA abaixo.
+                    </FormHintText>
+                  )}
+
+                  <PreAttendOptionCard style={{ opacity: (config.chatbotEnabled || config.enableAIPreAttend) ? 1 : 0.7, pointerEvents: (config.chatbotEnabled || config.enableAIPreAttend) ? 'auto' : 'none' }}>
                     <FormLabelText style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <MdSmartToy size={20} />
                       Chatbot
                     </FormLabelText>
                     <FormHintText style={{ marginBottom: '12px' }}>
-                      Resposta automática com mensagens pré-definidas que você escolhe. Ative e selecione até 5 mensagens na ordem de envio.
+                      Resposta automática com mensagens em ordem fixa. Escolha um template e, se quiser, troque uma mensagem por outra na mesma posição (a ordem não muda).
                     </FormHintText>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', cursor: (config.chatbotEnabled || config.enableAIPreAttend) ? 'pointer' : 'default', opacity: (config.chatbotEnabled || config.enableAIPreAttend) ? 1 : 0.7 }}>
                       <input
                         type='checkbox'
-                        checked={config.chatbotEnabled !== false}
+                        checked={config.chatbotEnabled === true}
                         onChange={e => setConfig({ ...config, chatbotEnabled: e.target.checked })}
-                        disabled={saving || deleting}
+                        disabled={saving || deleting || !(config.chatbotEnabled || config.enableAIPreAttend) || config.enableAIPreAttend === true}
                       />
-                      <span style={{ fontWeight: 500 }}>Ativar Chatbot</span>
+                      <span style={{ fontWeight: 500 }}>Usar Chatbot (padrão)</span>
                     </label>
-                    <FormHintText style={{ marginBottom: '8px' }}>Suas mensagens (máx. {MAX_CHATBOT_MESSAGES}) – ordem de envio:</FormHintText>
+
+                    <FormHintText style={{ marginBottom: '8px' }}>Template (ordem pronta):</FormHintText>
+                    <ChatbotTemplateGrid>
+                      {CHATBOT_TEMPLATES.map(tpl => {
+                        const current = config.chatbotMessages || [];
+                        const isSelected =
+                          current.length === tpl.messages.length &&
+                          tpl.messages.every((msg, i) => (current[i]?.text || '').trim() === msg.trim());
+                        return (
+                          <ChatbotTemplateCard
+                            key={tpl.id}
+                            type='button'
+                            $selected={isSelected}
+                            disabled={saving || deleting}
+                            onClick={() => {
+                              setConfig({
+                                ...config,
+                                chatbotMessages: tpl.messages.slice(0, MAX_CHATBOT_MESSAGES).map(text => ({ text })),
+                              });
+                              setChatbotReplaceSlot(null);
+                            }}
+                          >
+                            {tpl.name}
+                            <ChatbotTemplateCardSub>{tpl.messages.length} mensagens</ChatbotTemplateCardSub>
+                          </ChatbotTemplateCard>
+                        );
+                      })}
+                    </ChatbotTemplateGrid>
+
+                    <FormHintText style={{ marginBottom: '8px' }}>
+                      Mensagens na ordem de envio. Para alterar, use &quot;Trocar&quot; na posição (a ordem é mantida).
+                    </FormHintText>
                     <div style={{ marginBottom: '10px' }}>
                       {(config.chatbotMessages || []).map((item, index) => (
-                        <ChatbotMessageRow key={index}>
-                          <ChatbotMessageInput value={item.text || ''} readOnly disabled style={{ background: 'var(--color-background-secondary)', cursor: 'default' }} />
-                          <ChatbotRemoveBtn
-                            type='button'
-                            onClick={() => {
-                              const list = (config.chatbotMessages || []).filter((_, i) => i !== index);
-                              setConfig({ ...config, chatbotMessages: list });
-                            }}
-                            disabled={saving || deleting}
-                            title='Remover'
-                          >
-                            <MdRemove size={20} />
-                          </ChatbotRemoveBtn>
-                        </ChatbotMessageRow>
+                        <div key={index}>
+                          <ChatbotSlotRow>
+                            <ChatbotSlotLabel>{index + 1}ª</ChatbotSlotLabel>
+                            <ChatbotSlotText>{item.text || ''}</ChatbotSlotText>
+                            <ChatbotReplaceBtn
+                              type='button'
+                              onClick={() => setChatbotReplaceSlot(chatbotReplaceSlot === index ? null : index)}
+                              disabled={saving || deleting}
+                              title='Trocar esta mensagem por outra (mesma posição)'
+                            >
+                              Trocar
+                            </ChatbotReplaceBtn>
+                          </ChatbotSlotRow>
+                          {chatbotReplaceSlot === index && (
+                            <ChatbotReplaceDropdown>
+                              {CHATBOT_OPTIONS_FOR_REPLACE.map((text, idx) => (
+                                <ChatbotReplaceOption
+                                  key={idx}
+                                  type='button'
+                                  onClick={() => {
+                                    const list = [...(config.chatbotMessages || [])];
+                                    if (list[index]) {
+                                      list[index] = { text };
+                                      setConfig({ ...config, chatbotMessages: list });
+                                    }
+                                    setChatbotReplaceSlot(null);
+                                  }}
+                                >
+                                  {text}
+                                </ChatbotReplaceOption>
+                              ))}
+                            </ChatbotReplaceDropdown>
+                          )}
+                        </div>
                       ))}
                     </div>
-                    {(config.chatbotMessages?.length ?? 0) < MAX_CHATBOT_MESSAGES && (
-                        <>
-                          <FormHintText style={{ marginBottom: '6px' }}>Escolha uma mensagem para adicionar:</FormHintText>
-                          <div>
-                            {CHATBOT_PREDEFINED_MESSAGES.filter(
-                              pred => !(config.chatbotMessages || []).some(m => m?.text?.trim() === pred.trim())
-                            ).map((text, idx) => (
-                              <PredefinedMessageItem
-                                key={idx}
-                                type='button'
-                                onClick={() => {
-                                  const list = [...(config.chatbotMessages || []), { text }];
-                                  if (list.length <= MAX_CHATBOT_MESSAGES) setConfig({ ...config, chatbotMessages: list });
-                                }}
-                                disabled={saving || deleting || (config.chatbotMessages?.length ?? 0) >= MAX_CHATBOT_MESSAGES}
-                              >
-                                {text}
-                              </PredefinedMessageItem>
-                            ))}
-                          </div>
-                        </>
-                    )}
                     {(config.chatbotMessages?.length ?? 0) === 0 && (
                       <FormHintText style={{ marginTop: '8px' }}>
-                        Se não escolher nenhuma, o sistema envia: &quot;Obrigado pelo contato. Em breve nossa equipe responderá.&quot;
+                        Escolha um template acima. Se não houver mensagens, o sistema envia: &quot;Obrigado pelo contato. Em breve nossa equipe responderá.&quot;
                       </FormHintText>
                     )}
                   </PreAttendOptionCard>
 
-                  <PreAttendOptionCard>
+                  <PreAttendOptionCard style={{ opacity: (config.chatbotEnabled || config.enableAIPreAttend) ? 1 : 0.7, pointerEvents: (config.chatbotEnabled || config.enableAIPreAttend) ? 'auto' : 'none' }}>
                     <FormLabelText style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <MdSmartToy size={20} style={{ opacity: 0.9 }} />
-                      Pré-atendimento com IA (módulo pago)
+                      Pré-atendimento com IA
                     </FormLabelText>
                     <FormHintText style={{ marginBottom: '8px' }}>
-                      A IA qualifica o lead e responde automaticamente no WhatsApp. Este módulo não pode ser ativado por aqui: é pago e a ativação é feita pelo suporte.
+                      A IA qualifica o lead, responde 24/7 no WhatsApp e pode enviar sugestões de imóveis (Ver imóveis) com botões para falar com atendente. Menos leads perdidos e primeiro contato sempre humanizado. Se a IA estiver ativa, o Chatbot fica desativado.
                     </FormHintText>
                     {config.enableAIPreAttend ? (
                       <FormHintText style={{ color: 'var(--color-success)', fontWeight: 500 }}>
@@ -1783,7 +2011,7 @@ const WhatsAppConfigPage: React.FC = () => {
                     ) : (
                       <>
                         <FormHintText>
-                          Quer ativar? Entre em contato com o suporte; a mensagem abaixo será enviada no chat.
+                          Quer conhecer melhor? A mensagem abaixo será enviada no chat para nossa equipe.
                         </FormHintText>
                         <SupportChatBtn
                           type='button'
@@ -1792,14 +2020,14 @@ const WhatsAppConfigPage: React.FC = () => {
                               new CustomEvent('open-chat', {
                                 detail: {
                                   initialMessage:
-                                    'Olá! Gostaria de saber mais sobre o módulo de Pré-atendimento com IA no WhatsApp (qualificação de leads e respostas automáticas). Podem me informar como ativar e valores?',
+                                    'Olá! Gostaria de conhecer o pré-atendimento com IA no WhatsApp: qualificação de leads, respostas automáticas e envio de imóveis com botão para falar com atendente. Podem me contar como funciona?',
                                 },
                               })
                             );
                           }}
                         >
                           <MdSupport size={20} />
-                          Falar com suporte sobre a IA
+                          Quero saber mais sobre a IA
                         </SupportChatBtn>
                       </>
                     )}
