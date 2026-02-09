@@ -72,7 +72,14 @@ export interface CreateSaleFormDto {
     corretores: Array<{
       id: string; // ID ou nome do corretor
       porcentagem: number; // 0-100
-      captador?: string | null; // ID ou nome do captador (opcional)
+      /** @deprecated Preferir captadores (até 3 por corretor). */
+      captador?: string | null;
+      /** Até 3 captadores por corretor, com porcentagem opcional */
+      captadores?: Array<{
+        id: string;
+        nome?: string | null;
+        porcentagem?: number | null;
+      }>;
     }>;
     gerencias: Array<{
       nivel: number; // 1, 2, 3 ou 4

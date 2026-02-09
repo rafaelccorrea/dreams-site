@@ -15,6 +15,8 @@ const publicApi = axios.create({
   timeout: 30000,
 });
 
+export type TempUniaoUserRole = 'corretor' | 'gestor';
+
 // Tipos
 export interface TempUniaoUser {
   id: string;
@@ -22,13 +24,23 @@ export interface TempUniaoUser {
   email: string;
   cpf?: string;
   telefone?: string;
-  tipo?: 'corretor' | 'gestor';
-  type?: 'corretor' | 'gestor'; // Campo alternativo (API pode retornar 'type')
+  /** Tipos do usuário (pode ser corretor e gestor ao mesmo tempo) – API retorna `types` */
+  types?: TempUniaoUserRole[];
+  /** Derivado de types: primeiro tipo (retrocompatibilidade) */
+  tipo?: TempUniaoUserRole;
+  /** Derivado de types (retrocompatibilidade) */
+  type?: TempUniaoUserRole;
   unidade?: string;
   /** Porcentagem padrão (0–100) para comissão na ficha de venda */
   porcentagem?: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** Extrai tipo único a partir de types (gestor tem prioridade para exibição) */
+function roleFromTypes(types: TempUniaoUserRole[] | undefined, fallback: TempUniaoUserRole): TempUniaoUserRole {
+  if (!types?.length) return fallback;
+  return types.includes('gestor') ? 'gestor' : 'corretor';
 }
 
 export interface TempUniaoUsersResponse {
@@ -55,19 +67,24 @@ export interface LoginResponse {
   user?: TempUniaoUser;
 }
 
-const mapUserFromApi = (user: any): TempUniaoUser => ({
-  id: user.id,
-  nome: user.nome,
-  email: user.email,
-  cpf: user.cpf,
-  telefone: user.telefone,
-  tipo: (user.type ?? user.tipo ?? 'corretor') as 'corretor' | 'gestor',
-  type: (user.type ?? user.tipo ?? 'corretor') as 'corretor' | 'gestor',
-  unidade: user.unidade,
-  porcentagem: user.porcentagem,
-  createdAt: user.createdAt,
-  updatedAt: user.updatedAt,
-});
+const mapUserFromApi = (user: any): TempUniaoUser => {
+  const types = Array.isArray(user.types) ? user.types : (user.type != null ? [user.type] : user.tipo != null ? [user.tipo] : ['corretor']);
+  const fallback = (user.type ?? user.tipo ?? 'corretor') as TempUniaoUserRole;
+  return {
+    id: user.id,
+    nome: user.nome,
+    email: user.email,
+    cpf: user.cpf,
+    telefone: user.telefone,
+    types,
+    tipo: roleFromTypes(types, fallback),
+    type: roleFromTypes(types, fallback),
+    unidade: user.unidade,
+    porcentagem: user.porcentagem,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+};
 
 /**
  * Login por CPF (corretor ou gestor) – verifica se o CPF está cadastrado
@@ -154,19 +171,24 @@ export const buscarCorretores = async (): Promise<TempUniaoUser[]> => {
       '/api/temp-uniao-users/corretores'
     );
 
-    const mapUser = (user: any) => ({
-      id: user.id,
-      nome: user.nome,
-      email: user.email,
-      cpf: user.cpf,
-      telefone: user.telefone,
-      tipo: (user.type || user.tipo || 'corretor') as 'corretor' | 'gestor',
-      unidade: user.unidade,
-      porcentagem:
-        typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    });
+    const mapUser = (user: any) => {
+      const types = Array.isArray(user.types) ? user.types : (user.type != null ? [user.type] : [user.tipo || 'corretor']);
+      return {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        cpf: user.cpf,
+        telefone: user.telefone,
+        types,
+        tipo: roleFromTypes(types, 'corretor'),
+        type: roleFromTypes(types, 'corretor'),
+        unidade: user.unidade,
+        porcentagem:
+          typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    };
 
     // Verificar se é array direto
     if (Array.isArray(response.data)) {
@@ -187,19 +209,24 @@ export const buscarCorretores = async (): Promise<TempUniaoUser[]> => {
   } catch (error: any) {
     // Se o erro contém dados válidos (array), retornar os dados
     if (error.response?.data && Array.isArray(error.response.data)) {
-      return error.response.data.map((user: any) => ({
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        cpf: user.cpf,
-        telefone: user.telefone,
-        tipo: (user.type || user.tipo || 'corretor') as 'corretor' | 'gestor',
-        unidade: user.unidade,
-        porcentagem:
-          typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      }));
+      return error.response.data.map((user: any) => {
+        const types = Array.isArray(user.types) ? user.types : [user.type || user.tipo || 'corretor'];
+        return {
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          cpf: user.cpf,
+          telefone: user.telefone,
+          types,
+          tipo: roleFromTypes(types, 'corretor'),
+          type: roleFromTypes(types, 'corretor'),
+          unidade: user.unidade,
+          porcentagem:
+            typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        };
+      });
     }
 
     // Tratar erro padrão
@@ -224,19 +251,24 @@ export const buscarGestores = async (): Promise<TempUniaoUser[]> => {
   try {
     const response = await publicApi.get<any>('/api/temp-uniao-users/gestores');
 
-    const mapGestor = (user: any) => ({
-      id: user.id,
-      nome: user.nome,
-      email: user.email,
-      cpf: user.cpf,
-      telefone: user.telefone,
-      tipo: (user.type || user.tipo || 'gestor') as 'corretor' | 'gestor',
-      unidade: user.unidade,
-      porcentagem:
-        typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    });
+    const mapGestor = (user: any) => {
+      const types = Array.isArray(user.types) ? user.types : [user.type || user.tipo || 'gestor'];
+      return {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        cpf: user.cpf,
+        telefone: user.telefone,
+        types,
+        tipo: roleFromTypes(types, 'gestor'),
+        type: roleFromTypes(types, 'gestor'),
+        unidade: user.unidade,
+        porcentagem:
+          typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    };
 
     if (Array.isArray(response.data)) {
       return response.data.map(mapGestor);
@@ -254,19 +286,24 @@ export const buscarGestores = async (): Promise<TempUniaoUser[]> => {
     } as ApiError;
   } catch (error: any) {
     if (error.response?.data && Array.isArray(error.response.data)) {
-      return error.response.data.map((user: any) => ({
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        cpf: user.cpf,
-        telefone: user.telefone,
-        tipo: (user.type || user.tipo || 'gestor') as 'corretor' | 'gestor',
-        unidade: user.unidade,
-        porcentagem:
-          typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      }));
+      return error.response.data.map((user: any) => {
+        const types = Array.isArray(user.types) ? user.types : [user.type || user.tipo || 'gestor'];
+        return {
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          cpf: user.cpf,
+          telefone: user.telefone,
+          types,
+          tipo: roleFromTypes(types, 'gestor'),
+          type: roleFromTypes(types, 'gestor'),
+          unidade: user.unidade,
+          porcentagem:
+            typeof user.porcentagem === 'number' ? user.porcentagem : undefined,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        };
+      });
     }
 
     // Tratar erro padrão

@@ -102,6 +102,7 @@ export interface CaptadorDto {
   id: string; // ID ou nome do captador
   nome: string; // Nome do captador
   unidade?: string; // Unidade do captador (opcional - será buscada automaticamente se não fornecida)
+  porcentagem?: number; // Porcentagem do captador (0-100, opcional)
 }
 
 export interface CreatePurchaseProposalDto {
@@ -112,7 +113,7 @@ export interface CreatePurchaseProposalDto {
   proprietario: ProprietarioDto;
   proprietarioConjuge?: ProprietarioConjugeDto | null;
   corretores?: CorretorDto[]; // Até 3 corretores (opcional)
-  captadores?: CaptadorDto[]; // Até 2 captadores (opcional)
+  captadores?: CaptadorDto[]; // Até 3 captadores (opcional)
   /** Opcional; default no backend: 'rascunho' */
   status?: 'rascunho' | 'disponivel';
 }
@@ -169,6 +170,7 @@ export interface PropostaListItem {
     id: string;
     nome: string;
     unidade?: string;
+    porcentagem?: number;
   }>;
 }
 

@@ -67,27 +67,12 @@ import {
   FooterPrimaryGroup,
   FooterHighlightButton,
   PercentageBadge,
-  CalculatedValue,
   CalculatedLabel,
   CalculatedAmount,
   Divider,
   InfoBox,
   InfoBoxText,
   IndicativeCardsGrid,
-  IndicativeCard,
-  CardHeader,
-  CardTitle,
-  CardIcon,
-  CardValue,
-  FichasAnterioresSection,
-  FichasAnterioresHeader,
-  FichasAnterioresTitle,
-  FichasList,
-  FichaItem,
-  FichaItemInfo,
-  FichaItemNumber,
-  FichaItemDate,
-  FichaItemValue,
   CepSearchButton,
   AutocompleteWrapper,
   HistoricoButton,
@@ -236,14 +221,22 @@ interface Pessoa {
   endereco: Endereco;
 }
 
+interface CaptadorItem {
+  id: string;
+  nome?: string;
+  porcentagem?: number;
+}
+
 interface ComissaoCorretor {
   id: string;
   /** UUID do corretor (temp-uniao-users) enviado à API */
   corretorId?: string;
   corretor: string;
   porcentagem: number;
-  /** UUID ou nome do captador (opcional) */
+  /** @deprecated Preferir captadores (até 3 por corretor). */
   captador?: string;
+  /** Até 3 captadores por corretor, com porcentagem opcional */
+  captadores?: CaptadorItem[];
 }
 
 interface ComissaoGerencia {
@@ -432,13 +425,22 @@ function apiDataToFormData(apiData: {
     valorVenda: formatCurrencyValue(apiData.financeiro.valorVenda),
     comissaoTotal: formatCurrencyValue(apiData.financeiro.comissaoTotal),
     valorMeta: formatCurrencyValue(apiData.financeiro.valorMeta),
-    comissoesCorretores: apiData.comissoes.corretores.map((c, i) => ({
-      id: `row_${c.id}_${i}`,
-      corretorId: c.id,
-      corretor: '', // preenchido pelo select ao exibir
-      porcentagem: c.porcentagem,
-      captador: c.captador ?? undefined,
-    })),
+    comissoesCorretores: apiData.comissoes.corretores.map((c, i) => {
+      const captadores =
+        (c as any).captadores?.length > 0
+          ? (c as any).captadores
+          : (c as any).captador
+            ? [{ id: (c as any).captador, nome: undefined, porcentagem: undefined }]
+            : [];
+      return {
+        id: `row_${c.id}_${i}`,
+        corretorId: c.id,
+        corretor: '',
+        porcentagem: c.porcentagem,
+        captador: c.captador ?? undefined,
+        captadores,
+      };
+    }),
     comissoesGerencias: apiData.comissoes.gerencias ?? [],
     colaboradorPreAtendimento: apiData.colaboradores?.preAtendimento ?? '',
     colaboradorCentralCaptacao: apiData.colaboradores?.centralCaptacao ?? '',
@@ -568,7 +570,7 @@ const FichaVendaPage: React.FC = () => {
   const [hasLoadedSharedData, setHasLoadedSharedData] = useState(false);
   const [loadingFichaById, setLoadingFichaById] = useState(false);
   const [fichaNotFound, setFichaNotFound] = useState(false);
-  const [hasLoadedFichaById, setHasLoadedFichaById] = useState(false);
+  const [, setHasLoadedFichaById] = useState(false);
   /** Número da ficha carregada (ex: FV-2024-001) para nome do PDF */
   const [loadedFichaFormNumber, setLoadedFichaFormNumber] = useState<
     string | null
@@ -623,6 +625,29 @@ const FichaVendaPage: React.FC = () => {
   const [filtroDataFimFicha, setFiltroDataFimFicha] = useState<string>('');
   const [filtroSearchFicha, setFiltroSearchFicha] = useState<string>('');
   const [loadingFichas, setLoadingFichas] = useState(false);
+  // Estados para seções colapsáveis e "outro" em mídia/profissão (usados em resetForm)
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
+    metadados: true,
+    comprador: true,
+    compradorConjuge: false,
+    vendedor: true,
+    vendedorConjuge: false,
+    imovel: true,
+    financeiro: true,
+    comissoes: true,
+    colaboradores: true,
+  });
+  const [midiaOutro, setMidiaOutro] = useState(false);
+  const [profissaoOutro, setProfissaoOutro] = useState<Record<string, boolean>>(
+    {
+      comprador: false,
+      compradorConjuge: false,
+      vendedor: false,
+      vendedorConjuge: false,
+    }
+  );
 
   // Estado para corretor selecionado
   const [corretorSelecionado, setCorretorSelecionado] =
@@ -844,8 +869,8 @@ const FichaVendaPage: React.FC = () => {
     []
   );
 
-  // Salvar ficha enviada no localStorage do usuário logado (por CPF)
-  const saveFichaEnviada = useCallback(
+  // Salvar ficha enviada no localStorage (disponível para uso futuro)
+  const _saveFichaEnviada = useCallback(
     (ficha: FichaEnviada, cpf: string | null) => {
       if (!cpf) return;
       try {
@@ -1157,9 +1182,13 @@ const FichaVendaPage: React.FC = () => {
   const vendedorConjugeProfissao = watch('vendedorConjuge.profissao');
 
   // Função para resetar o formulário sem recarregar a página
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     const emptyValues: FichaVendaForm = {
       dataVenda: new Date().toISOString().split('T')[0],
+      secretariaPresentes: '',
+      midiaOrigem: '',
+      gerente: '',
+      unidadeVenda: 'União Esmeralda',
       possuiCompradorConjuge: false,
       possuiVendedorConjuge: false,
       comprador: {
@@ -1217,8 +1246,6 @@ const FichaVendaPage: React.FC = () => {
       comissoesGerencias: [],
       colaboradorPreAtendimento: '',
       colaboradorCentralCaptacao: '',
-      secretariaPresentes: '',
-      midiaOrigem: '',
     };
 
     reset(emptyValues);
@@ -1242,7 +1269,7 @@ const FichaVendaPage: React.FC = () => {
       comissoes: true,
       colaboradores: true,
     });
-  };
+  }, [reset, setMidiaOutro, setProfissaoOutro, setExpandedSections]);
 
   // Carregar dados salvos após montagem e habilitar scroll
   useEffect(() => {
@@ -1666,6 +1693,8 @@ const FichaVendaPage: React.FC = () => {
         showError('Erro ao carregar dados da proposta.');
       }
     }
+    // getDefaultValues e resetForm são estáveis / intencionalmente omitidos para evitar reexecução
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     searchParams,
     isLoading,
@@ -1697,11 +1726,13 @@ const FichaVendaPage: React.FC = () => {
         // Não enviar status no auto-save: backend preserva o atual e evita sobrescrever "disponivel" com "rascunho"
         const payload = { ...preparePayload(data) } as CreateSaleFormDto;
         await atualizarFichaVendaPorId(fichaIdFromUrl, payload);
-      } catch (_) {
+      } catch {
         // Silencioso: não incomodar o usuário a cada falha de auto-save
       }
     }, 30000);
     return () => clearInterval(interval);
+    // preparePayload estável; omitido para evitar reexecução do interval
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     fichaIdFromUrl,
     isFichaFinalizada,
@@ -1711,21 +1742,6 @@ const FichaVendaPage: React.FC = () => {
     isDirty,
     hasMinimalRequiredForSave,
   ]);
-
-  // Estados para seções colapsáveis
-  const [expandedSections, setExpandedSections] = useState<
-    Record<string, boolean>
-  >({
-    metadados: true,
-    comprador: true,
-    compradorConjuge: false,
-    vendedor: true,
-    vendedorConjuge: false,
-    imovel: true,
-    financeiro: true,
-    comissoes: true,
-    colaboradores: true,
-  });
 
   // Watch valores para cálculos
   const valorVenda = watch('valorVenda');
@@ -1797,15 +1813,6 @@ const FichaVendaPage: React.FC = () => {
   const [loadingPropriedades, setLoadingPropriedades] = useState(false);
   const [showDropdownImovel, setShowDropdownImovel] = useState(false);
   const [buscaCodigoImovel, setBuscaCodigoImovel] = useState('');
-  const [midiaOutro, setMidiaOutro] = useState(false);
-  const [profissaoOutro, setProfissaoOutro] = useState<Record<string, boolean>>(
-    {
-      comprador: false,
-      compradorConjuge: false,
-      vendedor: false,
-      vendedorConjuge: false,
-    }
-  );
 
   // Buscar endereço por CEP
   const buscarCEP = async (
@@ -1831,8 +1838,8 @@ const FichaVendaPage: React.FC = () => {
     }
   };
 
-  // Buscar endereço do imóvel por CEP
-  const buscarCEPImovel = async (cep: string) => {
+  // Buscar endereço do imóvel por CEP (disponível para uso em campo imóvel)
+  const _buscarCEPImovel = async (cep: string) => {
     const cleanCEP = cep.replace(/\D/g, '');
     if (cleanCEP.length !== 8) return;
 
@@ -1851,6 +1858,8 @@ const FichaVendaPage: React.FC = () => {
       setLoadingCEP(prev => ({ ...prev, imovel: false }));
     }
   };
+  // Referência para uso futuro (evita aviso de variável não lida)
+  void [_saveFichaEnviada, _buscarCEPImovel];
 
   // Cidade padrão para busca de propriedades (API exige cidade)
   const CIDADE_PADRAO_BUSCA_IMOVEL = 'Marília';
@@ -1877,7 +1886,7 @@ const FichaVendaPage: React.FC = () => {
       setShowDropdownImovel(true);
       if (arr.length === 0)
         showInfo('Nenhum imóvel encontrado com esse código.');
-    } catch (err) {
+    } catch {
       showError('Erro ao buscar imóveis. Tente novamente.');
     } finally {
       setLoadingPropriedades(false);
@@ -2086,6 +2095,7 @@ const FichaVendaPage: React.FC = () => {
         corretorId: '',
         corretor: '',
         porcentagem: 0,
+        captadores: [],
       },
     ]);
   };
@@ -2111,6 +2121,7 @@ const FichaVendaPage: React.FC = () => {
         porcentagem:
           typeof corretor.porcentagem === 'number' ? corretor.porcentagem : 0,
         captador: undefined,
+        captadores: [],
       },
     ]);
     setShowAddCorretorComissaoModal(false);
@@ -2351,11 +2362,36 @@ const FichaVendaPage: React.FC = () => {
               (c.corretorId || '').trim()
             )
           )
-          .map(c => ({
-            id: (c.corretorId || '').trim(),
-            porcentagem: c.porcentagem,
-            captador: c.captador?.trim() || null,
-          })),
+          .map(c => {
+            const captadores =
+              (c.captadores?.length ?? 0) > 0
+                ? (c.captadores ?? [])
+                    .slice(0, 3)
+                    .filter(cap => (cap.id || '').trim())
+                    .map(cap => ({
+                      id: cap.id.trim(),
+                      nome: cap.nome?.trim() || undefined,
+                      porcentagem:
+                        cap.porcentagem != null && !Number.isNaN(Number(cap.porcentagem))
+                          ? Math.min(100, Math.max(0, Number(cap.porcentagem)))
+                          : undefined,
+                    }))
+                : c.captador?.trim()
+                  ? [{ id: c.captador.trim(), nome: undefined, porcentagem: undefined }]
+                  : [];
+            const item: {
+              id: string;
+              porcentagem: number;
+              captador: string | null;
+              captadores?: Array<{ id: string; nome?: string; porcentagem?: number }>;
+            } = {
+              id: (c.corretorId || '').trim(),
+              porcentagem: c.porcentagem,
+              captador: c.captador?.trim() || null,
+            };
+            if (captadores.length > 0) item.captadores = captadores;
+            return item;
+          }),
         gerencias: data.comissoesGerencias,
       },
       colaboradores: {
@@ -2623,11 +2659,11 @@ const FichaVendaPage: React.FC = () => {
       const result = await buscarPropostaPorId(propostaId, {
         gestorCpf: userCpf,
       });
-      const propostaData = result.success ? result.data : result;
-      if (!propostaData || !propostaData.id) {
+      if (!result.success || !result.data?.id) {
         showError('Proposta não encontrada ou sem permissão.');
         return;
       }
+      const propostaData: PropostaListItem = result.data;
       const base = getDefaultValues();
       const fromP = mapPropostaDataToFichaVendaForm(propostaData);
       const merged = { ...base };
@@ -7189,7 +7225,12 @@ const FichaVendaPage: React.FC = () => {
                                       </div>
                                     </FormGroup>
 
-                                    <FormGroup>
+                                    {/* Até 3 captadores por corretor */}
+                                    <FormGroup
+                                      style={{
+                                        gridColumn: '1 / -1',
+                                      }}
+                                    >
                                       <FormLabel
                                         style={{
                                           display: 'flex',
@@ -7205,38 +7246,105 @@ const FichaVendaPage: React.FC = () => {
                                             color: corretorColor.border,
                                           }}
                                         />
-                                        Captador (opcional)
+                                        Captadores (até 3, opcional)
                                       </FormLabel>
-                                      <FormSelect
-                                        value={corretor.captador || ''}
-                                        onChange={e => {
-                                          const updated = [
-                                            ...comissoesCorretores,
-                                          ];
-                                          updated[index].captador =
-                                            e.target.value || undefined;
-                                          setValue(
-                                            'comissoesCorretores',
-                                            updated
-                                          );
-                                        }}
-                                        style={{
-                                          borderLeft: `3px solid ${corretorColor.border}`,
-                                          paddingLeft: '12px',
-                                          width: '100%',
-                                          minWidth: 0,
-                                        }}
-                                      >
-                                        <option value=''>
-                                          Selecione o captador...
-                                        </option>
-                                        {opcoesCaptador.map(u => (
-                                          <option key={u.id} value={u.id}>
-                                            {u.nome}
-                                            {u.unidade ? ` · ${u.unidade}` : ''}
-                                          </option>
-                                        ))}
-                                      </FormSelect>
+                                      {(corretor.captadores ?? (corretor.captador ? [{ id: corretor.captador, nome: undefined, porcentagem: undefined }] : [])).map((cap, capIdx) => (
+                                        <div
+                                          key={capIdx}
+                                          style={{
+                                            display: 'flex',
+                                            gap: '12px',
+                                            alignItems: 'center',
+                                            marginBottom: '12px',
+                                          }}
+                                        >
+                                          <FormSelect
+                                            value={cap.id || ''}
+                                            onChange={e => {
+                                              const val = e.target.value;
+                                              const list = corretor.captadores ?? [];
+                                              const updated = [...comissoesCorretores];
+                                              const newList = [...list];
+                                              newList[capIdx] = val
+                                                ? {
+                                                    id: val,
+                                                    nome: opcoesCaptador.find(u => u.id === val)?.nome,
+                                                    porcentagem: cap.porcentagem,
+                                                  }
+                                                : { id: '', nome: undefined, porcentagem: undefined };
+                                              updated[index].captadores = newList.filter(c => c.id);
+                                              setValue('comissoesCorretores', updated);
+                                            }}
+                                            style={{
+                                              flex: 1,
+                                              minWidth: 0,
+                                              borderLeft: `3px solid ${corretorColor.border}`,
+                                              paddingLeft: '12px',
+                                            }}
+                                          >
+                                            <option value=''>Selecione...</option>
+                                            {opcoesCaptador.map(u => (
+                                              <option key={u.id} value={u.id}>
+                                                {u.nome}
+                                                {u.unidade ? ` · ${u.unidade}` : ''}
+                                              </option>
+                                            ))}
+                                          </FormSelect>
+                                          <FormInput
+                                            type='number'
+                                            min={0}
+                                            max={100}
+                                            step={0.5}
+                                            placeholder='%'
+                                            value={cap.porcentagem != null ? String(cap.porcentagem) : ''}
+                                            onChange={e => {
+                                              const num = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                                              const list = [...(corretor.captadores ?? [])];
+                                              if (list[capIdx]) {
+                                                list[capIdx] = {
+                                                  ...list[capIdx],
+                                                  porcentagem: num != null && !Number.isNaN(num) ? Math.min(100, Math.max(0, num)) : undefined,
+                                                };
+                                              }
+                                              const updated = [...comissoesCorretores];
+                                              updated[index].captadores = list;
+                                              setValue('comissoesCorretores', updated);
+                                            }}
+                                            style={{
+                                              width: '80px',
+                                              paddingRight: '8px',
+                                            }}
+                                          />
+                                          <Button
+                                            type='button'
+                                            $variant='secondary'
+                                            onClick={() => {
+                                              const list = (corretor.captadores ?? []).filter((_, i) => i !== capIdx);
+                                              const updated = [...comissoesCorretores];
+                                              updated[index].captadores = list;
+                                              setValue('comissoesCorretores', updated);
+                                            }}
+                                            style={{ padding: '8px 12px' }}
+                                          >
+                                            <MdClose />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                      {(corretor.captadores ?? []).length < 3 && (
+                                        <Button
+                                          type='button'
+                                          $variant='secondary'
+                                          onClick={() => {
+                                            const list = [...(corretor.captadores ?? []), { id: '', nome: undefined, porcentagem: undefined }];
+                                            const updated = [...comissoesCorretores];
+                                            updated[index].captadores = list;
+                                            setValue('comissoesCorretores', updated);
+                                          }}
+                                          style={{ marginTop: '8px' }}
+                                        >
+                                          <MdPerson /> Adicionar captador ({(corretor.captadores ?? []).length}/3)
+                                        </Button>
+                                      )}
                                     </FormGroup>
                                   </FormGrid>
                                 </ComissaoItem>
@@ -8287,18 +8395,27 @@ const FichaVendaPage: React.FC = () => {
                                   corretoresDisponiveis.find(
                                     c => c.id === corretor.id
                                   )?.nome ?? corretor.id;
-                                const captadorNome = corretor.captador
-                                  ? (opcoesCaptador.find(
-                                      u => u.id === corretor.captador
-                                    )?.nome ?? corretor.captador)
-                                  : null;
+                                const captadoresList = (corretor as any).captadores?.length
+                                  ? (corretor as any).captadores
+                                  : (corretor as any).captador
+                                    ? [{ id: (corretor as any).captador, nome: undefined, porcentagem: undefined }]
+                                    : [];
+                                const captadoresTexto =
+                                  captadoresList.length > 0
+                                    ? captadoresList
+                                        .map(
+                                          (cap: any) =>
+                                            `${opcoesCaptador.find(u => u.id === cap.id)?.nome ?? cap.nome ?? cap.id}${cap.porcentagem != null ? ` (${cap.porcentagem}%)` : ''}`
+                                        )
+                                        .join(', ')
+                                    : null;
                                 return (
                                   <SummaryItem key={idx}>
                                     <SummaryLabel>{corretorNome}</SummaryLabel>
                                     <SummaryValue>
                                       {corretor.porcentagem}%
-                                      {captadorNome &&
-                                        ` (Captador: ${captadorNome})`}
+                                      {captadoresTexto &&
+                                        ` (Captadores: ${captadoresTexto})`}
                                     </SummaryValue>
                                   </SummaryItem>
                                 );

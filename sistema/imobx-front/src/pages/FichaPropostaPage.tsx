@@ -399,10 +399,11 @@ interface FichaPropostaForm {
     email: string;
   }>;
 
-  // Bloco 8 - Captadores (até 2)
+  // Bloco 8 - Captadores (até 3)
   captadores?: Array<{
     id: string;
     nome: string;
+    porcentagem?: number;
   }>;
 }
 
@@ -1138,7 +1139,8 @@ const FichaPropostaPage: React.FC = () => {
           });
         }
         if (d.corretores?.length) setValue('corretores', d.corretores);
-        if (d.captadores?.length) setValue('captadores', d.captadores);
+        const captadores = d.captadores?.length ? d.captadores : d.captadoresData?.length ? d.captadoresData : [];
+        if (captadores.length) setValue('captadores', captadores);
         showSuccess('Proposta carregada. Você pode continuar o preenchimento.');
       })
       .catch((err: any) => {
@@ -1733,11 +1735,14 @@ const FichaPropostaPage: React.FC = () => {
       }));
     }
 
-    // Adicionar captadores se houver (até 2)
+    // Adicionar captadores se houver (até 3)
     if (data.captadores && data.captadores.length > 0) {
-      payload.captadores = data.captadores.slice(0, 2).map(c => ({
+      payload.captadores = data.captadores.slice(0, 3).map(c => ({
         id: c.id.trim(),
         nome: c.nome.trim(),
+        ...(c.porcentagem != null && !Number.isNaN(Number(c.porcentagem))
+          ? { porcentagem: Math.min(100, Math.max(0, Number(c.porcentagem))) }
+          : {}),
       }));
     }
 
@@ -6961,7 +6966,7 @@ const FichaPropostaPage: React.FC = () => {
                   <SectionTitleWrapper>
                     <StyledSectionTitle>Captadores</StyledSectionTitle>
                     <SectionDescription>
-                      Até 2 captadores (opcional)
+                      Até 3 captadores (opcional)
                     </SectionDescription>
                   </SectionTitleWrapper>
                 </SectionHeaderLeft>
@@ -6979,7 +6984,7 @@ const FichaPropostaPage: React.FC = () => {
                 <FormGrid $columns={1}>
                   <InfoBox $type='info' style={{ marginBottom: '24px' }}>
                     <InfoBoxText>
-                      💡 Você pode adicionar até 2 captadores (gestores).
+                      💡 Você pode adicionar até 3 captadores (gestores). Opcionalmente informe a porcentagem de cada um.
                     </InfoBoxText>
                   </InfoBox>
 
@@ -7007,11 +7012,11 @@ const FichaPropostaPage: React.FC = () => {
                           await carregarGestores();
                           if (
                             gestoresDisponiveis.length > 0 &&
-                            captadoresForm.length < 2
+                            captadoresForm.length < 3
                           ) {
                             const updated = [
                               ...captadoresForm,
-                              { id: '', nome: '' },
+                              { id: '', nome: '', porcentagem: undefined },
                             ];
                             setValue('captadores', updated, {
                               shouldValidate: true,
@@ -7079,7 +7084,7 @@ const FichaPropostaPage: React.FC = () => {
                               </Button>
                             )}
                           </div>
-                          <FormGrid $columns={2}>
+                          <FormGrid $columns={3}>
                             <FormGroup>
                               <FormLabel>
                                 Gestor/Captador{' '}
@@ -7101,7 +7106,7 @@ const FichaPropostaPage: React.FC = () => {
                                   if (!selectedId) {
                                     // Se selecionar "Selecione...", limpar o captador
                                     const updated = [...captadoresForm];
-                                    updated[index] = { id: '', nome: '' };
+                                    updated[index] = { id: '', nome: '', porcentagem: undefined };
                                     setValue('captadores', updated, {
                                       shouldValidate: true,
                                       shouldDirty: true,
@@ -7112,21 +7117,14 @@ const FichaPropostaPage: React.FC = () => {
                                   const selected = gestoresDisponiveis.find(
                                     g => g.id === selectedId
                                   );
-                                  console.log(
-                                    '🔍 Gestor encontrado:',
-                                    selected
-                                  );
 
                                   if (selected) {
                                     const updated = [...captadoresForm];
                                     updated[index] = {
                                       id: selected.id,
                                       nome: selected.nome,
+                                      porcentagem: captador?.porcentagem,
                                     };
-                                    console.log(
-                                      '✅ Atualizando captadores:',
-                                      updated
-                                    );
                                     setValue('captadores', updated, {
                                       shouldValidate: true,
                                       shouldDirty: true,
@@ -7166,11 +7164,50 @@ const FichaPropostaPage: React.FC = () => {
                                 }}
                               />
                             </FormGroup>
+                            <FormGroup>
+                              <FormLabel>Porcentagem (%)</FormLabel>
+                              <FormInput
+                                type='number'
+                                min={0}
+                                max={100}
+                                step={0.5}
+                                placeholder='0-100'
+                                value={
+                                  captador?.porcentagem != null &&
+                                  captador.porcentagem !== ''
+                                    ? String(captador.porcentagem)
+                                    : ''
+                                }
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLInputElement>
+                                ) => {
+                                  const raw = e.target.value;
+                                  const num =
+                                    raw === ''
+                                      ? undefined
+                                      : parseFloat(raw);
+                                  const updated = [...captadoresForm];
+                                  updated[index] = {
+                                    ...updated[index],
+                                    id: updated[index]?.id ?? '',
+                                    nome: updated[index]?.nome ?? '',
+                                    porcentagem:
+                                      num !== undefined && !Number.isNaN(num)
+                                        ? Math.min(100, Math.max(0, num))
+                                        : undefined,
+                                  };
+                                  setValue('captadores', updated, {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                  });
+                                }}
+                              />
+                            </FormGroup>
                           </FormGrid>
                         </div>
                       ))}
 
-                      {captadoresForm.length < 2 && (
+                      {captadoresForm.length < 3 && (
                         <Button
                           type='button'
                           $variant='secondary'
@@ -7179,19 +7216,19 @@ const FichaPropostaPage: React.FC = () => {
                               carregarGestores();
                               return;
                             }
-                            if (captadoresForm.length < 2) {
+                            if (captadoresForm.length < 3) {
                               setValue(
                                 'captadores',
-                                [...captadoresForm, { id: '', nome: '' }],
+                                [...captadoresForm, { id: '', nome: '', porcentagem: undefined }],
                                 { shouldValidate: true, shouldDirty: true }
                               );
                             }
                           }}
-                          disabled={captadoresForm.length === 2}
+                          disabled={captadoresForm.length === 3}
                           style={{ width: '100%', marginTop: '16px' }}
                         >
                           <MdPerson /> Adicionar Captador (
-                          {captadoresForm.length}/2)
+                          {captadoresForm.length}/3)
                         </Button>
                       )}
                     </>

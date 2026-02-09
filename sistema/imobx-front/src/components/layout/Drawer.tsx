@@ -1099,16 +1099,21 @@ export const Drawer: React.FC<DrawerProps> = memo(
 
       const filtered = filterNavigationItems(navigationItems);
       const isAdminOrMaster = user?.role === 'admin' || user?.role === 'master';
-      const crmIndex = filtered.findIndex(item => item.id === 'crm');
-      if (crmIndex === -1) return filtered;
+      // Mover todo o grupo "Vendas" junto para evitar duplicar o cabeçalho do grupo no drawer
+      const vendasGroup = (item: NavigationItem) =>
+        (item as NavigationItem).menuGroup === 'Vendas';
+      const vendasIndices = filtered
+        .map((item, i) => (vendasGroup(item) ? i : -1))
+        .filter(i => i >= 0);
+      if (vendasIndices.length === 0) return filtered;
 
       const arr = [...filtered];
-      const [crmItem] = arr.splice(crmIndex, 1);
-      if (isAdminOrMaster) {
-        arr.splice(1, 0, crmItem);
-      } else {
-        arr.unshift(crmItem);
-      }
+      const vendasItems = vendasIndices
+        .sort((a, b) => b - a)
+        .map(i => arr.splice(i, 1)[0]);
+      vendasItems.reverse(); // manter ordem original (ex.: Funil de Vendas, Metas)
+      const insertAt = isAdminOrMaster ? 1 : 0;
+      arr.splice(insertAt, 0, ...vendasItems);
       return arr;
     }, [
       navigationItems,
