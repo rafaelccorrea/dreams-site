@@ -1896,13 +1896,9 @@ const WhatsAppConfigPage: React.FC = () => {
                     </div>
                   </label>
 
-                  {!(config.chatbotEnabled || config.enableAIPreAttend) && (
-                    <FormHintText style={{ marginBottom: '16px', padding: '12px', borderRadius: '8px', background: 'var(--color-background-secondary)' }}>
-                      Ative o pré-atendimento acima para configurar Chatbot ou IA abaixo.
-                    </FormHintText>
-                  )}
-
-                  <PreAttendOptionCard style={{ opacity: (config.chatbotEnabled || config.enableAIPreAttend) ? 1 : 0.7, pointerEvents: (config.chatbotEnabled || config.enableAIPreAttend) ? 'auto' : 'none' }}>
+                  {(config.chatbotEnabled || config.enableAIPreAttend) && (
+                  <>
+                  <PreAttendOptionCard>
                     <FormLabelText style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <MdSmartToy size={20} />
                       Chatbot
@@ -1910,12 +1906,12 @@ const WhatsAppConfigPage: React.FC = () => {
                     <FormHintText style={{ marginBottom: '12px' }}>
                       Resposta automática com mensagens em ordem fixa. Escolha um template e, se quiser, troque uma mensagem por outra na mesma posição (a ordem não muda).
                     </FormHintText>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', cursor: (config.chatbotEnabled || config.enableAIPreAttend) ? 'pointer' : 'default', opacity: (config.chatbotEnabled || config.enableAIPreAttend) ? 1 : 0.7 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', cursor: 'pointer' }}>
                       <input
                         type='checkbox'
                         checked={config.chatbotEnabled === true}
                         onChange={e => setConfig({ ...config, chatbotEnabled: e.target.checked })}
-                        disabled={saving || deleting || !(config.chatbotEnabled || config.enableAIPreAttend) || config.enableAIPreAttend === true}
+                        disabled={saving || deleting || config.enableAIPreAttend === true}
                       />
                       <span style={{ fontWeight: 500 }}>Usar Chatbot (padrão)</span>
                     </label>
@@ -1996,7 +1992,7 @@ const WhatsAppConfigPage: React.FC = () => {
                     )}
                   </PreAttendOptionCard>
 
-                  <PreAttendOptionCard style={{ opacity: (config.chatbotEnabled || config.enableAIPreAttend) ? 1 : 0.7, pointerEvents: (config.chatbotEnabled || config.enableAIPreAttend) ? 'auto' : 'none' }}>
+                  <PreAttendOptionCard>
                     <FormLabelText style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <MdSmartToy size={20} style={{ opacity: 0.9 }} />
                       Pré-atendimento com IA
@@ -2032,6 +2028,8 @@ const WhatsAppConfigPage: React.FC = () => {
                       </>
                     )}
                   </PreAttendOptionCard>
+                  </>
+                  )}
 
                   <AutoActionsTitle style={{ marginTop: '24px' }}>⚙️ O que o sistema pode fazer sozinho</AutoActionsTitle>
 
