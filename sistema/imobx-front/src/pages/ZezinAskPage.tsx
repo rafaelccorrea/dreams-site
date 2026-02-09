@@ -327,8 +327,10 @@ function historyToMessages(history: ZezinHistoryItem[]): ChatMessage[] {
   const list: ChatMessage[] = [];
   const reversed = [...(history || [])].reverse();
   reversed.forEach(item => {
-    list.push({ id: `user-${item.id}`, role: 'user', content: item.message });
-    list.push({ id: `assistant-${item.id}`, role: 'assistant', content: item.answer });
+    const msg = item?.message ?? '';
+    const ans = item?.answer ?? '';
+    list.push({ id: `user-${item.id}`, role: 'user', content: msg });
+    list.push({ id: `assistant-${item.id}`, role: 'assistant', content: ans });
   });
   return list;
 }
@@ -375,9 +377,11 @@ const ZezinAskPage: React.FC = () => {
   const loadHistory = useCallback(async () => {
     try {
       const data = await zezinApi.getHistory(50, 0);
-      setMessages(historyToMessages(data.items || []));
-    } catch {
+      setMessages(historyToMessages(data?.items ?? []));
+    } catch (e: any) {
+      console.error('[Zezin] Erro ao carregar histórico:', e);
       setMessages([]);
+      showError(e?.message || 'Não foi possível carregar o histórico de conversas.');
     }
   }, []);
 
