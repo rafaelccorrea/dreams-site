@@ -357,8 +357,8 @@ interface FichaPropostaForm {
 
   // Bloco 4 - Imóvel
   imovel: {
-    matricula: string;
-    cartorio: string;
+    matricula?: string; // Opcional
+    cartorio?: string; // Opcional
     cadastroPrefeitura?: string;
     cep?: string;
     endereco: string;
@@ -1717,8 +1717,8 @@ const FichaPropostaPage: React.FC = () => {
             }
           : null,
       imovel: {
-        matricula: data.imovel.matricula.trim(),
-        cartorio: data.imovel.cartorio.trim(),
+        matricula: data.imovel.matricula?.trim() ?? '',
+        cartorio: data.imovel.cartorio?.trim() ?? '',
         cadastroPrefeitura: data.imovel.cadastroPrefeitura?.trim() || undefined,
         endereco: data.imovel.endereco.trim(),
         bairro: data.imovel.bairro.trim(),
@@ -5940,23 +5940,16 @@ const FichaPropostaPage: React.FC = () => {
               <SectionContent $isExpanded={expandedSections.imovel}>
                 <FormGrid $columns={2}>
                   <FormGroup>
-                    <FormLabel>
-                      Matrícula <RequiredIndicator>*</RequiredIndicator>
-                    </FormLabel>
+                    <FormLabel>Matrícula</FormLabel>
                     <FormInput
                       type='text'
                       {...register('imovel.matricula', {
-                        required: 'Matrícula é obrigatória',
-                        minLength: {
-                          value: 3,
-                          message: 'Matrícula deve ter no mínimo 3 caracteres',
-                        },
                         maxLength: {
                           value: 50,
                           message: 'Matrícula deve ter no máximo 50 caracteres',
                         },
                       })}
-                      placeholder='Número da matrícula'
+                      placeholder='Número da matrícula (opcional)'
                       maxLength={50}
                       $hasError={!!errors.imovel?.matricula}
                     />
@@ -5971,23 +5964,16 @@ const FichaPropostaPage: React.FC = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>
-                      Cartório <RequiredIndicator>*</RequiredIndicator>
-                    </FormLabel>
+                    <FormLabel>Cartório</FormLabel>
                     <FormInput
                       type='text'
                       {...register('imovel.cartorio', {
-                        required: 'Cartório é obrigatório',
-                        minLength: {
-                          value: 2,
-                          message: 'Cartório deve ter no mínimo 2 caracteres',
-                        },
                         maxLength: {
                           value: 100,
                           message: 'Cartório deve ter no máximo 100 caracteres',
                         },
                       })}
-                      placeholder='Número do cartório'
+                      placeholder='Número do cartório (opcional)'
                       maxLength={100}
                       $hasError={!!errors.imovel?.cartorio}
                     />

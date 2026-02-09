@@ -44,8 +44,8 @@ export interface ProponenteConjugeDto {
 }
 
 export interface ImovelDto {
-  matricula: string;
-  cartorio: string;
+  matricula?: string; // Opcional
+  cartorio?: string; // Opcional
   cadastroPrefeitura?: string; // Opcional
   endereco: string;
   bairro: string;
