@@ -1446,6 +1446,13 @@ const HistoryTime = styled.div`
   gap: 4px;
 `;
 
+const SourceHistoryTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text};
+  margin: 0 0 12px 0;
+`;
+
 const LoadingHistory = styled.div`
   text-align: center;
   padding: 48px 24px;
@@ -5105,10 +5112,54 @@ const TaskDetailsPage: React.FC = () => {
                     (!validationHistory?.executions ||
                       validationHistory.executions.length === 0) &&
                     (!actionHistory?.executions ||
-                      actionHistory.executions.length === 0) ? (
+                      actionHistory.executions.length === 0) &&
+                    !(task?.sourceHistory && task.sourceHistory.length > 0) ? (
                     <EmptyHistory>Nenhum histórico disponível</EmptyHistory>
                   ) : (
                     <>
+                      {task?.sourceHistory && task.sourceHistory.length > 0 && (
+                        <>
+                          <SourceHistoryTitle>Histórico da origem</SourceHistoryTitle>
+                          <HistoryList style={{ marginBottom: '24px' }}>
+                            {[...task.sourceHistory]
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.at || 0).getTime() -
+                                  new Date(a.at || 0).getTime()
+                              )
+                              .map((entry, index) => (
+                                <HistoryItem key={`source-${index}`}>
+                                  <HistoryAvatarSection>
+                                    <Avatar
+                                      name={entry.userName || 'Origem'}
+                                      size={40}
+                                    />
+                                  </HistoryAvatarSection>
+                                  <HistoryContent>
+                                    <HistoryAction>
+                                      {entry.text || '(sem descrição)'}
+                                    </HistoryAction>
+                                    {entry.userName && (
+                                      <HistoryAction>
+                                        <strong>{entry.userName}</strong>
+                                      </HistoryAction>
+                                    )}
+                                    <HistoryTime>
+                                      <MdSchedule size={14} />
+                                      {entry.at
+                                        ? format(
+                                            new Date(entry.at),
+                                            "dd/MM/yyyy 'às' HH:mm",
+                                            { locale: ptBR }
+                                          )
+                                        : ''}
+                                    </HistoryTime>
+                                  </HistoryContent>
+                                </HistoryItem>
+                              ))}
+                          </HistoryList>
+                        </>
+                      )}
                       <HistoryTimeline
                         history={history}
                         loading={loadingHistory}

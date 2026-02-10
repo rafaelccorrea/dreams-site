@@ -108,6 +108,10 @@ export const useKanban = () => {
         if (columnIdOnly) {
           filterParams.columnId = columnIdOnly;
         }
+        // Paginação por coluna: carregar apenas N cards por coluna no início
+        if (!columnIdOnly) {
+          filterParams.perColumnLimit = 20;
+        }
 
         // Converter filtros para formato da API
         // Filtros básicos
@@ -962,6 +966,57 @@ export const useKanban = () => {
     };
   }, []);
 
+  const PER_COLUMN_PAGE_SIZE = 20;
+
+  /** Carrega mais cards de uma coluna (paginação). */
+  const loadMoreColumnTasks = useCallback(
+    async (
+      teamId: string,
+      columnId: string,
+      options?: { projectId?: string | null; search?: string; currentCount: number }
+    ) => {
+      const page =
+        Math.floor((options?.currentCount ?? 0) / PER_COLUMN_PAGE_SIZE) + 1;
+      const res = await kanbanApi.getColumnTasks(teamId, columnId, {
+        projectId: options?.projectId ?? undefined,
+        page,
+        limit: PER_COLUMN_PAGE_SIZE,
+        search: options?.search?.trim() || undefined,
+      });
+      if (!res.data.length) return;
+      setBoard(prev => ({
+        ...prev,
+        tasks: [...prev.tasks, ...res.data],
+      }));
+    },
+    []
+  );
+
+  /** Busca cards na coluna (substitui a lista da coluna pelo resultado da busca). */
+  const searchColumnTasks = useCallback(
+    async (
+      teamId: string,
+      columnId: string,
+      options?: { projectId?: string | null; search?: string }
+    ) => {
+      const search = options?.search?.trim();
+      const res = await kanbanApi.getColumnTasks(teamId, columnId, {
+        projectId: options?.projectId ?? undefined,
+        page: 1,
+        limit: 100,
+        search: search || undefined,
+      });
+      setBoard(prev => ({
+        ...prev,
+        tasks: [
+          ...prev.tasks.filter((t: KanbanTask) => t.columnId !== columnId),
+          ...res.data,
+        ],
+      }));
+    },
+    []
+  );
+
   return {
     board: filteredBoard,
     originalBoard: board,
@@ -985,5 +1040,8 @@ export const useKanban = () => {
     refreshColumn,
     handleFiltersChange,
     handleClearFilters,
+    loadMoreColumnTasks,
+    searchColumnTasks,
+    perColumnPageSize: PER_COLUMN_PAGE_SIZE,
   };
 };

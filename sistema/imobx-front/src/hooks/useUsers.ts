@@ -95,7 +95,7 @@ export const useUsers = (options?: UseUsersOptions): UseUsersReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await usersApi.getUsers({ page: 1, limit: 100 });
+      const response = await usersApi.getUsers({ page: 1, limit: 10000 });
       setUsers(response.data || []);
       setTotal(response.total || 0);
       setCurrentPage(response.page || 1);

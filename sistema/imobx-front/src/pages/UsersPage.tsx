@@ -125,7 +125,7 @@ const UsersPage: React.FC = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 500, 3);
 
   useEffect(() => {
-    getUsers();
+    getUsers({ page: 1, limit: 10000 });
   }, [getUsers]);
 
   const handleCreateUser = () => {

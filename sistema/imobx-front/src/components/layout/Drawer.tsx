@@ -250,7 +250,11 @@ const getNavigationItems = (userRole: string): NavigationItem[] => {
           icon: MdAccountBox,
           title: 'Usuários',
           path: '/users',
-          permission: 'user:view',
+          customPermission: (hasPermission) =>
+            hasPermission('user:view') &&
+            (hasPermission('user:create') ||
+              hasPermission('user:update') ||
+              hasPermission('user:delete')),
         },
         {
           id: 'hierarchy',
@@ -355,7 +359,17 @@ const getNavigationItems = (userRole: string): NavigationItem[] => {
       id: 'integrations',
       icon: MdExtension,
       title: 'Integrações',
-      permission: 'whatsapp:view',
+      customPermission: (hasPermission) =>
+        hasPermission('integration:view') ||
+        hasPermission('whatsapp:view') ||
+        hasPermission('whatsapp:view_messages') ||
+        hasPermission('whatsapp:manage_config') ||
+        hasPermission('meta_campaign:view') ||
+        hasPermission('meta_campaign:manage_config') ||
+        hasPermission('grupo_zap:view') ||
+        hasPermission('grupo_zap:manage_config') ||
+        hasPermission('lead_distribution:view') ||
+        hasPermission('lead_distribution:manage_config'),
       requiredModule: MODULE_TYPES.API_INTEGRATIONS,
       menuGroup: 'Integração',
       children: [
@@ -364,6 +378,7 @@ const getNavigationItems = (userRole: string): NavigationItem[] => {
           icon: MdSettings,
           title: 'Configurações',
           path: '/integrations',
+          permission: 'integration:view',
           menuGroup: 'Integração',
         },
         {
@@ -455,16 +470,19 @@ const getNavigationItems = (userRole: string): NavigationItem[] => {
     },
 
     // ========== FINANCEIRO ==========
+    // Grupo só aparece se tiver permissão de ver ao menos um item (cada filho tem sua própria permissão)
     {
       id: 'financeiro',
       icon: MdAttachMoney,
       title: 'Financeiro',
       menuGroup: 'Financeiro',
+      customPermission: (hasPermission) =>
+        hasPermission('financial:view') || hasPermission('commission:view'),
       children: [
         {
           id: 'financial',
           icon: MdAttachMoney,
-          title: 'Financeiro',
+          title: 'Lançamentos financeiros',
           path: '/financial',
           permission: 'financial:view',
           requiredModule: MODULE_TYPES.FINANCIAL_MANAGEMENT,
@@ -475,7 +493,7 @@ const getNavigationItems = (userRole: string): NavigationItem[] => {
           icon: MdCalculate,
           title: 'Calculadora de Comissões',
           path: '/commissions',
-          permission: 'financial:view',
+          permission: 'commission:view',
           requiredModule: MODULE_TYPES.COMMISSION_MANAGEMENT,
         },
         {
@@ -1065,8 +1083,12 @@ export const Drawer: React.FC<DrawerProps> = memo(
               }
 
               // Se há exatamente 1 filho visível, retornar o filho diretamente (sem submenu)
+              // Preservar menuGroup do pai para o item não cair em "Outros" e sumir do drawer
               if (children && children.length === 1) {
-                return children[0];
+                return {
+                  ...children[0],
+                  menuGroup: item.menuGroup ?? (children[0] as NavigationItem).menuGroup,
+                };
               }
 
               // Se há mais de 1 filho, manter o item pai com os filhos

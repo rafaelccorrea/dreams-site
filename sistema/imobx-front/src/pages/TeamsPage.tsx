@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   MdAdd,
   MdEdit,
@@ -109,6 +109,18 @@ import {
   FilterStats,
   ClearButton,
   ApplyButton,
+  UserTeamsLookup,
+  UserTeamsLookupRow,
+  UserTeamsLookupLabel,
+  UserTeamsSelectWrap,
+  UserTeamsSearchInput,
+  UserTeamsSearchIcon,
+  UserTeamsDropdown,
+  UserTeamsOption,
+  UserTeamsOptionEmpty,
+  UserTeamsResult,
+  UserTeamsResultList,
+  UserTeamsResultItem,
 } from '../styles/pages/TeamsPageStyles';
 
 // Importar estilos da visualiza    o em lista
@@ -273,6 +285,43 @@ export const TeamsPage: React.FC = () => {
     const saved = localStorage.getItem('teams_view_mode');
     return (saved as ViewMode) || 'list';
   });
+
+  // Ver equipes de um usuário
+  const [selectedUserForTeams, setSelectedUserForTeams] = useState<string>('');
+  const [userSearchText, setUserSearchText] = useState('');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Usuários ordenados por nome (para o select "Ver equipes do usuário")
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) =>
+      (a.name || '').localeCompare(b.name || '', 'pt-BR')
+    );
+  }, [users]);
+
+  // Filtrar usuários por nome/email na busca
+  const filteredUsersForSelect = useMemo(() => {
+    const term = (userSearchText || '').trim().toLowerCase();
+    if (!term) return sortedUsers;
+    return sortedUsers.filter(
+      u =>
+        (u.name || '').toLowerCase().includes(term) ||
+        (u.email || '').toLowerCase().includes(term)
+    );
+  }, [sortedUsers, userSearchText]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowUserDropdown(false);
+      }
+    };
+    if (showUserDropdown) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserDropdown]);
 
   // Fun    o para alterar o modo de visualiza    o
   const handleViewModeChange = (mode: ViewMode) => {
@@ -472,6 +521,18 @@ export const TeamsPage: React.FC = () => {
 
     return filtered;
   }, [teams, searchTerm, filters]);
+
+  // Equipes em que o usuário selecionado faz parte (para o bloco "Ver equipes do usuário")
+  const teamsOfSelectedUser = useMemo(() => {
+    if (!selectedUserForTeams) return [];
+    return teams.filter(team => {
+      if (isPersonalTeam(team)) return false;
+      const isMember = team.members?.some(
+        (m: any) => m.userId === selectedUserForTeams || m.user?.id === selectedUserForTeams
+      );
+      return isMember;
+    });
+  }, [teams, selectedUserForTeams]);
 
   // Função handleCreateTeam removida - agora usando página dedicada CreateTeamPage
 
@@ -711,6 +772,84 @@ export const TeamsPage: React.FC = () => {
             )}
           </FilterToggle>
         </TeamsControls>
+
+        {/* Ver equipes de um usuário */}
+        <UserTeamsLookup>
+          <UserTeamsLookupRow>
+            <UserTeamsLookupLabel htmlFor="user-teams-search">
+              Ver equipes do usuário:
+            </UserTeamsLookupLabel>
+            <UserTeamsSelectWrap ref={userDropdownRef}>
+              <UserTeamsSearchIcon>
+                <MdSearch size={18} />
+              </UserTeamsSearchIcon>
+              <UserTeamsSearchInput
+                id="user-teams-search"
+                type="text"
+                placeholder="Buscar por nome ou e-mail..."
+                value={
+                  showUserDropdown
+                    ? userSearchText
+                    : selectedUserForTeams
+                      ? sortedUsers.find(u => u.id === selectedUserForTeams)?.name ||
+                        users.find(u => u.id === selectedUserForTeams)?.name ||
+                        ''
+                      : ''
+                }
+                onChange={e => {
+                  setUserSearchText(e.target.value);
+                  setShowUserDropdown(true);
+                  if (!e.target.value) setSelectedUserForTeams('');
+                }}
+                onFocus={() => setShowUserDropdown(true)}
+              />
+              {showUserDropdown && (
+                <UserTeamsDropdown>
+                  {filteredUsersForSelect.length === 0 ? (
+                    <UserTeamsOptionEmpty>
+                      Nenhum usuário encontrado
+                    </UserTeamsOptionEmpty>
+                  ) : (
+                    filteredUsersForSelect.map(u => (
+                      <UserTeamsOption
+                        key={u.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedUserForTeams(u.id);
+                          setUserSearchText('');
+                          setShowUserDropdown(false);
+                        }}
+                      >
+                        {u.name}
+                        {u.email ? ` (${u.email})` : ''}
+                      </UserTeamsOption>
+                    ))
+                  )}
+                </UserTeamsDropdown>
+              )}
+            </UserTeamsSelectWrap>
+          </UserTeamsLookupRow>
+          {selectedUserForTeams && (
+            <UserTeamsResult>
+              {teamsOfSelectedUser.length > 0 ? (
+                <>
+                  <strong>
+                    {users.find(u => u.id === selectedUserForTeams)?.name || 'Usuário'} faz parte de:
+                  </strong>
+                  <UserTeamsResultList>
+                    {teamsOfSelectedUser.map(t => (
+                      <UserTeamsResultItem key={t.id}>{t.name}</UserTeamsResultItem>
+                    ))}
+                  </UserTeamsResultList>
+                </>
+              ) : (
+                <strong>
+                  {users.find(u => u.id === selectedUserForTeams)?.name || 'Usuário'} não faz parte de nenhuma equipe.
+                </strong>
+              )}
+            </UserTeamsResult>
+          )}
+        </UserTeamsLookup>
 
         {/* Estat  sticas Gerais */}
         <TeamsStatsGrid>

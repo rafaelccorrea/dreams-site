@@ -411,7 +411,7 @@ const GalleryPage: React.FC = () => {
                           onClick={() =>
                             hasImages
                               ? handleOpenGallery(p, 0)
-                              : nav(`/properties/${p.id}`)
+                              : nav(`/properties/${p.id}?fromGallery=true`)
                           }
                           style={{ cursor: 'pointer' }}
                           title={

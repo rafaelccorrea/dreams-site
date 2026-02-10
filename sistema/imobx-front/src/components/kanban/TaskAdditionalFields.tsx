@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
+import { MdSchedule, MdPerson, MdEmail, MdPhone } from 'react-icons/md';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type { KanbanTask, UpdateTaskFieldsDto } from '../../types/kanban';
 import { kanbanApi } from '../../services/kanbanApi';
 import { showError } from '../../utils/notifications';
@@ -56,6 +59,56 @@ const FieldLabel = styled.label`
   color: ${props => props.theme.colors.textSecondary};
   text-transform: uppercase;
   letter-spacing: 0.5px;
+`;
+
+const OriginSection = styled.div`
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid ${props => props.theme.colors.border};
+`;
+
+const OriginTitle = styled.h4`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text};
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const OriginRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 8px;
+  & svg {
+    flex-shrink: 0;
+    color: ${props => props.theme.colors.textSecondary};
+  }
+`;
+
+const ContactList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const ContactItem = styled.li`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text};
+  padding: 8px 12px;
+  background: ${props => props.theme.colors.surface};
+  border-radius: 8px;
+  border: 1px solid ${props => props.theme.colors.border};
+  & strong {
+    color: ${props => props.theme.colors.text};
+  }
 `;
 
 const FieldInput = styled.input`
@@ -597,6 +650,57 @@ export const TaskAdditionalFields: React.FC<TaskAdditionalFieldsProps> = ({
           </FieldSelect>
         </FieldGroup>
       </FieldsGrid>
+
+      {(task.externalId ||
+        task.lastActivityAt ||
+        (task.contactSnapshot && task.contactSnapshot.length > 0)) && (
+        <OriginSection>
+          <OriginTitle>Dados da origem</OriginTitle>
+          {task.lastActivityAt && (
+            <OriginRow>
+              <MdSchedule size={18} />
+              <span>
+                Última atividade:{' '}
+                {format(
+                  new Date(task.lastActivityAt),
+                  "dd/MM/yyyy 'às' HH:mm",
+                  { locale: ptBR }
+                )}
+              </span>
+            </OriginRow>
+          )}
+          {task.contactSnapshot && task.contactSnapshot.length > 0 && (
+            <>
+              <OriginRow>
+                <MdPerson size={18} />
+                <span>Contatos ({task.contactSnapshot.length})</span>
+              </OriginRow>
+              <ContactList>
+                {task.contactSnapshot.map((c, i) => (
+                  <ContactItem key={c.id || i}>
+                    {c.name && <strong>{c.name}</strong>}
+                    {c.email && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                        <MdEmail size={14} />
+                        {c.email}
+                      </span>
+                    )}
+                    {c.phone && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        <MdPhone size={14} />
+                        {c.phone}
+                      </span>
+                    )}
+                    {!c.name && !c.email && !c.phone && (
+                      <span>Contato sem dados</span>
+                    )}
+                  </ContactItem>
+                ))}
+              </ContactList>
+            </>
+          )}
+        </OriginSection>
+      )}
     </Container>
   );
 };

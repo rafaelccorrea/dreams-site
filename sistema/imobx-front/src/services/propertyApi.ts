@@ -87,11 +87,18 @@ class PropertyApiService {
   /**
    * Buscar propriedade por ID
    */
-  async getPropertyById(id: string): Promise<Property> {
+  async getPropertyById(
+    id: string,
+    options?: { fromGallery?: boolean }
+  ): Promise<Property> {
     try {
-      // console.log('🔍 Buscando propriedade:', id);
-      const response = await api.get(`${this.baseUrl}/${id}`);
-      // console.log('✅ Propriedade encontrada:', response.data);
+      const params =
+        options?.fromGallery === true
+          ? new URLSearchParams({ fromGallery: 'true' })
+          : undefined;
+      const url =
+        params != null ? `${this.baseUrl}/${id}?${params.toString()}` : `${this.baseUrl}/${id}`;
+      const response = await api.get(url);
       return response.data;
     } catch (error: any) {
       console.error('❌ Erro ao buscar propriedade:', error);

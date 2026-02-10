@@ -23,7 +23,7 @@ import {
 } from 'react-icons/md';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { KanbanTask } from '../../types/kanban';
 import { TaskDeadlineIndicator } from './TaskDeadlineIndicator';
@@ -1751,6 +1751,9 @@ export const Task: React.FC<TaskProps> = ({
             const hasQualification =
               task.qualification && task.qualification.trim() !== '';
             const hasSource = task.source && task.source.trim() !== '';
+            const hasLastActivity = !!task.lastActivityAt;
+            const hasContacts =
+              task.contactSnapshot && task.contactSnapshot.length > 0;
 
             // Só renderizar a linha se houver pelo menos uma informação
             if (
@@ -1761,7 +1764,9 @@ export const Task: React.FC<TaskProps> = ({
               !hasSubtasks &&
               !hasCampaign &&
               !hasQualification &&
-              !hasSource
+              !hasSource &&
+              !hasLastActivity &&
+              !hasContacts
             ) {
               return null;
             }
@@ -1865,6 +1870,31 @@ export const Task: React.FC<TaskProps> = ({
                   <InfoBadge $variant='source' title={`Origem: ${task.source}`}>
                     <MdLocationOn size={14} />
                     {task.source}
+                  </InfoBadge>
+                )}
+
+                {/* Última atividade (dados da origem) */}
+                {hasLastActivity && task.lastActivityAt && (
+                  <InfoBadge
+                    $variant='source'
+                    title={`Última atividade: ${format(new Date(task.lastActivityAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`}
+                  >
+                    <MdSchedule size={14} />
+                    {formatDistanceToNow(new Date(task.lastActivityAt), {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
+                  </InfoBadge>
+                )}
+
+                {/* Contatos da origem */}
+                {hasContacts && (
+                  <InfoBadge
+                    $variant='campaign'
+                    title={`${task.contactSnapshot!.length} contato(s) da origem`}
+                  >
+                    <MdPerson size={14} />
+                    {task.contactSnapshot!.length} contato(s)
                   </InfoBadge>
                 )}
               </TaskInfoRow>

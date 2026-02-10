@@ -167,6 +167,8 @@ import {
 interface KanbanBoardComponentProps {
   initialTeamId?: string;
   initialProjectId?: string;
+  /** Dados do projeto já carregados pela página (evita chamar getProjectById de novo) */
+  initialProjectData?: KanbanProjectResponseDto | null;
   isPersonalWorkspace?: boolean;
   selectedProjectId?: string | null;
   onProjectChange?: (projectId: string, teamId?: string) => void;
@@ -175,6 +177,7 @@ interface KanbanBoardComponentProps {
 export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
   initialTeamId,
   initialProjectId,
+  initialProjectData,
   isPersonalWorkspace: isPersonalWorkspaceProp = false,
   selectedProjectId: selectedProjectIdProp,
   onProjectChange,
@@ -231,6 +234,9 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     deleteColumn,
     handleFiltersChange,
     handleClearFilters,
+    loadMoreColumnTasks,
+    searchColumnTasks,
+    perColumnPageSize,
   } = useKanban();
 
   const { settings } = useKanbanSettings();
@@ -252,9 +258,17 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     useState<KanbanProjectResponseDto | null>(null);
 
   // Buscar o projeto para obter o teamId quando for workspace pessoal e também para obter nome/descrição
+  // Usa initialProjectData quando disponível para evitar chamada duplicada (já carregado na KanbanPage)
   useEffect(() => {
     const projectId = selectedProjectId;
     if (projectId) {
+      if (initialProjectData?.id === projectId) {
+        setProjectData(initialProjectData);
+        if (isPersonalWorkspace && initialProjectData.teamId && !projectTeamId) {
+          setProjectTeamId(initialProjectData.teamId);
+        }
+        return;
+      }
       const fetchProjectData = async () => {
         try {
           const project = await projectsApi.getProjectById(projectId);
@@ -277,7 +291,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPersonalWorkspace, selectedProjectId]);
+  }, [isPersonalWorkspace, selectedProjectId, initialProjectData?.id]);
 
   // Estados locais
 
@@ -512,8 +526,13 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     loadColumnValues();
   }, [loadColumnValues]);
 
-  /** Carregar insights IA do funil (resumo, prioridades, parados por coluna) */
+  /** Carregar insights IA do funil apenas para quem tem permissão kanban:view_analytics (SDR/métricas) */
   useEffect(() => {
+    if (!canViewMetrics()) {
+      setFunnelInsights(null);
+      setInsightsLoading(false);
+      return;
+    }
     if (!currentTeamId || !selectedProjectId || board.columns.length === 0) {
       setFunnelInsights(null);
       return;
@@ -544,6 +563,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     board.columns.length,
     isPersonalWorkspace,
     board.tasks.length,
+    permissionsContext?.isLoading,
   ]);
 
   /** Carregar valor (R$) apenas de uma coluna e atualizar o estado */
@@ -2691,10 +2711,32 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
                       key={columnKey}
                       column={column}
                       tasks={filteredTasks}
+                      teamId={currentTeamId || board.teamId}
+                      projectId={selectedProjectId}
+                      onLoadMore={(columnId, opts) =>
+                        loadMoreColumnTasks(
+                          currentTeamId || board.teamId || '',
+                          columnId,
+                          {
+                            projectId: selectedProjectId,
+                            currentCount: opts.currentCount,
+                            search: opts.search,
+                          }
+                        )
+                      }
+                      onSearchColumn={(columnId, opts) =>
+                        searchColumnTasks(
+                          currentTeamId || board.teamId || '',
+                          columnId,
+                          { projectId: selectedProjectId, search: opts.search }
+                        )
+                      }
+                      perColumnPageSize={perColumnPageSize}
                       scrollMode={viewSettings.columnScrollMode}
                       isColumnLocked={lockedColumns.has(column.id)}
-                      taskInsightsMap={taskInsightsMap}
-                      columnStuckCount={columnStuckCountMap.get(column.id)}
+                      canViewAnalytics={canViewMetrics()}
+                      taskInsightsMap={canViewMetrics() ? taskInsightsMap : undefined}
+                      columnStuckCount={canViewMetrics() ? columnStuckCountMap.get(column.id) : undefined}
                       onOpenColumnInsights={
                         canViewMetrics()
                           ? col => {

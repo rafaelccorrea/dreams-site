@@ -71,7 +71,7 @@ export const ImageGalleryModal: React.FC<ImageGalleryModalProps> = ({
   };
 
   const handleGoToProperty = () => {
-    nav(`/properties/${propertyId}`);
+    nav(`/properties/${propertyId}?fromGallery=true`);
   };
 
   const currentImage = images[currentIndex];

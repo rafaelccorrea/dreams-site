@@ -32,6 +32,15 @@ const KanbanPage: React.FC = () => {
   const [validatedProjectId, setValidatedProjectId] = useState<string | null>(
     null
   );
+  const [validatedProjectData, setValidatedProjectData] = useState<{
+    id: string;
+    name: string;
+    description?: string | null;
+    teamId?: string;
+    isPersonal?: boolean;
+    [key: string]: any;
+  } | null>(null);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
   console.log('🔍 [KanbanPage] Render:', {
     teamId,
@@ -105,6 +114,17 @@ const KanbanPage: React.FC = () => {
 
   // Inicializar com workspace pessoal se não houver projeto selecionado
   const hasInitialized = useRef(false);
+
+  // Timeout de segurança: nunca deixar shimmer infinito (máx 8s)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      console.warn('⏰ [KanbanPage] Timeout de segurança - forçando fim do loading');
+      setLoadingTimedOut(true);
+      setIsInitializing(false);
+      hasInitialized.current = true;
+    }, 8000);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     // Evitar múltiplas inicializações
@@ -311,6 +331,11 @@ const KanbanPage: React.FC = () => {
       }
 
       setIsValidatingProject(true);
+      const validationTimeoutId = setTimeout(() => {
+        console.warn('⏰ [KanbanPage] Timeout na validação do projeto - liberando tela');
+        setIsValidatingProject(false);
+      }, 12000);
+
       console.log('🔍 [KanbanPage] Validando se projeto pertence ao usuário:', {
         projectId: finalProjectId,
         userId: currentUser.id,
@@ -323,12 +348,14 @@ const KanbanPage: React.FC = () => {
 
         // Verificar se o projeto existe e obter o teamId
         if (!project) {
+          clearTimeout(validationTimeoutId);
           console.log(
             '⚠️ [KanbanPage] Projeto não encontrado, limpando estado'
           );
           clearKanbanState(currentUser.id);
           setSelectedProjectId(null);
           setValidatedProjectId(null);
+          setValidatedProjectData(null);
           setIsValidatingProject(false);
           return;
         }
@@ -339,8 +366,9 @@ const KanbanPage: React.FC = () => {
           isPersonal: project.isPersonal,
         });
 
-        // Marcar projeto como validado
+        // Marcar projeto como validado e guardar dados para evitar nova chamada no KanbanBoard
         setValidatedProjectId(finalProjectId);
+        setValidatedProjectData(project);
 
         // Se não temos teamId, usar o do projeto
         if (!isValidFinalTeamId && project.teamId) {
@@ -385,10 +413,12 @@ const KanbanPage: React.FC = () => {
           clearKanbanState(currentUser.id);
           setSelectedProjectId(null);
           setValidatedProjectId(null);
+          setValidatedProjectData(null);
           // Limpar URL
           navigate('/kanban', { replace: true });
         }
       } finally {
+        clearTimeout(validationTimeoutId);
         setIsValidatingProject(false);
       }
     };
@@ -401,9 +431,11 @@ const KanbanPage: React.FC = () => {
     if (!finalProjectId) {
       setResolvedTeamId(null);
       setValidatedProjectId(null);
+      setValidatedProjectData(null);
     } else if (finalProjectId !== validatedProjectId) {
       // Se o projeto mudou, limpar validação anterior
       setValidatedProjectId(null);
+      setValidatedProjectData(null);
     }
   }, [finalProjectId, validatedProjectId]);
 
@@ -414,12 +446,16 @@ const KanbanPage: React.FC = () => {
     // Para workspace pessoal, garantir que temos o teamId
     let teamIdToUse = isPersonal ? teamId || personalWorkspace?.teamId : teamId;
 
-    // Se ainda não temos teamId, buscar do projeto
+    // Se ainda não temos teamId, buscar do projeto (e guardar dados para o board não chamar de novo)
     if (!teamIdToUse && projectId) {
       try {
         const { projectsApi } = await import('../services/projectsApi');
         const project = await projectsApi.getProjectById(projectId);
         teamIdToUse = project?.teamId || teamIdToUse;
+        if (project) {
+          setValidatedProjectData(project);
+          setValidatedProjectId(projectId);
+        }
       } catch (error) {
         console.error('Erro ao buscar projeto:', error);
       }
@@ -455,8 +491,12 @@ const KanbanPage: React.FC = () => {
     });
   };
 
-  // Mostrar loading enquanto inicializa ou valida projeto
-  if (isInitializing || personalWorkspaceLoading || isValidatingProject) {
+  // Mostrar loading enquanto inicializa ou valida projeto (respeitar timeout para não ficar infinito)
+  const showLoading =
+    !loadingTimedOut &&
+    (isInitializing || personalWorkspaceLoading || isValidatingProject);
+
+  if (showLoading) {
     console.log('⏳ [KanbanPage] Mostrando loading:', {
       isInitializing,
       personalWorkspaceLoading,
@@ -503,14 +543,25 @@ const KanbanPage: React.FC = () => {
     hasTeamAndProject: !!(isValidFinalTeamIdForRender && finalProjectId),
   });
 
+  // Só mostrar o board após validar o projeto quando temos projectId (evita 2ª chamada getProjectById no board)
+  const canShowBoard =
+    isValidFinalTeamIdForRender &&
+    finalProjectId &&
+    (validatedProjectId === finalProjectId || !isValidatingProject);
+
   // Renderizar KanbanBoard quando há projeto selecionado
   // Sempre mostrar o ProjectSelect, mesmo sem projeto selecionado
   return (
     <Layout>
-      {isValidFinalTeamIdForRender && finalProjectId ? (
+      {canShowBoard ? (
         <KanbanBoardComponent
           initialTeamId={finalTeamId}
           initialProjectId={finalProjectId}
+          initialProjectData={
+            validatedProjectData?.id === finalProjectId
+              ? validatedProjectData
+              : undefined
+          }
           isPersonalWorkspace={isPersonalWorkspace}
           selectedProjectId={selectedProjectId}
           onProjectChange={handleProjectChange}
@@ -528,7 +579,7 @@ const KanbanPage: React.FC = () => {
               onProjectChange={handleProjectChange}
             />
           </div>
-          {finalProjectId && !finalTeamId ? (
+          {finalProjectId && (!finalTeamId || isValidatingProject) ? (
             <div style={{ padding: '24px', textAlign: 'center' }}>
               <p style={{ color: 'var(--color-text-secondary)' }}>
                 Carregando informações do funil...

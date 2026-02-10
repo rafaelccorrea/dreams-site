@@ -89,6 +89,8 @@ class KanbanApiService {
       unassigned?: boolean;
       noDueDate?: boolean;
       involvedUserId?: string;
+      /** Limite de cards por coluna no carregamento inicial (paginação por coluna). Ex: 20 */
+      perColumnLimit?: number;
     }
   ): Promise<KanbanBoard> {
     try {
@@ -199,6 +201,8 @@ class KanbanApiService {
           params.noDueDate = options.noDueDate;
         if (options.involvedUserId)
           params.involvedUserId = options.involvedUserId;
+        if (options.perColumnLimit != null)
+          params.perColumnLimit = options.perColumnLimit;
       }
 
       const response = await api.get(`${this.baseUrl}/board/${teamId}`, {
@@ -301,6 +305,54 @@ class KanbanApiService {
       return mappedBoard;
     } catch (error: any) {
       console.error('❌ Erro ao buscar quadro Kanban:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Busca tarefas de uma coluna com paginação e busca (para "Carregar mais" e busca na coluna).
+   */
+  async getColumnTasks(
+    teamId: string,
+    columnId: string,
+    params?: {
+      projectId?: string;
+      page?: number;
+      limit?: number;
+      search?: string;
+    }
+  ): Promise<{
+    data: KanbanTask[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    try {
+      const query: Record<string, string | number> = { teamId };
+      if (params?.projectId) query.projectId = params.projectId;
+      if (params?.page != null) query.page = params.page;
+      if (params?.limit != null) query.limit = params.limit;
+      if (params?.search != null && params.search.trim())
+        query.search = params.search.trim();
+
+      const response = await api.get(
+        `${this.baseUrl}/columns/${columnId}/tasks`,
+        { params: query }
+      );
+      const data = (response.data.data || []).map((task: any) => ({
+        ...task,
+        involvedUsers: task.involvedUsers || [],
+      }));
+      return {
+        data,
+        total: response.data.total ?? 0,
+        page: response.data.page ?? 1,
+        limit: response.data.limit ?? 20,
+        totalPages: response.data.totalPages ?? 1,
+      };
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar tarefas da coluna:', error);
       throw this.handleError(error);
     }
   }

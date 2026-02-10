@@ -13,6 +13,7 @@ import type {
   MetaRoasItem,
   MetaAdSetItem,
   MetaAdItem,
+  MetaLeadWebhookLogResponse,
 } from '../types/metaCampaign';
 
 class MetaCampaignApiService {
@@ -238,6 +239,37 @@ class MetaCampaignApiService {
       );
     } catch (error: any) {
       console.error('❌ [MetaCampaignApi] Erro ao listar leads:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  async getWebhookLeadsLog(params?: {
+    page?: number;
+    limit?: number;
+    meta_campaign_id?: string;
+    status?: string;
+  }): Promise<MetaLeadWebhookLogResponse> {
+    try {
+      const searchParams = new URLSearchParams();
+      if (params?.page != null) searchParams.set('page', String(params.page));
+      if (params?.limit != null)
+        searchParams.set('limit', String(params.limit));
+      if (params?.meta_campaign_id)
+        searchParams.set('meta_campaign_id', params.meta_campaign_id);
+      if (params?.status) searchParams.set('status', params.status);
+      const qs = searchParams.toString();
+      const url = qs
+        ? `${this.baseUrl}/webhook-leads-log?${qs}`
+        : `${this.baseUrl}/webhook-leads-log`;
+      const response = await api.get<MetaLeadWebhookLogResponse>(url);
+      return (
+        response.data ?? { data: [], total: 0, page: 1, limit: 20 }
+      );
+    } catch (error: any) {
+      console.error(
+        '❌ [MetaCampaignApi] Erro ao listar log de webhook de leads:',
+        error
+      );
       throw this.handleError(error);
     }
   }

@@ -13,6 +13,8 @@ import {
   MdRefresh,
   MdSchedule,
   MdAutoAwesome,
+  MdSearch,
+  MdExpandMore,
 } from 'react-icons/md';
 import { useDroppable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
@@ -331,6 +333,60 @@ import {
   AddTaskButton,
 } from '../../styles/components/ColumnStyles';
 
+const ColumnSearchWrap = styled.div`
+  margin-bottom: 8px;
+  flex-shrink: 0;
+`;
+const ColumnSearchInput = styled.input`
+  width: 100%;
+  padding: 6px 10px 6px 32px;
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: ${props => props.theme.colors.text};
+  background: ${props => props.theme.colors.background};
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+  }
+`;
+const ColumnSearchInputWrap = styled.div`
+  position: relative;
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: ${props => props.theme.colors.textSecondary};
+    pointer-events: none;
+    font-size: 14px;
+  }
+`;
+const LoadMoreButton = styled.button`
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px dashed ${props => props.theme.colors.border};
+  border-radius: 6px;
+  background: ${props => props.theme.colors.background};
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  &:hover:not(:disabled) {
+    border-color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.primary};
+  }
+  &:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+`;
+
 interface ColumnProps {
   column: KanbanColumn;
   tasks: KanbanTask[];
@@ -360,12 +416,24 @@ interface ColumnProps {
   settings?: any;
   /** Atualizar dados desta coluna (recarrega board e valores por coluna) */
   onRefreshColumn?: (columnId: string) => void;
+  /** Se o usuário pode ver métricas/insights (permissão kanban:view_analytics / SDR) */
+  canViewAnalytics?: boolean;
   /** Insights IA por tarefa (prioridade, próxima ação) */
   taskInsightsMap?: Map<string, FunnelInsights['taskInsights'][0]>;
   /** Contagem de parados/follow-up nesta coluna (insights IA) */
   columnStuckCount?: { stuckCount: number; followUpCount: number };
   /** Abre a tela de Insights IA filtrada por esta coluna (quem tem permissão de analytics) */
   onOpenColumnInsights?: (column: KanbanColumn) => void;
+  /** Paginação por coluna: teamId para carregar mais / buscar */
+  teamId?: string | null;
+  /** projectId para carregar mais / buscar */
+  projectId?: string | null;
+  /** Carregar mais cards nesta coluna */
+  onLoadMore?: (columnId: string, options: { currentCount: number; search?: string }) => void;
+  /** Buscar cards nesta coluna (substitui lista pelo resultado) */
+  onSearchColumn?: (columnId: string, options: { search?: string }) => void;
+  /** Tamanho da página por coluna (ex: 20) para mostrar "Carregar mais" */
+  perColumnPageSize?: number;
 }
 
 export const Column: React.FC<ColumnProps> = ({
@@ -392,19 +460,55 @@ export const Column: React.FC<ColumnProps> = ({
   settings,
   columnValue,
   onRefreshColumn,
+  canViewAnalytics = false,
   taskInsightsMap,
   columnStuckCount,
   onOpenColumnInsights,
+  teamId,
+  projectId,
+  onLoadMore,
+  onSearchColumn,
+  perColumnPageSize = 20,
 }) => {
-  // Debug: Log das configurações recebidas
-  // console.log('🎯 Column recebeu viewSettings:', viewSettings);
-  // console.log('🎯 Column recebeu settings:', settings);
-  // console.log('🎯 Column - showTaskCount:', viewSettings?.showTaskCount);
-  // console.log('🎯 Column - scrollMode:', scrollMode);
   const [showMenu, setShowMenu] = useState(false);
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isRefreshingColumn, setIsRefreshingColumn] = useState(false);
+  const [columnSearchText, setColumnSearchText] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, []);
+
+  const columnTasks = tasks.filter(task => task.columnId === column.id);
+
+  const handleSearchChange = (value: string) => {
+    setColumnSearchText(value);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    if (!onSearchColumn || !teamId) return;
+    searchTimeoutRef.current = setTimeout(() => {
+      setIsSearching(true);
+      onSearchColumn(column.id, { search: value.trim() || undefined })
+        .finally(() => setIsSearching(false));
+    }, 400);
+  };
+
+  const handleLoadMore = () => {
+    if (!onLoadMore || !teamId || isLoadingMore) return;
+    setIsLoadingMore(true);
+    onLoadMore(column.id, {
+      currentCount: columnTasks.length,
+      search: columnSearchText.trim() || undefined,
+    }).finally(() => setIsLoadingMore(false));
+  };
+
+  const canLoadMore =
+    Boolean(teamId && onLoadMore && columnTasks.length >= perColumnPageSize);
 
   // Hook para tornar a coluna ordenável (drag and drop)
   const {
@@ -435,8 +539,6 @@ export const Column: React.FC<ColumnProps> = ({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-
-  const columnTasks = tasks.filter(task => task.columnId === column.id);
 
   /** Estatísticas do estágio: em andamento, esfriando, sem tarefas, atrasadas, sem produtos/serviços */
   const columnStats = useMemo(() => {
@@ -597,7 +699,8 @@ export const Column: React.FC<ColumnProps> = ({
                 </StuckIndicator>
               )}
             </ColumnValueBadge>
-            {columnStuckCount &&
+            {canViewAnalytics &&
+              columnStuckCount &&
               (columnStuckCount.stuckCount > 0 ||
                 columnStuckCount.followUpCount > 0) && (
                 <ColumnInsightsWrap title='Insights IA: parados 7+ dias e precisando follow-up'>
@@ -631,51 +734,53 @@ export const Column: React.FC<ColumnProps> = ({
                 <MdRefresh size={18} />
               </RefreshColumnButton>
             )}
-            <div ref={statsDropdownRef} style={{ position: 'relative' }}>
-              <StatsMenuButton
-                type='button'
-                onClick={e => {
-                  e.stopPropagation();
-                  setShowMenu(false);
-                  setShowStatsDropdown(prev => !prev);
-                }}
-                title='Estatísticas do estágio'
-              >
-                <MdBarChart size={18} />
-              </StatsMenuButton>
-              <StatsDropdown
-                $isOpen={showStatsDropdown}
-                onClick={e => e.stopPropagation()}
-              >
-                <StatsDropdownTitle>Estatísticas do estágio</StatsDropdownTitle>
-                <ColumnStatRow>
-                  <ColumnStatLabel>Em andamento</ColumnStatLabel>
-                  <ColumnStatValue>{columnStats.emAndamento}</ColumnStatValue>
-                </ColumnStatRow>
-                <ColumnStatRow>
-                  <ColumnStatLabel>Esfriando</ColumnStatLabel>
-                  <ColumnStatValue>
-                    {columnStats.esfriando > 0 ? columnStats.esfriando : '-'}
-                  </ColumnStatValue>
-                </ColumnStatRow>
-                <ColumnStatRow>
-                  <ColumnStatLabel>Sem tarefas</ColumnStatLabel>
-                  <ColumnStatValue>{columnStats.semTarefas}</ColumnStatValue>
-                </ColumnStatRow>
-                <ColumnStatRow>
-                  <ColumnStatLabel>Com tarefas atrasadas</ColumnStatLabel>
-                  <ColumnStatValue>
-                    {columnStats.comTarefasAtrasadas}
-                  </ColumnStatValue>
-                </ColumnStatRow>
-                <ColumnStatRow>
-                  <ColumnStatLabel>Sem produtos ou serviços</ColumnStatLabel>
-                  <ColumnStatValue>
-                    {columnStats.semProdutosOuServicos}
-                  </ColumnStatValue>
-                </ColumnStatRow>
-              </StatsDropdown>
-            </div>
+            {canViewAnalytics && (
+              <div ref={statsDropdownRef} style={{ position: 'relative' }}>
+                <StatsMenuButton
+                  type='button'
+                  onClick={e => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    setShowStatsDropdown(prev => !prev);
+                  }}
+                  title='Estatísticas do estágio'
+                >
+                  <MdBarChart size={18} />
+                </StatsMenuButton>
+                <StatsDropdown
+                  $isOpen={showStatsDropdown}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <StatsDropdownTitle>Estatísticas do estágio</StatsDropdownTitle>
+                  <ColumnStatRow>
+                    <ColumnStatLabel>Em andamento</ColumnStatLabel>
+                    <ColumnStatValue>{columnStats.emAndamento}</ColumnStatValue>
+                  </ColumnStatRow>
+                  <ColumnStatRow>
+                    <ColumnStatLabel>Esfriando</ColumnStatLabel>
+                    <ColumnStatValue>
+                      {columnStats.esfriando > 0 ? columnStats.esfriando : '-'}
+                    </ColumnStatValue>
+                  </ColumnStatRow>
+                  <ColumnStatRow>
+                    <ColumnStatLabel>Sem tarefas</ColumnStatLabel>
+                    <ColumnStatValue>{columnStats.semTarefas}</ColumnStatValue>
+                  </ColumnStatRow>
+                  <ColumnStatRow>
+                    <ColumnStatLabel>Com tarefas atrasadas</ColumnStatLabel>
+                    <ColumnStatValue>
+                      {columnStats.comTarefasAtrasadas}
+                    </ColumnStatValue>
+                  </ColumnStatRow>
+                  <ColumnStatRow>
+                    <ColumnStatLabel>Sem produtos ou serviços</ColumnStatLabel>
+                    <ColumnStatValue>
+                      {columnStats.semProdutosOuServicos}
+                    </ColumnStatValue>
+                  </ColumnStatRow>
+                </StatsDropdown>
+              </div>
+            )}
             <ColumnMenu ref={menuRef}>
               <MenuButton
                 onClick={e => {
@@ -743,6 +848,21 @@ export const Column: React.FC<ColumnProps> = ({
           </ColumnHeaderActions>
         </ColumnHeader>
 
+        {onSearchColumn && teamId && (
+          <ColumnSearchWrap>
+            <ColumnSearchInputWrap>
+              <MdSearch className="search-icon" />
+              <ColumnSearchInput
+                type="text"
+                placeholder="Buscar card..."
+                value={columnSearchText}
+                onChange={e => handleSearchChange(e.target.value)}
+                disabled={isSearching}
+              />
+            </ColumnSearchInputWrap>
+          </ColumnSearchWrap>
+        )}
+
         <TasksList
           $scrollMode={scrollMode}
           data-has-many-tasks={columnTasks.length > 8 ? 'true' : 'false'}
@@ -785,6 +905,22 @@ export const Column: React.FC<ColumnProps> = ({
                   />
                 ))}
             </SortableContext>
+          )}
+          {canLoadMore && (
+            <LoadMoreButton
+              type="button"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? (
+                'Carregando...'
+              ) : (
+                <>
+                  <MdExpandMore size={18} />
+                  Carregar mais
+                </>
+              )}
+            </LoadMoreButton>
           )}
         </TasksList>
 

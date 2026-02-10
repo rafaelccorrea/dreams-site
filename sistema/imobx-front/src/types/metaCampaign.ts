@@ -153,3 +153,27 @@ export interface MetaAdItem {
   status?: string;
   effective_status?: string;
 }
+
+/** Registro de lead recebido via webhook (log para admin/SDR) */
+export interface MetaLeadWebhookLogItem {
+  id: string;
+  companyId: string;
+  leadgenId: string;
+  metaCampaignId: string;
+  metaCampaignName: string | null;
+  metaFormId: string | null;
+  leadTitle: string | null;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  kanbanTaskId: string | null;
+  status: 'task_created' | 'no_redirect' | 'task_failed' | 'no_details';
+  metaCreatedTime: number | null;
+  createdAt: string;
+}
+
+export interface MetaLeadWebhookLogResponse {
+  data: MetaLeadWebhookLogItem[];
+  total: number;
+  page: number;
+  limit: number;
+}

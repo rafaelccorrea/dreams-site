@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   MdArrowBack,
   MdHome,
@@ -83,6 +83,8 @@ const formatBRL = (value?: number | string | null) => {
 
 const PropertyDetailsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromGallery = searchParams.get('fromGallery') === 'true';
   const { propertyId } = useParams<{ propertyId: string }>();
   const { isModuleAvailableForCompany } = useModuleAccess();
   const [property, setProperty] = useState<Property | null>(null);
@@ -115,8 +117,10 @@ const PropertyDetailsPage: React.FC = () => {
     try {
       setIsLoading(true);
 
-      // Carregar dados da propriedade
-      const propertyData = await propertyApi.getPropertyById(propertyId);
+      // Carregar dados da propriedade (fromGallery permite ver qualquer propriedade da empresa, vindo da galeria)
+      const propertyData = await propertyApi.getPropertyById(propertyId, {
+        fromGallery,
+      });
       setProperty(propertyData);
 
       // Carregar informações do responsável se disponível
@@ -158,11 +162,11 @@ const PropertyDetailsPage: React.FC = () => {
     } catch (error) {
       console.error('Erro ao carregar detalhes da propriedade:', error);
       toast.error('Erro ao carregar propriedade');
-      navigate('/properties');
+      navigate(fromGallery ? '/gallery' : '/properties');
     } finally {
       setIsLoading(false);
     }
-  }, [propertyId, navigate]);
+  }, [propertyId, navigate, fromGallery]);
 
   useEffect(() => {
     if (propertyId) {
@@ -230,8 +234,8 @@ const PropertyDetailsPage: React.FC = () => {
           <ErrorMessage>
             Esta propriedade não existe ou foi removida.
           </ErrorMessage>
-          <ErrorButton onClick={() => navigate('/properties')}>
-            Voltar às Propriedades
+          <ErrorButton onClick={() => navigate(fromGallery ? '/gallery' : '/properties')}>
+            {fromGallery ? 'Voltar à Galeria' : 'Voltar às Propriedades'}
           </ErrorButton>
         </ErrorContainer>
       </Layout>
@@ -256,9 +260,11 @@ const PropertyDetailsPage: React.FC = () => {
               </PropertyAddress>
             </PropertyHeader>
 
-            <BackButton onClick={() => navigate('/properties')}>
+            <BackButton
+              onClick={() => navigate(fromGallery ? '/gallery' : '/properties')}
+            >
               <MdArrowBack />
-              Voltar às Propriedades
+              {fromGallery ? 'Voltar à Galeria' : 'Voltar às Propriedades'}
             </BackButton>
           </PropertyDetailsHeaderContent>
         </PropertyDetailsHeader>

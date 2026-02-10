@@ -8,6 +8,8 @@ import { metaCampaignApi } from '../services/metaCampaignApi';
 import type {
   MetaLeadItem,
   MetaLeadsListResponse,
+  MetaLeadWebhookLogItem,
+  MetaLeadWebhookLogResponse,
 } from '../types/metaCampaign';
 import { getNavigationUrl } from '../utils/pathUtils';
 
@@ -215,6 +217,19 @@ const PaginationBtn = styled.button`
   }
 `;
 
+const SectionTitle = styled.h2`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text};
+  margin: 32px 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    margin: 24px 0 10px 0;
+  }
+`;
+
 const EmptyRow = styled.tr`
   td {
     padding: 24px 18px;
@@ -256,12 +271,25 @@ function formatDate(iso: string): string {
   }
 }
 
+const STATUS_LABEL: Record<string, string> = {
+  task_created: 'Tarefa criada',
+  no_redirect: 'Sem funil configurado',
+  task_failed: 'Falha ao criar tarefa',
+  no_details: 'Sem detalhes na Meta',
+};
+
 const MetaLeadsPage: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<MetaLeadsListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const limit = 20;
+
+  const [webhookLog, setWebhookLog] =
+    useState<MetaLeadWebhookLogResponse | null>(null);
+  const [webhookLoading, setWebhookLoading] = useState(true);
+  const [webhookPage, setWebhookPage] = useState(1);
+  const webhookLimit = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -275,12 +303,33 @@ const MetaLeadsPage: React.FC = () => {
     }
   }, [page]);
 
+  const loadWebhookLog = useCallback(async () => {
+    setWebhookLoading(true);
+    try {
+      const res = await metaCampaignApi.getWebhookLeadsLog({
+        page: webhookPage,
+        limit: webhookLimit,
+      });
+      setWebhookLog(res);
+    } catch {
+      setWebhookLog({ data: [], total: 0, page: 1, limit: webhookLimit });
+    } finally {
+      setWebhookLoading(false);
+    }
+  }, [webhookPage]);
+
   useEffect(() => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    loadWebhookLog();
+  }, [loadWebhookLog]);
+
   const leads = data?.data ?? [];
   const totalPages = data?.totalPages ?? 0;
+  const webhookRows = webhookLog?.data ?? [];
+  const webhookTotalPages = Math.ceil((webhookLog?.total ?? 0) / webhookLimit);
 
   return (
     <Layout>
@@ -378,6 +427,95 @@ const MetaLeadsPage: React.FC = () => {
               type='button'
               disabled={page >= totalPages}
               onClick={() => setPage(p => p + 1)}
+              title='Próxima página'
+            >
+              Próxima
+            </PaginationBtn>
+          </div>
+        </Pagination>
+
+        <SectionTitle>Registros via webhook (quem entrou por campanha)</SectionTitle>
+        <Subtitle style={{ marginBottom: 12 }}>
+          Todos os leads que chegaram pelo webhook da Meta. Mostra quem entrou,
+          em qual campanha e se virou tarefa no CRM.
+        </Subtitle>
+        <TableWrap>
+          <Table>
+            <thead>
+              <tr>
+                <Th>Lead / Nome</Th>
+                <Th>Campanha</Th>
+                <Th>E-mail</Th>
+                <Th>Telefone</Th>
+                <Th>Status</Th>
+                <Th>Recebido em</Th>
+                <Th style={{ width: 100 }}>Ação</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {webhookLoading ? (
+                <LoadingRow>
+                  <Td colSpan={7}>Carregando...</Td>
+                </LoadingRow>
+              ) : webhookRows.length === 0 ? (
+                <EmptyRow>
+                  <Td colSpan={7}>Nenhum registro ainda.</Td>
+                </EmptyRow>
+              ) : (
+                webhookRows.map((row: MetaLeadWebhookLogItem) => (
+                  <tr key={row.id}>
+                    <Td>
+                      <strong>{row.leadTitle || row.leadgenId || '—'}</strong>
+                    </Td>
+                    <Td>{row.metaCampaignName || row.metaCampaignId || '—'}</Td>
+                    <Td>{row.leadEmail || '—'}</Td>
+                    <Td>{row.leadPhone || '—'}</Td>
+                    <Td>{STATUS_LABEL[row.status] ?? row.status}</Td>
+                    <Td>{formatDate(row.createdAt)}</Td>
+                    <Td>
+                      {row.kanbanTaskId ? (
+                        <LinkToTask
+                          href={getNavigationUrl(
+                            `/kanban/task/${row.kanbanTaskId}`
+                          )}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          title='Abrir tarefa no Kanban'
+                        >
+                          <MdOpenInNew size={18} />
+                          Tarefa
+                        </LinkToTask>
+                      ) : (
+                        '—'
+                      )}
+                    </Td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </TableWrap>
+
+        <Pagination>
+          <span>
+            {webhookLog?.total ?? 0} registro(s) no total (webhook)
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PaginationBtn
+              type='button'
+              disabled={webhookPage <= 1}
+              onClick={() => setWebhookPage(p => Math.max(1, p - 1))}
+              title='Página anterior'
+            >
+              Anterior
+            </PaginationBtn>
+            <span>
+              Página {webhookLog?.page ?? 1} de {webhookTotalPages || 1}
+            </span>
+            <PaginationBtn
+              type='button'
+              disabled={webhookPage >= webhookTotalPages}
+              onClick={() => setWebhookPage(p => p + 1)}
               title='Próxima página'
             >
               Próxima

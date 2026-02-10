@@ -21,6 +21,8 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     null
   );
   const [loading, setLoading] = useState(true);
+  const retryCountRef = React.useRef(0);
+  const MAX_RETRY_WHEN_NO_COMPANY = 1;
 
   const user = getCurrentUser();
 
@@ -90,7 +92,32 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
       lastCheckPromise = subscriptionService.checkSubscriptionAccess();
       const info = await lastCheckPromise;
       console.log('✅ SubscriptionGuard: API retornou:', info);
-      setAccessInfo(info);
+
+      // Retry: usuário "user" sem acesso e sem Company ID pode estar em race pós-login
+      const selectedCompanyId =
+        typeof localStorage !== 'undefined'
+          ? localStorage.getItem('dream_keys_selected_company_id')
+          : null;
+      if (
+        !info.hasAccess &&
+        user?.role === 'user' &&
+        !selectedCompanyId &&
+        retryCountRef.current < MAX_RETRY_WHEN_NO_COMPANY
+      ) {
+        retryCountRef.current += 1;
+        console.log(
+          '🔄 SubscriptionGuard: User sem company ID, aguardando 1.5s e retentando...'
+        );
+        lastCheckPromise = null;
+        isCheckingAccess = false;
+        await new Promise(r => setTimeout(r, 1500));
+        subscriptionService.invalidateSubscriptionCaches();
+        const retryInfo =
+          await subscriptionService.checkSubscriptionAccess();
+        setAccessInfo(retryInfo);
+      } else {
+        setAccessInfo(info);
+      }
     } catch (error) {
       console.error('❌ Erro ao verificar assinatura:', error);
       // CORREÇÃO: Em caso de erro na API, NÃO redirecionar automaticamente
@@ -139,15 +166,21 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     return <>{children}</>;
   }
 
-  // ✅ REGRA: APENAS status 'active' tem acesso normal ao sistema
+  // ✅ REGRA: hasAccess é a fonte da verdade do backend; permitir acesso para status active ou custom_plan
+  const hasValidAccess =
+    accessInfo.hasAccess &&
+    (accessInfo.status === 'active' ||
+      accessInfo.status === 'custom_plan' ||
+      accessInfo.status === 'ACTIVE');
   console.log('🔍 [SubscriptionGuardNew] Verificando acesso:', {
     hasAccess: accessInfo.hasAccess,
     status: accessInfo.status,
+    hasValidAccess,
     currentPath: location.pathname,
     userRole: user?.role,
   });
 
-  if (!accessInfo.hasAccess || accessInfo.status !== 'active') {
+  if (!hasValidAccess) {
     const currentPath = location.pathname;
 
     // ✅ CORREÇÃO: Permitir acesso às páginas de planos e gerenciamento de assinatura

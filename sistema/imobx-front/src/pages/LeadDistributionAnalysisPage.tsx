@@ -343,11 +343,17 @@ const Pagination = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  padding: 14px 18px;
+  background: ${p => p.theme.colors.cardBackground};
+  border: 1px solid ${p => p.theme.colors.border};
+  border-radius: 12px;
   font-size: 0.875rem;
   color: ${p => p.theme.colors.textSecondary};
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   @media (max-width: 480px) {
     font-size: 0.8125rem;
     gap: 10px;
+    padding: 12px 14px;
   }
 `;
 
@@ -579,6 +585,7 @@ export default function LeadDistributionAnalysisPage() {
   const [filterAssignedToId, setFilterAssignedToId] = useState('');
   const [filterSource, setFilterSource] = useState('');
   const [onlyWithSource, setOnlyWithSource] = useState(false);
+  const limitOptions = [10, 20, 50, 100];
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -634,10 +641,17 @@ export default function LeadDistributionAnalysisPage() {
     setFilters(prev => ({ ...prev, page }));
   };
 
+  const setLimit = (newLimit: number) => {
+    setFilters(prev => ({ ...prev, limit: newLimit, page: 1 }));
+  };
+
   const leads = result?.data ?? [];
   const total = result?.total ?? 0;
   const page = result?.page ?? 1;
+  const limit = result?.limit ?? 20;
   const totalPages = result?.totalPages ?? 1;
+  const from = total === 0 ? 0 : (page - 1) * limit + 1;
+  const to = Math.min(page * limit, total);
 
   if (loading && !result) {
     return (
@@ -970,12 +984,41 @@ export default function LeadDistributionAnalysisPage() {
         </TableOnly>
 
         <Pagination>
-          <span>{total} lead(s) no total</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+            <span>
+              {total === 0
+                ? 'Nenhum lead'
+                : `Mostrando ${from}–${to} de ${total} lead(s)`}
+            </span>
+            <FilterGroup style={{ marginBottom: 0, minWidth: 100 }}>
+              <FilterLabel>Por página</FilterLabel>
+              <FilterSelect
+                value={limit}
+                onChange={e => setLimit(Number(e.target.value))}
+                style={{ minWidth: 80 }}
+              >
+                {limitOptions.map(n => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </FilterSelect>
+            </FilterGroup>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PaginationBtn
               type='button'
               disabled={page <= 1}
+              onClick={() => setPage(1)}
+              title='Primeira página'
+            >
+              Primeira
+            </PaginationBtn>
+            <PaginationBtn
+              type='button'
+              disabled={page <= 1}
               onClick={() => setPage(page - 1)}
+              title='Página anterior'
             >
               Anterior
             </PaginationBtn>
@@ -986,8 +1029,17 @@ export default function LeadDistributionAnalysisPage() {
               type='button'
               disabled={page >= totalPages}
               onClick={() => setPage(page + 1)}
+              title='Próxima página'
             >
               Próxima
+            </PaginationBtn>
+            <PaginationBtn
+              type='button'
+              disabled={page >= totalPages}
+              onClick={() => setPage(totalPages || 1)}
+              title='Última página'
+            >
+              Última
             </PaginationBtn>
           </div>
         </Pagination>

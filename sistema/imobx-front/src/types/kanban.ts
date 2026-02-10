@@ -122,6 +122,25 @@ export interface KanbanTask {
   color?: string;
   // ID da tarefa original se esta foi transferida/duplicada
   originalTaskId?: string;
+  // Dados de origem (importação de outro CRM/funil)
+  externalId?: string | null;
+  lastActivityAt?: string | null;
+  contactSnapshot?: Array<{
+    id?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+  }> | null;
+  productSnapshot?: unknown[] | null;
+  externalCustomFields?: Record<string, unknown> | null;
+  enrichedFromSource?: boolean;
+  /** Histórico da negociação no sistema de origem (ex.: RD Station) */
+  sourceHistory?: Array<{
+    at?: string;
+    userName?: string;
+    text?: string;
+    type?: string;
+  }> | null;
 }
 
 export interface KanbanBoard {

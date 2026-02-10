@@ -1280,3 +1280,152 @@ export const ApplyButton = styled.button`
     cursor: not-allowed;
   }
 `;
+
+// Bloco "Ver equipes do usuário"
+export const UserTeamsLookup = styled.div`
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  background: ${props => props.theme.colors.cardBackground};
+  border-radius: 16px;
+  border: 1px solid ${props => props.theme.colors.border};
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+`;
+
+export const UserTeamsLookupRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+export const UserTeamsLookupLabel = styled.label`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text};
+  white-space: nowrap;
+`;
+
+export const UserTeamsSelect = styled.select`
+  min-width: 280px;
+  padding: 10px 14px;
+  border: 2px solid ${props => props.theme.colors.border};
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: ${props => props.theme.colors.text};
+  background: ${props => props.theme.colors.background};
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+  }
+`;
+
+export const UserTeamsSelectWrap = styled.div`
+  position: relative;
+  min-width: 280px;
+`;
+
+export const UserTeamsSearchInput = styled.input`
+  width: 100%;
+  min-width: 280px;
+  padding: 10px 14px 10px 36px;
+  border: 2px solid ${props => props.theme.colors.border};
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: ${props => props.theme.colors.text};
+  background: ${props => props.theme.colors.background};
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+  }
+
+  &::placeholder {
+    color: ${props => props.theme.colors.textLight};
+  }
+`;
+
+export const UserTeamsSearchIcon = styled.span`
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${props => props.theme.colors.textSecondary};
+  pointer-events: none;
+  font-size: 1rem;
+`;
+
+export const UserTeamsDropdown = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: ${props => props.theme.colors.cardBackground};
+  border: 2px solid ${props => props.theme.colors.border};
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+`;
+
+export const UserTeamsOption = styled.button`
+  width: 100%;
+  display: block;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 0.95rem;
+  color: ${props => props.theme.colors.text};
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: ${props => props.theme.colors.primary}15;
+  }
+
+  &:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+`;
+
+export const UserTeamsOptionEmpty = styled.div`
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+export const UserTeamsResult = styled.div`
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: ${props => props.theme.colors.background};
+  border-radius: 10px;
+  border-left: 4px solid ${props => props.theme.colors.primary};
+  font-size: 0.9rem;
+  color: ${props => props.theme.colors.text};
+`;
+
+export const UserTeamsResultList = styled.ul`
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+`;
+
+export const UserTeamsResultItem = styled.li`
+  margin-bottom: 4px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;

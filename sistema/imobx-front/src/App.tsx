@@ -89,7 +89,26 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const RoleBasedDashboard = lazy(
   () => import('./components/RoleBasedDashboard')
 );
-const KanbanPage = lazy(() => import('./pages/KanbanPage'));
+// Retry para lazy load (evita "Failed to fetch dynamically imported module")
+function lazyWithRetry(
+  importFn: () => Promise<{ default: React.ComponentType<any> }>,
+  retries = 2
+) {
+  return lazy(async () => {
+    let lastError: unknown;
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await importFn();
+      } catch (e) {
+        lastError = e;
+        if (i < retries) await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+      }
+    }
+    throw lastError;
+  });
+}
+
+const KanbanPage = lazyWithRetry(() => import('./pages/KanbanPage'));
 const KanbanSettingsPage = lazy(() => import('./pages/KanbanSettingsPage'));
 const ColorRulesPage = lazy(() => import('./pages/ColorRulesPage'));
 const KanbanMetricsPage = lazy(() => import('./pages/KanbanMetricsPage'));
