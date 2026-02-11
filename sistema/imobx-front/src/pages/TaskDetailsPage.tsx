@@ -159,36 +159,70 @@ const ContentWrapper = styled.div`
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 
-  @media (max-width: 968px) {
+  @media (max-width: 992px) {
     flex-direction: column;
+    overflow-y: auto;
   }
 `;
 
 const LeftPanel = styled.div`
-  width: 400px;
-  padding: 36px 28px;
+  width: 380px;
+  min-width: 280px;
+  max-width: 100%;
+  padding: 24px 20px;
   background: ${props => props.theme.colors.cardBackground};
   border-right: 1px solid ${props => props.theme.colors.border};
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
   position: relative;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
 
-  @media (max-width: 1024px) and (min-width: 769px) {
-    width: 320px;
-    padding: 28px 20px;
+  @media (max-width: 1200px) and (min-width: 993px) {
+    width: 340px;
+    padding: 20px 18px;
   }
 
-  @media (max-width: 968px) {
+  @media (max-width: 992px) {
     width: 100%;
+    min-width: 0;
+    max-height: none;
     padding: 20px 16px;
     border-right: none;
-    border-top: 1px solid ${props => props.theme.colors.border};
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid ${props => props.theme.colors.border};
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
   @media (max-width: 768px) {
     padding: 16px 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 10px;
+  }
+`;
+
+/** Agrupa as seções da lateral com espaçamento uniforme e distribuição responsiva */
+const LeftPanelInner = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+
+  @media (max-width: 992px) {
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    gap: 18px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 16px;
   }
 `;
 
@@ -477,18 +511,11 @@ const ActionButton = styled.button<{ $variant?: 'danger' | 'success' }>`
 `;
 
 const Section = styled.div`
-  margin-bottom: 32px;
+  margin-bottom: 0;
+  min-width: 0;
 
   &:last-child {
     margin-bottom: 0;
-  }
-
-  @media (max-width: 1024px) and (min-width: 769px) {
-    margin-bottom: 24px;
-  }
-
-  @media (max-width: 768px) {
-    margin-bottom: 16px;
   }
 `;
 
@@ -496,21 +523,32 @@ const SectionHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  min-width: 0;
 
   @media (max-width: 768px) {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     gap: 6px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 8px;
   }
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: ${props => props.theme.colors.text};
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0;
+  min-width: 0;
+  word-break: break-word;
+
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const SectionIcon = styled.div`
@@ -523,16 +561,27 @@ const ClientInfoCard = styled.div`
   background: ${props => props.theme.colors.cardBackground};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 12px;
-  padding: 20px;
-  margin-top: 16px;
+  padding: 16px;
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
+  min-width: 0;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    padding: 14px;
+    margin-top: 10px;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
   }
 `;
 
@@ -582,8 +631,13 @@ const ClientInfoBadge = styled.span<{ $type?: string }>`
 
 const ClientInfoGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 12px 16px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 `;
 
 const ClientInfoItem = styled.div`
@@ -614,16 +668,27 @@ const PropertyInfoCard = styled.div`
   background: ${props => props.theme.colors.cardBackground};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 12px;
-  padding: 20px;
-  margin-top: 16px;
+  padding: 16px;
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
+  min-width: 0;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    padding: 14px;
+    margin-top: 10px;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
   }
 `;
 
@@ -645,8 +710,13 @@ const PropertyInfoTitle = styled.h4`
 
 const PropertyInfoGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 12px 16px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 `;
 
 const PropertyInfoItem = styled.div`
@@ -726,34 +796,32 @@ const EditableDescription = styled.textarea`
 const InfoCard = styled.div<{ $hasDropdownOpen?: boolean }>`
   background: ${props => props.theme.colors.cardBackground};
   border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: ${props => (props.$hasDropdownOpen ? 'visible' : 'hidden')};
   z-index: ${props => (props.$hasDropdownOpen ? 1 : 'auto')};
+  min-width: 0;
 
   &:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: ${props => props.theme.colors.primary}40;
   }
 
-  @media (max-width: 1024px) and (min-width: 769px) {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
   @media (max-width: 768px) {
-    padding: 16px;
-    margin-bottom: 16px;
-    border-radius: 12px;
+    padding: 14px;
+    border-radius: 10px;
 
     &:hover {
       transform: none;
     }
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
   }
 `;
 
@@ -1274,7 +1342,13 @@ const MainContent = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
   background: ${props => props.theme.colors.background};
+
+  @media (max-width: 992px) {
+    min-height: 400px;
+  }
 `;
 
 const CreateSubTaskButtonContainer = styled.div`
@@ -1383,38 +1457,62 @@ const Tab = styled.button<{ active: boolean }>`
 `;
 
 const TabContent = styled.div<{ active: boolean }>`
-  display: ${props => (props.active ? 'block' : 'none')};
-  padding: 32px;
+  display: ${props => (props.active ? 'flex' : 'none')};
+  flex-direction: column;
+  padding: 20px 28px 28px;
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  align-self: flex-start;
+  box-sizing: border-box;
 
   @media (max-width: 1024px) and (min-width: 769px) {
-    padding: 24px;
+    padding: 18px 20px 24px;
+    max-width: 100%;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 14px 12px 20px;
+    max-width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 10px 16px;
   }
 `;
 
 const HistoryList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
 `;
 
 const HistoryItem = styled.div`
   display: flex;
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  padding: 14px 18px;
   background: ${props => props.theme.colors.cardBackground};
   border-radius: 12px;
   border: 1px solid ${props => props.theme.colors.border};
   transition: all 0.2s ease;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 
   &:hover {
     border-color: ${props => props.theme.colors.primary}40;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 14px;
+    gap: 12px;
   }
 `;
 
@@ -1451,6 +1549,7 @@ const SourceHistoryTitle = styled.h3`
   font-weight: 600;
   color: ${props => props.theme.colors.text};
   margin: 0 0 12px 0;
+  width: 100%;
 `;
 
 const LoadingHistory = styled.div`
@@ -1865,29 +1964,42 @@ const ShimmerContentWrapper = styled.div`
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+
+  @media (max-width: 992px) {
+    flex-direction: column;
+  }
 `;
 
 const ShimmerLeftPanel = styled.div`
-  width: 400px;
-  padding: 36px 28px;
+  width: 380px;
+  min-width: 280px;
+  padding: 24px 20px;
   background: ${props => props.theme.colors.cardBackground};
   border-right: 1px solid ${props => props.theme.colors.border};
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   gap: 24px;
+  flex-shrink: 0;
 
-  @media (max-width: 1024px) and (min-width: 769px) {
-    width: 320px;
-    padding: 28px 20px;
+  @media (max-width: 1200px) and (min-width: 993px) {
+    width: 340px;
+    padding: 20px 18px;
   }
 
-  @media (max-width: 968px) {
+  @media (max-width: 992px) {
     width: 100%;
+    min-width: 0;
     padding: 20px 16px;
     border-right: none;
-    border-top: 1px solid ${props => props.theme.colors.border};
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid ${props => props.theme.colors.border};
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px 12px;
+    gap: 20px;
   }
 `;
 
@@ -2657,11 +2769,20 @@ const TaskDetailsPage: React.FC = () => {
   const handleChangeTotalValue = useCallback(
     async (value: string) => {
       if (!task) return;
+      const numericValue = value ? getNumericValue(value) : undefined;
+      const currentNumeric = task.totalValue ?? undefined;
+      // Só chamar API se o valor realmente mudou (evita histórico fantasma)
+      if (numericValue === currentNumeric) return;
+      if (
+        numericValue != null &&
+        currentNumeric != null &&
+        Math.abs(numericValue - currentNumeric) < 0.01
+      )
+        return;
+
       const previousValue = currentTotalValue;
       const previousTask = { ...task };
 
-      // Update otimista IMEDIATO
-      const numericValue = value ? getNumericValue(value) : undefined;
       setTask(prev =>
         prev
           ? {
@@ -2677,10 +2798,8 @@ const TaskDetailsPage: React.FC = () => {
 
       try {
         await kanbanApi.updateTaskFields(task.id, { totalValue: numericValue });
-        // Não atualizar o estado - já foi atualizado otimisticamente
       } catch (error: any) {
         console.error('Erro ao alterar valor:', error);
-        // Rollback - reverter para estado anterior
         setCurrentTotalValue(previousValue);
         setTask(previousTask);
         showError(error?.message || 'Erro ao alterar valor');
@@ -4192,6 +4311,7 @@ const TaskDetailsPage: React.FC = () => {
 
         <ContentWrapper>
           <LeftPanel>
+            <LeftPanelInner>
             <Section>
               <SectionHeader>
                 <SectionIcon>
@@ -4504,7 +4624,6 @@ const TaskDetailsPage: React.FC = () => {
                     scheduleValueSave(formatted);
                   }}
                   onBlur={() => {
-                    // Limpar timeout e salvar imediatamente ao perder o foco
                     if (saveValueTimeoutRef.current) {
                       clearTimeout(saveValueTimeoutRef.current);
                     }
@@ -5047,6 +5166,7 @@ const TaskDetailsPage: React.FC = () => {
                 />
               </Section>
             )}
+            </LeftPanelInner>
           </LeftPanel>
 
           <MainContent>
@@ -5120,7 +5240,7 @@ const TaskDetailsPage: React.FC = () => {
                       {task?.sourceHistory && task.sourceHistory.length > 0 && (
                         <>
                           <SourceHistoryTitle>Histórico da origem</SourceHistoryTitle>
-                          <HistoryList style={{ marginBottom: '24px' }}>
+                          <HistoryList style={{ marginBottom: '20px' }}>
                             {[...task.sourceHistory]
                               .sort(
                                 (a, b) =>
@@ -5166,7 +5286,7 @@ const TaskDetailsPage: React.FC = () => {
                       />
                       {validationHistory?.executions &&
                         validationHistory.executions.length > 0 && (
-                          <HistoryList style={{ marginTop: '24px' }}>
+                          <HistoryList style={{ marginTop: '20px' }}>
                             {validationHistory.executions.map(
                               (validation, index) => (
                                 <HistoryItem key={`validation-${index}`}>
@@ -5195,7 +5315,7 @@ const TaskDetailsPage: React.FC = () => {
                         )}
                       {actionHistory?.executions &&
                         actionHistory.executions.length > 0 && (
-                          <HistoryList style={{ marginTop: '24px' }}>
+                          <HistoryList style={{ marginTop: '20px' }}>
                             {actionHistory.executions.map((action, index) => (
                               <HistoryItem key={`action-${index}`}>
                                 <HistoryAvatarSection>

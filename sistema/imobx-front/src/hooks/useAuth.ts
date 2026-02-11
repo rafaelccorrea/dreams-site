@@ -749,9 +749,14 @@ export const useAuth = (): UseAuthReturn => {
     console.error('Erro na autenticação:', error);
 
     let errorMessage = defaultMessage;
+    const details = error?.response?.data?.details;
 
     if (error.response?.status === 401) {
-      errorMessage = 'Email ou senha incorretos.';
+      const reason = details?.reason || error?.response?.data?.message;
+      const suggestion = details?.suggestion;
+      errorMessage =
+        [reason, suggestion].filter(Boolean).join('. ') ||
+        'Email ou senha incorretos. Verifique e tente novamente.';
     } else if (error.response?.status === 409) {
       errorMessage =
         error.response.data?.message || 'Email ou CPF/CNPJ já está em uso.';
@@ -843,6 +848,18 @@ export const useAuth = (): UseAuthReturn => {
             'Sua empresa exige 2FA. Configure-o em Configurações > Segurança para continuar.',
         });
         navigate('/settings');
+        return;
+      }
+      // 401 credenciais inválidas (INVALID_CREDENTIALS): exibir mensagem do backend sem recarregar
+      if (error?.response?.status === 401 && errData?.errorCode === 'INVALID_CREDENTIALS') {
+        const details = errData?.details || {};
+        const reason = details.reason || errData?.message;
+        const suggestion = details.suggestion;
+        const msg =
+          [reason, suggestion].filter(Boolean).join('. ') ||
+          'Email ou senha incorretos. Verifique suas credenciais e tente novamente.';
+        setIsLoading(false);
+        setAlert({ type: 'error', message: msg });
         return;
       }
       console.error('Erro no login:', error);

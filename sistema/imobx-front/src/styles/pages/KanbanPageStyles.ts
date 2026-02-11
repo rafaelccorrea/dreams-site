@@ -23,6 +23,6 @@ export const ProjectSelectLabel = styled.label`
 
 export const ProjectSelectWrapper = styled.div`
   flex: 1;
-  min-width: 280px;
+  min-width: 320px;
   max-width: 400px;
 `;

@@ -71,27 +71,44 @@ export const ColumnContainer = styled.div<{
     min-width: 300px;
     max-width: none;
     padding: 14px;
+    height: calc(100vh - 200px);
+    min-height: 380px;
+    max-height: calc(100vh - 200px);
   }
 
   /* Mobile: largura fixa com scroll horizontal */
   @media (max-width: 768px) {
     flex: 0 0 auto;
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
     padding: 12px;
     border-radius: 12px;
+    height: calc(100vh - 240px);
+    min-height: 320px;
+    max-height: calc(100vh - 240px);
 
     &:hover {
       transform: none;
     }
   }
+
+  /* Mobile pequeno */
+  @media (max-width: 480px) {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    padding: 10px;
+    height: calc(100vh - 220px);
+    min-height: 280px;
+    max-height: calc(100vh - 220px);
+  }
 `;
 
 export const ColumnHeader = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid ${props => props.theme.colors.border};
@@ -314,6 +331,7 @@ export const TasksList = styled.div<{ $scrollMode?: 'scroll' | 'expand' }>`
 `;
 
 export const TaskCount = styled.span`
+  flex-shrink: 0;
   background: linear-gradient(
     135deg,
     ${props => props.theme.colors.primary}20,
@@ -322,9 +340,8 @@ export const TaskCount = styled.span`
   color: ${props => props.theme.colors.primary};
   font-size: 0.813rem;
   font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 16px;
-  margin-left: 8px;
+  padding: 4px 10px;
+  border-radius: 14px;
   border: 1px solid ${props => props.theme.colors.primary}30;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;

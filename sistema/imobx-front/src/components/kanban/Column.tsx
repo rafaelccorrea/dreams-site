@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import {
   MdAdd,
   MdMoreVert,
@@ -15,6 +15,7 @@ import {
   MdAutoAwesome,
   MdSearch,
   MdExpandMore,
+  MdClose,
 } from 'react-icons/md';
 import { useDroppable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
@@ -33,13 +34,6 @@ import { formatCurrencyValue } from '../../utils/masks';
 /** Exibir opção "Configurar Ações" no menu da coluna (oculto por enquanto) */
 const SHOW_CONFIGURE_ACTIONS = false;
 
-const ColumnTitleContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-`;
-
 const ColumnTitleRow = styled.h3<{
   $headerStyle?: 'simple' | 'gradient' | 'colored';
 }>`
@@ -49,13 +43,13 @@ const ColumnTitleRow = styled.h3<{
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   letter-spacing: -0.01em;
   padding: 4px 8px;
   border-radius: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   min-width: 0;
-  overflow: hidden;
+  width: 100%;
 
   /* Configuração de estilo do cabeçalho */
   ${props => {
@@ -80,25 +74,45 @@ const ColumnTitleRow = styled.h3<{
     }
   }}
 
-  @media (max-width: 1024px) and (min-width: 769px) {
-    font-size: 0.9rem;
-    padding: 5px 8px;
-    gap: 6px;
-    flex-wrap: nowrap;
-  }
-
   @media (max-width: 768px) {
     font-size: 0.85rem;
-    padding: 5px 8px;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 0.8rem;
     padding: 4px 6px;
-    gap: 3px;
+    gap: 6px;
   }
+`;
+
+const ColumnTitleLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+`;
+
+const ColumnTitleText = styled.span`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const ColumnHeaderBottomRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+`;
+
+const ColumnHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1;
 `;
 
 const ColumnValueBadge = styled.div<{ $hasStuck?: boolean }>`
@@ -123,7 +137,6 @@ const ColumnValueBadge = styled.div<{ $hasStuck?: boolean }>`
         : props.theme.colors.primary + '30'};
   white-space: nowrap;
   flex-shrink: 0;
-  align-self: flex-start;
 
   @media (max-width: 768px) {
     font-size: 0.7rem;
@@ -192,6 +205,25 @@ const InsightPill = styled.span<{ $variant: 'stuck' | 'followup' }>`
   @media (max-width: 768px) {
     padding: 2px 5px;
     font-size: 0.6rem;
+  }
+`;
+
+/** Resumo de Insights IA no menu da coluna (parados / follow-up) */
+const MenuInsightsSummary = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  color: ${props => props.theme.colors.textSecondary};
+  background: ${props => props.theme.colors.primary}08;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+  pointer-events: none;
+  flex-wrap: wrap;
+
+  svg {
+    color: ${props => props.theme.colors.primary};
+    flex-shrink: 0;
   }
 `;
 
@@ -334,33 +366,128 @@ import {
 } from '../../styles/components/ColumnStyles';
 
 const ColumnSearchWrap = styled.div`
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   flex-shrink: 0;
 `;
-const ColumnSearchInput = styled.input`
-  width: 100%;
-  padding: 6px 10px 6px 32px;
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: ${props => props.theme.colors.text};
-  background: ${props => props.theme.colors.background};
-  &:focus {
-    outline: none;
-    border-color: ${props => props.theme.colors.primary};
-  }
-`;
+
 const ColumnSearchInputWrap = styled.div`
   position: relative;
-  .search-icon {
+  display: flex;
+  align-items: center;
+
+  .column-search-icon {
     position: absolute;
-    left: 10px;
+    left: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: ${props => props.theme.colors.textSecondary};
     pointer-events: none;
-    font-size: 14px;
+    font-size: 18px;
+    opacity: 0.85;
+    transition: color 0.2s ease, opacity 0.2s ease;
   }
+
+  &:focus-within .column-search-icon {
+    color: ${props => props.theme.colors.primary};
+    opacity: 1;
+  }
+`;
+
+const ColumnSearchInput = styled.input<{ $hasClear?: boolean; $isSearching?: boolean }>`
+  width: 100%;
+  height: 36px;
+  padding: 0 12px 0 40px;
+  padding-right: ${props => (props.$hasClear ? 36 : props.$isSearching ? 36 : 12)}px;
+  border: 1px solid ${props => props.theme.colors.border || 'rgba(0,0,0,0.08)'};
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: ${props => props.theme.colors.text};
+  background: ${props => props.theme.colors.surface ?? props.theme.colors.background};
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+  &::placeholder {
+    color: ${props => props.theme.colors.textSecondary};
+    opacity: 0.8;
+  }
+
+  &:hover:not(:disabled):not(:focus) {
+    border-color: ${props => props.theme.colors.textSecondary}40;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${props => `${props.theme.colors.primary}20`};
+  }
+
+  &:disabled {
+    opacity: 0.85;
+    cursor: not-allowed;
+  }
+`;
+
+const ColumnSearchClearBtn = styled.button`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: ${props => props.theme.colors.textSecondary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    color: ${props => props.theme.colors.text};
+    background: ${props => props.theme.colors.border}40;
+  }
+
+  .icon {
+    font-size: 16px;
+  }
+`;
+
+const spinKeyframes = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const SmallSpinner = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid ${props => props.theme.colors.border};
+  border-top-color: ${props => props.theme.colors.primary};
+  border-radius: 50%;
+  animation: ${spinKeyframes} 0.7s linear infinite;
+`;
+
+const ColumnSearchSpinnerWrap = styled.div`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+`;
+
+const ColumnSearchFeedback = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 0;
+  font-size: 0.75rem;
+  color: ${props => props.theme.colors.primary};
+  min-height: 20px;
 `;
 const LoadMoreButton = styled.button`
   width: 100%;
@@ -468,7 +595,7 @@ export const Column: React.FC<ColumnProps> = ({
   projectId,
   onLoadMore,
   onSearchColumn,
-  perColumnPageSize = 20,
+  perColumnPageSize = 12,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
@@ -654,8 +781,8 @@ export const Column: React.FC<ColumnProps> = ({
         className='column-container'
       >
         <ColumnHeader className='column-header'>
-          <ColumnTitleContainer>
-            <ColumnTitleRow $headerStyle={settings?.columnHeaderStyle}>
+          <ColumnTitleRow $headerStyle={settings?.columnHeaderStyle}>
+            <ColumnTitleLeft>
               <ColumnColor color={column.color || '#6B7280'} />
               <div
                 {...attributes}
@@ -665,6 +792,7 @@ export const Column: React.FC<ColumnProps> = ({
                     canEditColumns && !isColumnLocked ? 'grab' : 'not-allowed',
                   display: 'flex',
                   alignItems: 'center',
+                  flexShrink: 0,
                   opacity: isColumnLocked ? 0.5 : 1,
                 }}
                 title={
@@ -677,49 +805,35 @@ export const Column: React.FC<ColumnProps> = ({
               >
                 <MdDragIndicator size={16} />
               </div>
-              {column.title}
-              {viewSettings?.showTaskCount !== false && (
-                <TaskCount data-show-task-count='true'>
-                  ({columnTasks.length})
-                </TaskCount>
-              )}
-            </ColumnTitleRow>
-            <ColumnValueBadge
-              $hasStuck={Boolean(
-                columnValue?.stuckValue && columnValue.stuckValue > 0
-              )}
-            >
-              {formatCurrency(columnValue?.totalValue || 0)}
-              {columnValue?.stuckValue && columnValue.stuckValue > 0 && (
-                <StuckIndicator
-                  title={`${formatCurrency(columnValue.stuckValue)} parado há mais de 7 dias`}
-                >
-                  <MdWarning size={12} />
-                  {columnValue.stuckTasks || 0}
-                </StuckIndicator>
-              )}
-            </ColumnValueBadge>
-            {canViewAnalytics &&
-              columnStuckCount &&
-              (columnStuckCount.stuckCount > 0 ||
-                columnStuckCount.followUpCount > 0) && (
-                <ColumnInsightsWrap title='Insights IA: parados 7+ dias e precisando follow-up'>
-                  {columnStuckCount.stuckCount > 0 && (
-                    <InsightPill $variant='stuck'>
-                      <MdWarning size={10} />
-                      {columnStuckCount.stuckCount}
-                    </InsightPill>
-                  )}
-                  {columnStuckCount.followUpCount > 0 && (
-                    <InsightPill $variant='followup'>
-                      <MdSchedule size={10} />
-                      {columnStuckCount.followUpCount}
-                    </InsightPill>
-                  )}
-                </ColumnInsightsWrap>
-              )}
-          </ColumnTitleContainer>
-          <ColumnHeaderActions>
+              <ColumnTitleText title={column.title}>
+                {column.title}
+              </ColumnTitleText>
+            </ColumnTitleLeft>
+            {viewSettings?.showTaskCount !== false && (
+              <TaskCount data-show-task-count='true'>
+                ({columnTasks.length})
+              </TaskCount>
+            )}
+          </ColumnTitleRow>
+          <ColumnHeaderBottomRow>
+            <ColumnHeaderLeft>
+              <ColumnValueBadge
+                $hasStuck={Boolean(
+                  columnValue?.stuckValue && columnValue.stuckValue > 0
+                )}
+              >
+                {formatCurrency(columnValue?.totalValue || 0)}
+                {columnValue?.stuckValue && columnValue.stuckValue > 0 && (
+                  <StuckIndicator
+                    title={`${formatCurrency(columnValue.stuckValue)} parado há mais de 7 dias`}
+                  >
+                    <MdWarning size={12} />
+                    {columnValue.stuckTasks || 0}
+                  </StuckIndicator>
+                )}
+              </ColumnValueBadge>
+            </ColumnHeaderLeft>
+            <ColumnHeaderActions>
             {onRefreshColumn && (
               <RefreshColumnButton
                 type='button'
@@ -796,6 +910,29 @@ export const Column: React.FC<ColumnProps> = ({
                 $isOpen={showMenu}
                 onClick={e => e.stopPropagation()}
               >
+                {canViewAnalytics &&
+                  columnStuckCount &&
+                  (columnStuckCount.stuckCount > 0 ||
+                    columnStuckCount.followUpCount > 0) && (
+                    <MenuInsightsSummary>
+                      <MdAutoAwesome size={14} />
+                      {columnStuckCount.stuckCount > 0 && (
+                        <span>
+                          {columnStuckCount.stuckCount} parado
+                          {columnStuckCount.stuckCount > 1 ? 's' : ''} 7+ dias
+                        </span>
+                      )}
+                      {columnStuckCount.stuckCount > 0 &&
+                        columnStuckCount.followUpCount > 0 && (
+                          <span> · </span>
+                        )}
+                      {columnStuckCount.followUpCount > 0 && (
+                        <span>
+                          {columnStuckCount.followUpCount} follow-up
+                        </span>
+                      )}
+                    </MenuInsightsSummary>
+                  )}
                 {canCreateTasks && (
                   <MenuItem onClick={handleAddTask}>
                     <MdAdd size={16} />
@@ -846,20 +983,51 @@ export const Column: React.FC<ColumnProps> = ({
               </MenuDropdown>
             </ColumnMenu>
           </ColumnHeaderActions>
+          </ColumnHeaderBottomRow>
         </ColumnHeader>
 
         {onSearchColumn && teamId && (
           <ColumnSearchWrap>
             <ColumnSearchInputWrap>
-              <MdSearch className="search-icon" />
+              <MdSearch className='column-search-icon' aria-hidden />
+              {isSearching ? (
+                <ColumnSearchSpinnerWrap>
+                  <SmallSpinner />
+                </ColumnSearchSpinnerWrap>
+              ) : columnSearchText.length > 0 ? (
+                <ColumnSearchClearBtn
+                  type='button'
+                  onClick={() => {
+                    setColumnSearchText('');
+                    if (onSearchColumn && teamId) {
+                      setIsSearching(true);
+                      onSearchColumn(column.id, { search: undefined }).finally(() =>
+                        setIsSearching(false)
+                      );
+                    }
+                  }}
+                  aria-label='Limpar busca'
+                >
+                  <MdClose className='icon' />
+                </ColumnSearchClearBtn>
+              ) : null}
               <ColumnSearchInput
-                type="text"
-                placeholder="Buscar card..."
+                type='search'
+                placeholder='Buscar nesta coluna...'
                 value={columnSearchText}
                 onChange={e => handleSearchChange(e.target.value)}
                 disabled={isSearching}
+                $isSearching={isSearching}
+                $hasClear={columnSearchText.length > 0}
+                aria-label='Buscar cards nesta coluna'
               />
             </ColumnSearchInputWrap>
+            {isSearching && (
+              <ColumnSearchFeedback>
+                <SmallSpinner />
+                <span>Buscando cards...</span>
+              </ColumnSearchFeedback>
+            )}
           </ColumnSearchWrap>
         )}
 

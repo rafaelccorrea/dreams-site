@@ -11,6 +11,7 @@ import {
 import { usePersonalWorkspace } from '../hooks/usePersonalWorkspace';
 import { useAuth } from '../hooks/useAuth';
 import { LottieLoading } from '../components/common/LottieLoading';
+import KanbanShimmer from '../components/shimmer/KanbanShimmer';
 // import { useKanbanMonitoring } from '../hooks/useRealtimeMonitoring';
 
 const KanbanPage: React.FC = () => {
@@ -543,14 +544,10 @@ const KanbanPage: React.FC = () => {
     hasTeamAndProject: !!(isValidFinalTeamIdForRender && finalProjectId),
   });
 
-  // Só mostrar o board após validar o projeto quando temos projectId (evita 2ª chamada getProjectById no board)
+  // Mostrar o board sempre que tiver teamId + projectId (ao trocar funil, o board mostra shimmer interno)
   const canShowBoard =
-    isValidFinalTeamIdForRender &&
-    finalProjectId &&
-    (validatedProjectId === finalProjectId || !isValidatingProject);
+    isValidFinalTeamIdForRender && !!finalProjectId;
 
-  // Renderizar KanbanBoard quando há projeto selecionado
-  // Sempre mostrar o ProjectSelect, mesmo sem projeto selecionado
   return (
     <Layout>
       {canShowBoard ? (
@@ -579,12 +576,8 @@ const KanbanPage: React.FC = () => {
               onProjectChange={handleProjectChange}
             />
           </div>
-          {finalProjectId && (!finalTeamId || isValidatingProject) ? (
-            <div style={{ padding: '24px', textAlign: 'center' }}>
-              <p style={{ color: 'var(--color-text-secondary)' }}>
-                Carregando informações do funil...
-              </p>
-            </div>
+          {finalProjectId && !isValidFinalTeamIdForRender ? (
+            <KanbanShimmer columnCount={3} taskCountPerColumn={2} />
           ) : !finalProjectId ? (
             <div style={{ padding: '24px', textAlign: 'center' }}>
               <p style={{ color: 'var(--color-text-secondary)' }}>

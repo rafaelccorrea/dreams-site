@@ -217,7 +217,7 @@ const TaskCard = styled.div<{
   transform: ${props => (props.$isDragging ? 'scale(0.95)' : 'translateZ(0)')};
   opacity: ${props => (props.$isDragging ? 0.3 : 1)};
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   z-index: 1;
   will-change: transform, z-index;
   backface-visibility: hidden;
@@ -225,48 +225,47 @@ const TaskCard = styled.div<{
   transition:
     opacity 0.2s ease,
     transform 0.2s ease;
-  min-height: ${props => {
+  height: ${props => {
     switch (props.$cardDensity) {
       case 'compact':
-        return '120px';
+        return '124px';
       case 'comfortable':
-        return '200px';
+        return '168px';
       case 'normal':
       default:
-        return '160px';
+        return '146px';
     }
   }};
-  max-height: none;
-  height: auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 
-  /* Tablet: ajustes menores */
+  /* Tablet */
   @media (max-width: 1024px) and (min-width: 769px) {
-    min-height: ${props => {
+    height: ${props => {
       switch (props.$cardDensity) {
         case 'compact':
-          return '130px';
+          return '128px';
         case 'comfortable':
-          return '240px';
+          return '172px';
         case 'normal':
         default:
-          return '180px';
+          return '150px';
       }
     }};
   }
 
-  /* Mobile: cards mais compactos */
+  /* Mobile */
   @media (max-width: 768px) {
-    min-height: ${props => {
+    height: ${props => {
       switch (props.$cardDensity) {
         case 'compact':
           return '120px';
         case 'comfortable':
-          return '220px';
+          return '164px';
         case 'normal':
         default:
-          return '160px';
+          return '142px';
       }
     }};
   }
@@ -320,52 +319,54 @@ const TaskCard = styled.div<{
 
 const TaskHeader = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-  position: relative;
+  margin-bottom: 6px;
   min-height: 28px;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
+  min-width: 0;
 
   @media (max-width: 768px) {
-    margin-bottom: 6px;
-    min-height: 24px;
-    gap: 4px;
+    margin-bottom: 4px;
+    min-height: 26px;
+    gap: 6px;
   }
 `;
 
 const DeleteButton = styled.button`
-  position: absolute;
-  top: -4px;
-  right: -4px;
+  flex-shrink: 0;
   background: #fef2f2;
   border: 1px solid #fee2e2;
   color: #ef4444;
   cursor: pointer;
-  padding: 6px;
+  padding: 4px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  min-width: 26px;
+  min-height: 26px;
   opacity: 0;
-  pointer-events: none;
-  z-index: 100;
 
   ${TaskCard}:hover & {
     opacity: 1;
-    pointer-events: all;
   }
 
   &:hover {
     background: #fee2e2;
-    transform: scale(1.1);
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
   }
 
   &:active {
     transform: scale(0.95);
+  }
+
+  @media (max-width: 768px) {
+    min-width: 28px;
+    min-height: 28px;
   }
 `;
 
@@ -374,31 +375,22 @@ const DragHandle = styled.div`
   align-items: center;
   justify-content: center;
   color: ${props => props.theme.colors.textSecondary};
-  padding: 4px;
+  padding: 2px;
   border-radius: 4px;
   transition: all 0.2s ease;
   cursor: grab;
-  position: relative;
-  z-index: 10;
-  touch-action: none; /* Prevenir scroll quando tocar no handle */
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
-
-  /* Handle sempre visível e interativo */
-  pointer-events: all;
-  cursor: grab;
-  min-width: 32px;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-shrink: 0;
+  min-width: 26px;
+  min-height: 26px;
   background: ${props => props.theme.colors.backgroundSecondary};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 6px;
-  margin-left: 4px;
 
   &:active {
     cursor: grabbing;
-    opacity: 0.7;
+    opacity: 0.8;
     background: ${props => props.theme.colors.primary}20;
     border-color: ${props => props.theme.colors.primary};
     transform: scale(0.95);
@@ -410,8 +402,8 @@ const DragHandle = styled.div`
   }
 
   @media (max-width: 768px) {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 32px;
+    min-height: 32px;
   }
 `;
 
@@ -444,19 +436,21 @@ const TaskTitle = styled.h4<{ $titleLines?: number; $cardDensity?: string }>`
   margin: 0;
   line-height: 1.3;
   flex: 1;
+  min-width: 0;
   letter-spacing: -0.01em;
   display: -webkit-box;
-  -webkit-line-clamp: ${props => props.$titleLines || 2};
+  -webkit-line-clamp: ${props => props.$titleLines ?? 2};
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: auto;
   word-break: break-word;
 `;
 
 const TaskActions = styled.div`
   display: flex;
+  align-items: center;
   gap: 4px;
+  flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.2s ease;
 
@@ -466,18 +460,19 @@ const TaskActions = styled.div`
 `;
 
 const ActionButton = styled.button`
+  flex-shrink: 0;
   background: transparent;
   border: none;
   color: ${props => props.theme.colors.textSecondary};
   cursor: pointer;
-  padding: 4px;
+  padding: 2px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  min-width: 32px;
-  min-height: 32px;
+  min-width: 26px;
+  min-height: 26px;
 
   &:hover {
     background: ${props => props.theme.colors.border};
@@ -485,9 +480,8 @@ const ActionButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 6px;
+    min-width: 28px;
+    min-height: 28px;
   }
 `;
 
@@ -495,12 +489,13 @@ const AiInsightBadge = styled.span<{ $priority: 'high' | 'medium' | 'low' }>`
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 6px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  margin-top: 6px;
+  margin-top: 2px;
   width: fit-content;
+  flex-shrink: 0;
   ${props => {
     const colors = { high: '#EF4444', medium: '#F59E0B', low: '#10B981' };
     const c = colors[props.$priority];
@@ -563,12 +558,23 @@ const TaskDescription = styled.p<{
   white-space: pre-wrap;
 `;
 
+const TaskCardBody = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 2px;
+`;
+
 const TaskFooter = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   margin-top: auto;
   flex-shrink: 0;
+  min-height: 0;
 `;
 
 const TaskMeta = styled.div`
@@ -638,6 +644,13 @@ const InvolvedAvatar = styled.div<{ $isCount?: boolean }>`
   `}
 `;
 
+const TaskAssigneeCompact = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
 const TaskAssignee = styled.div`
   display: flex;
   align-items: center;
@@ -700,18 +713,50 @@ const TaskTags = styled.div`
   }
 `;
 
-const TaskDeadlineSection = styled.div`
+/** Agrupa avatar + informações + prazo na mesma linha, alinhados */
+const TaskFooterAlign = styled.div`
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  margin-top: 8px;
-  padding-top: 6px;
-  border-top: 1px solid ${props => props.theme.colors.border};
+  gap: 8px;
+  width: 100%;
+  min-height: 0;
+  flex-wrap: wrap;
+  row-gap: 6px;
 
   @media (max-width: 768px) {
-    margin-top: 6px;
-    padding-top: 4px;
+    gap: 6px;
+    row-gap: 4px;
   }
+`;
+
+const TaskFooterLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+`;
+
+const TaskFooterCenter = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+`;
+
+const TaskFooterRight = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+`;
+
+const TaskDeadlineSection = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 `;
 
 const TaskTag = styled.span`
@@ -1484,7 +1529,6 @@ export const Task: React.FC<TaskProps> = ({
           >
             {task.title}
           </TaskTitle>
-
           <TaskActions>
             {canDelete && (
               <DeleteButton
@@ -1519,66 +1563,51 @@ export const Task: React.FC<TaskProps> = ({
           </TaskActions>
         </TaskHeader>
 
-        {taskInsight && (
-          <AiInsightBadge
-            $priority={taskInsight.aiPriority}
-            title={
-              taskInsight.nextActionSuggestion +
-              (taskInsight.daysSinceUpdate != null &&
-              taskInsight.daysSinceUpdate > 0
-                ? ` · ${taskInsight.daysSinceUpdate}d sem atualização`
-                : '')
-            }
-          >
-            {taskInsight.aiPriority === 'high'
-              ? 'Alta prioridade'
-              : taskInsight.aiPriority === 'medium'
-                ? 'Follow-up'
-                : 'IA'}
-            {taskInsight.daysSinceUpdate != null &&
-              taskInsight.daysSinceUpdate > 0 &&
-              ` · ${taskInsight.daysSinceUpdate}d`}
-          </AiInsightBadge>
-        )}
-
-        {task.description &&
-          (settings?.showTaskDescription === true ||
-            settings?.showTaskDescription === undefined) && (
-            <TaskDescription
-              $descriptionLines={settings?.cardDescriptionLines}
-              $cardDensity={viewSettings?.cardDensity}
+        <TaskCardBody>
+          {taskInsight && (
+            <AiInsightBadge
+              $priority={taskInsight.aiPriority}
+              title={
+                taskInsight.nextActionSuggestion +
+                (taskInsight.daysSinceUpdate != null &&
+                taskInsight.daysSinceUpdate > 0
+                  ? ` · ${taskInsight.daysSinceUpdate}d sem atualização`
+                  : '')
+              }
             >
-              {task.description.length > 120
-                ? `${task.description.substring(0, 120).trim()}...`
-                : task.description}
-            </TaskDescription>
+              {taskInsight.aiPriority === 'high'
+                ? 'Alta prioridade'
+                : taskInsight.aiPriority === 'medium'
+                  ? 'Follow-up'
+                  : 'IA'}
+              {taskInsight.daysSinceUpdate != null &&
+                taskInsight.daysSinceUpdate > 0 &&
+                ` · ${taskInsight.daysSinceUpdate}d`}
+            </AiInsightBadge>
           )}
 
-        <TaskFooter>
-          <TaskMeta>
-            <TaskMetaLeft>
-              <TaskAssigneeRow>
-                {/* Mostrar responsável apenas se configurado */}
+          <TaskFooter>
+            <TaskFooterAlign>
+              <TaskFooterLeft>
                 {(viewSettings?.showAssigneeAvatars === true ||
                   viewSettings?.showAssigneeAvatars === undefined) &&
-                  (task.assignedTo ? (
+                  task.assignedTo && (
                     <Tooltip
-                      content={`Responsável: ${task.assignedTo.name}${task.assignedTo.email ? `\nEmail: ${task.assignedTo.email}` : ''}`}
+                      content={`Responsável: ${task.assignedTo.name}`}
                       placement='top'
                       delay={300}
                     >
-                      <TaskAssignee>
+                      <TaskAssigneeCompact>
                         <Avatar
                           name={task.assignedTo.name}
                           image={task.assignedTo.avatar}
                           size={20}
                         />
-                        <AssigneeName>{task.assignedTo.name}</AssigneeName>
-                      </TaskAssignee>
+                      </TaskAssigneeCompact>
                     </Tooltip>
-                  ) : null)}
-
-                {/* Mostrar prioridade apenas se configurado */}
+                  )}
+              </TaskFooterLeft>
+              <TaskFooterCenter>
                 {(settings?.showPriorityIndicators === true ||
                   settings?.showPriorityIndicators === undefined) && (
                   <Tooltip
@@ -1589,203 +1618,16 @@ export const Task: React.FC<TaskProps> = ({
                     <PriorityFlag priority={task.priority || 'low'} />
                   </Tooltip>
                 )}
-              </TaskAssigneeRow>
-
-              {/* Mostrar pessoas envolvidas abaixo do responsável, sobrepostas */}
-              {(() => {
-                const hasInvolvedUsers =
-                  task.involvedUsers && task.involvedUsers.length > 0;
-                if (hasInvolvedUsers) {
-                  console.log('👥 Task - Renderizando pessoas envolvidas:', {
-                    taskId: task.id,
-                    taskTitle: task.title,
-                    involvedUsers: task.involvedUsers,
-                    count: task.involvedUsers.length,
-                  });
-                }
-                return hasInvolvedUsers ? (
-                  <InvolvedUsersContainer>
-                    {task.involvedUsers!.slice(0, 4).map((user, index) => (
-                      <Tooltip
-                        key={user.id}
-                        content={`${user.name}${user.email ? `\n${user.email}` : ''}`}
-                        placement='top'
-                        delay={300}
-                      >
-                        <InvolvedAvatar style={{ zIndex: 10 - index }}>
-                          <Avatar
-                            name={user.name}
-                            image={user.avatar}
-                            size={20}
-                            title={user.name}
-                          />
-                        </InvolvedAvatar>
-                      </Tooltip>
-                    ))}
-                    {task.involvedUsers!.length > 4 && (
-                      <Tooltip
-                        content={`${task
-                          .involvedUsers!.slice(4)
-                          .map(u => u.name)
-                          .join(', ')}`}
-                        placement='top'
-                        delay={300}
-                      >
-                        <InvolvedAvatar $isCount={true} style={{ zIndex: 1 }}>
-                          +{task.involvedUsers!.length - 4}
-                        </InvolvedAvatar>
-                      </Tooltip>
-                    )}
-                  </InvolvedUsersContainer>
-                ) : null;
-              })()}
-            </TaskMetaLeft>
-          </TaskMeta>
-
-          {task.tags &&
-            task.tags.length > 0 &&
-            (settings?.showTaskTags === true ||
-              settings?.showTaskTags === undefined) && (
-              <TaskTags>
-                {task.tags.slice(0, 3).map((tag, index) => (
-                  <TaskTag key={index} title={tag}>
-                    {tag}
-                  </TaskTag>
-                ))}
-                {task.tags.length > 3 && (
-                  <TaskTag title={`${task.tags.length - 3} tags adicionais`}>
-                    +{task.tags.length - 3}
-                  </TaskTag>
-                )}
-              </TaskTags>
-            )}
-
-          {/* Badge do projeto */}
-          {task.project && (
-            <ProjectBadge title={task.project.name}>
-              <MdFolder size={12} />
-              {task.project.name}
-            </ProjectBadge>
-          )}
-
-          {/* Badge do cliente */}
-          {task.client && (
-            <ClientBadge
-              title={(() => {
-                const parts = [`Cliente: ${task.client.name}`];
-                if (task.client.email)
-                  parts.push(`Email: ${task.client.email}`);
-                if (task.client.phone)
-                  parts.push(`Telefone: ${task.client.phone}`);
-                if (
-                  task.client.whatsapp &&
-                  task.client.whatsapp !== task.client.phone
-                )
-                  parts.push(`WhatsApp: ${task.client.whatsapp}`);
-                if (task.client.cpf) parts.push(`CPF: ${task.client.cpf}`);
-                if (task.client.city) parts.push(`Cidade: ${task.client.city}`);
-                if (task.client.type)
-                  parts.push(`Tipo: ${translateClientType(task.client.type)}`);
-                if (task.client.status)
-                  parts.push(
-                    `Status: ${translateClientStatus(task.client.status)}`
-                  );
-                return parts.join(' | ');
-              })()}
-            >
-              <MdPerson size={12} />
-              {task.client.name}
-            </ClientBadge>
-          )}
-
-          {/* Badge do imóvel */}
-          {task.property && (
-            <PropertyBadge
-              title={(() => {
-                const parts = [`Imóvel: ${task.property.title}`];
-                if (task.property.code)
-                  parts.push(`Código: ${task.property.code}`);
-                if (task.property.address)
-                  parts.push(`Endereço: ${task.property.address}`);
-                if (task.property.city && task.property.state)
-                  parts.push(
-                    `Localização: ${task.property.city}/${task.property.state}`
-                  );
-                if (task.property.salePrice)
-                  parts.push(
-                    `Venda: R$ ${task.property.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  );
-                if (task.property.rentPrice)
-                  parts.push(
-                    `Aluguel: R$ ${task.property.rentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  );
-                if (task.property.type)
-                  parts.push(
-                    `Tipo: ${translatePropertyType(task.property.type)}`
-                  );
-                if (task.property.status)
-                  parts.push(
-                    `Status: ${translatePropertyStatus(task.property.status)}`
-                  );
-                return parts.join(' | ');
-              })()}
-            >
-              <MdHome size={12} />
-              {task.property.title}
-            </PropertyBadge>
-          )}
-
-          {/* Informações adicionais: Valor, Resultado, Anexos, Comentários, Subtarefas */}
-          {(() => {
-            const hasValue = task.totalValue && task.totalValue > 0;
-            const hasResult = task.result && task.result !== 'open';
-            const hasAttachments =
-              (task.attachmentsCount !== undefined &&
-                task.attachmentsCount > 0) ||
-              (task.attachments && task.attachments.length > 0);
-            const hasComments =
-              (task.commentsCount !== undefined && task.commentsCount > 0) ||
-              (task.comments && task.comments.length > 0);
-            const hasSubtasks = task.subtasks && task.subtasks.length > 0;
-            const hasCampaign = task.campaign && task.campaign.trim() !== '';
-            const hasQualification =
-              task.qualification && task.qualification.trim() !== '';
-            const hasSource = task.source && task.source.trim() !== '';
-            const hasLastActivity = !!task.lastActivityAt;
-            const hasContacts =
-              task.contactSnapshot && task.contactSnapshot.length > 0;
-
-            // Só renderizar a linha se houver pelo menos uma informação
-            if (
-              !hasValue &&
-              !hasResult &&
-              !hasAttachments &&
-              !hasComments &&
-              !hasSubtasks &&
-              !hasCampaign &&
-              !hasQualification &&
-              !hasSource &&
-              !hasLastActivity &&
-              !hasContacts
-            ) {
-              return null;
-            }
-
-            return (
-              <TaskInfoRow>
-                {/* Valor da negociação */}
-                {hasValue && (
+                {task.totalValue != null && task.totalValue > 0 && (
                   <InfoBadge
                     $variant='value'
-                    title={`Valor da negociação: ${formatCurrencyValue(task.totalValue!)}`}
+                    title={`Valor: ${formatCurrencyValue(task.totalValue)}`}
                   >
-                    <MdAttachMoney size={14} />
-                    {formatCurrencyValue(task.totalValue!)}
+                    <MdAttachMoney size={12} />
+                    {formatCurrencyValue(task.totalValue)}
                   </InfoBadge>
                 )}
-
-                {/* Resultado */}
-                {hasResult && (
+                {task.result && task.result !== 'open' && (
                   <ResultBadge
                     $result={task.result as 'won' | 'lost'}
                     title={
@@ -1795,121 +1637,26 @@ export const Task: React.FC<TaskProps> = ({
                     }
                   >
                     {task.result === 'won' ? (
-                      <MdCheckCircle size={14} />
+                      <MdCheckCircle size={12} />
                     ) : (
-                      <MdCancel size={14} />
+                      <MdCancel size={12} />
                     )}
                     {task.result === 'won' ? 'Ganha' : 'Perdida'}
                   </ResultBadge>
                 )}
-
-                {/* Contagem de anexos */}
-                {hasAttachments && (
-                  <CountBadge
-                    title={`${task.attachmentsCount || task.attachments?.length || 0} arquivo(s) anexado(s)`}
-                  >
-                    <MdAttachFile size={14} />
-                    {task.attachmentsCount || task.attachments?.length || 0}
-                  </CountBadge>
-                )}
-
-                {/* Contagem de comentários */}
-                {hasComments && (
-                  <CountBadge
-                    title={`${task.commentsCount || task.comments?.length || 0} comentário(s)`}
-                  >
-                    <MdComment size={14} />
-                    {task.commentsCount || task.comments?.length || 0}
-                  </CountBadge>
-                )}
-
-                {/* Progresso de subtarefas */}
-                {hasSubtasks && (
-                  <SubtasksProgress
-                    title={`${task.subtasks!.filter(st => st.isCompleted).length} de ${task.subtasks!.length} subtarefas concluídas`}
-                  >
-                    <MdCheckCircle size={14} />
-                    <span>
-                      {task.subtasks!.filter(st => st.isCompleted).length}/
-                      {task.subtasks!.length}
-                    </span>
-                    <ProgressBar
-                      $progress={Math.round(
-                        (task.subtasks!.filter(st => st.isCompleted).length /
-                          task.subtasks!.length) *
-                          100
-                      )}
-                    />
-                  </SubtasksProgress>
-                )}
-
-                {/* Campanha */}
-                {hasCampaign && (
-                  <InfoBadge
-                    $variant='campaign'
-                    title={`Campanha: ${task.campaign}`}
-                  >
-                    <MdCampaign size={14} />
-                    {task.campaign}
-                  </InfoBadge>
-                )}
-
-                {/* Qualificação */}
-                {hasQualification && (
-                  <InfoBadge
-                    $variant='qualification'
-                    title={`Qualificação: ${task.qualification}`}
-                  >
-                    <MdStar size={14} />
-                    {task.qualification}
-                  </InfoBadge>
-                )}
-
-                {/* Origem */}
-                {hasSource && (
-                  <InfoBadge $variant='source' title={`Origem: ${task.source}`}>
-                    <MdLocationOn size={14} />
-                    {task.source}
-                  </InfoBadge>
-                )}
-
-                {/* Última atividade (dados da origem) */}
-                {hasLastActivity && task.lastActivityAt && (
-                  <InfoBadge
-                    $variant='source'
-                    title={`Última atividade: ${format(new Date(task.lastActivityAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`}
-                  >
-                    <MdSchedule size={14} />
-                    {formatDistanceToNow(new Date(task.lastActivityAt), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
-                  </InfoBadge>
-                )}
-
-                {/* Contatos da origem */}
-                {hasContacts && (
-                  <InfoBadge
-                    $variant='campaign'
-                    title={`${task.contactSnapshot!.length} contato(s) da origem`}
-                  >
-                    <MdPerson size={14} />
-                    {task.contactSnapshot!.length} contato(s)
-                  </InfoBadge>
-                )}
-              </TaskInfoRow>
-            );
-          })()}
-
-          {/* Indicador de prazo no final do card */}
-          {(settings?.showDueDateIndicators === true ||
-            settings?.showDueDateIndicators === undefined) &&
-            task.dueDate && (
-              <TaskDeadlineSection>
-                <TaskDeadlineIndicator task={task} />
-              </TaskDeadlineSection>
-            )}
-        </TaskFooter>
+              </TaskFooterCenter>
+              <TaskFooterRight>
+                {(settings?.showDueDateIndicators === true ||
+                  settings?.showDueDateIndicators === undefined) &&
+                  task.dueDate && (
+                    <TaskDeadlineSection>
+                      <TaskDeadlineIndicator task={task} />
+                    </TaskDeadlineSection>
+                  )}
+              </TaskFooterRight>
+            </TaskFooterAlign>
+          </TaskFooter>
+        </TaskCardBody>
       </TaskCard>
 
       <ConfirmDeleteModal

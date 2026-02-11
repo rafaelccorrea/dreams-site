@@ -7,7 +7,7 @@ import type { KanbanTask } from '../../types/kanban';
 const FilterContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding: 8px 0;
   background: transparent;
   border-radius: 0;
@@ -17,6 +17,7 @@ const FilterContainer = styled.div`
   box-shadow: none;
   -webkit-overflow-scrolling: touch;
   flex: 1;
+  min-width: 0;
 
   &::-webkit-scrollbar {
     height: 4px;
@@ -32,15 +33,20 @@ const FilterContainer = styled.div`
   }
 
   @media (max-width: 1024px) and (min-width: 769px) {
-    gap: 10px;
+    gap: 12px;
   }
 
   @media (max-width: 768px) {
-    gap: 8px;
+    gap: 10px;
 
     &::-webkit-scrollbar {
       height: 3px;
     }
+  }
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    padding: 4px 0;
   }
 `;
 
@@ -56,13 +62,26 @@ const FilterLabel = styled.div`
     font-size: 0.8rem;
     margin-right: 6px;
   }
+
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    margin-right: 4px;
+  }
 `;
 
-const AvatarButton = styled.button<{ $isActive: boolean }>`
+const OVERLAP_PX = 10;
+
+const AvatarStack = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+`;
+
+const AvatarButton = styled.button<{ $isActive: boolean; $overlap?: boolean }>`
   position: relative;
-  background: transparent;
+  background: ${props => props.theme.colors.cardBackground};
   border: 2px solid
-    ${props => (props.$isActive ? props.theme.colors.primary : 'transparent')};
+    ${props => (props.$isActive ? props.theme.colors.primary : props.theme.colors.cardBackground)};
   border-radius: 50%;
   padding: 0;
   cursor: pointer;
@@ -73,33 +92,50 @@ const AvatarButton = styled.button<{ $isActive: boolean }>`
   flex-shrink: 0;
   overflow: visible;
   box-sizing: border-box;
+  margin-left: ${props => (props.$overlap ? `-${OVERLAP_PX}px` : '0')};
+  box-shadow: 0 0 0 2px ${props => props.theme.colors.cardBackground};
 
   & > * {
     display: block;
   }
 
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.08);
+    z-index: 2;
     border-color: ${props =>
       props.$isActive ? props.theme.colors.primary : props.theme.colors.border};
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
   }
 
   @media (max-width: 768px) {
     border-width: 2px;
+    margin-left: ${props => (props.$overlap ? '-8px' : '0')};
 
     &:hover {
-      transform: scale(1.03);
+      transform: scale(1.05);
     }
   }
 `;
 
-const UnassignedButton = styled(AvatarButton)`
+const UnassignedButton = styled.button<{ $isActive: boolean }>`
+  position: relative;
   width: 36px;
   height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid
+    ${props =>
+      props.$isActive ? props.theme.colors.primary : props.theme.colors.cardBackground};
   background: ${props =>
     props.$isActive
       ? props.theme.colors.primary + '20'
@@ -108,7 +144,12 @@ const UnassignedButton = styled(AvatarButton)`
     props.$isActive
       ? props.theme.colors.primary
       : props.theme.colors.textSecondary};
-  flex-shrink: 0;
+  box-shadow: 0 0 0 2px ${props => props.theme.colors.cardBackground};
+
+  &:hover {
+    transform: scale(1.08);
+    z-index: 2;
+  }
 
   @media (max-width: 768px) {
     width: 32px;
@@ -120,6 +161,7 @@ const TaskCount = styled.div`
   position: absolute;
   bottom: -4px;
   right: -4px;
+  z-index: 3;
   background: ${props => props.theme.colors.primary};
   color: white;
   font-size: 0.625rem;
@@ -185,7 +227,7 @@ const AvatarWrapper = styled.div`
   align-items: center;
   justify-content: center;
   overflow: visible;
-  padding-bottom: 14;
+  padding-bottom: 14px;
   margin-bottom: -4px;
 `;
 
@@ -266,37 +308,41 @@ export const AssigneeFilter: React.FC<AssigneeFilterProps> = ({
     <FilterContainer>
       <FilterLabel>Equipe:</FilterLabel>
 
-      {/* Cards sem responsável */}
-      {assignees.unassignedCount > 0 && (
-        <AvatarWrapper>
-          <UnassignedButton
-            $isActive={selectedAssigneeId === 'unassigned'}
-            onClick={() => handleAssigneeClick('unassigned')}
-            title={`${assignees.unassignedCount} tarefa(s) sem responsável`}
-          >
-            <MdPersonOff size={avatarSize === 32 ? 14 : 16} />
-          </UnassignedButton>
-          <TaskCount>{assignees.unassignedCount}</TaskCount>
-        </AvatarWrapper>
-      )}
+      {/* Avatares da equipe em stack sobreposto */}
+      <AvatarStack>
+        {/* Cards sem responsável - primeiro da pilha */}
+        {assignees.unassignedCount > 0 && (
+          <AvatarWrapper>
+            <UnassignedButton
+              $isActive={selectedAssigneeId === 'unassigned'}
+              onClick={() => handleAssigneeClick('unassigned')}
+              title={`${assignees.unassignedCount} tarefa(s) sem responsável`}
+            >
+              <MdPersonOff size={avatarSize === 32 ? 14 : 16} />
+            </UnassignedButton>
+            <TaskCount>{assignees.unassignedCount}</TaskCount>
+          </AvatarWrapper>
+        )}
 
-      {/* Responsáveis */}
-      {assignees.assigned.map(assignee => (
-        <AvatarWrapper key={assignee.id}>
-          <AvatarButton
-            $isActive={selectedAssigneeId === assignee.id}
-            onClick={() => handleAssigneeClick(assignee.id)}
-            title={`${assignee.name} - ${assignee.count} tarefa(s)`}
-          >
-            <Avatar
-              name={assignee.name}
-              image={assignee.avatar}
-              size={avatarSize}
-            />
-          </AvatarButton>
-          <TaskCount>{assignee.count}</TaskCount>
-        </AvatarWrapper>
-      ))}
+        {/* Responsáveis - sobrepostos */}
+        {assignees.assigned.map((assignee, index) => (
+          <AvatarWrapper key={assignee.id}>
+            <AvatarButton
+              $isActive={selectedAssigneeId === assignee.id}
+              $overlap={index > 0 || assignees.unassignedCount > 0}
+              onClick={() => handleAssigneeClick(assignee.id)}
+              title={`${assignee.name} - ${assignee.count} tarefa(s)`}
+            >
+              <Avatar
+                name={assignee.name}
+                image={assignee.avatar}
+                size={avatarSize}
+              />
+            </AvatarButton>
+            <TaskCount>{assignee.count}</TaskCount>
+          </AvatarWrapper>
+        ))}
+      </AvatarStack>
 
       {/* Botão de limpar filtro */}
       {selectedAssigneeId && (

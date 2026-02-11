@@ -9,13 +9,17 @@ interface TaskDeadlineIndicatorProps {
 }
 
 const IndicatorContainer = styled.div<{ type: 'ok' | 'warning' | 'overdue' }>`
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 6px;
-  border-radius: 8px;
+  justify-content: center;
+  gap: 4px;
+  padding: ${props => (props.type === 'overdue' ? '4px' : '2px 6px')};
+  border-radius: 6px;
   font-size: 0.65rem;
   font-weight: 600;
+  white-space: nowrap;
+  min-width: 0;
+  cursor: ${props => (props.type === 'overdue' ? 'help' : 'default')};
   background: ${props => {
     switch (props.type) {
       case 'overdue':
@@ -81,8 +85,9 @@ const getDeadlineText = (
   daysRemaining: number
 ): string => {
   if (type === 'overdue') {
-    return `${daysRemaining}d`;
-  } else if (type === 'warning') {
+    return daysRemaining === 1 ? '1 dia em atraso' : `${daysRemaining} dias em atraso`;
+  }
+  if (type === 'warning') {
     return daysRemaining === 0 ? 'Hoje' : `${daysRemaining}d`;
   }
   return `${daysRemaining}d`;
@@ -110,6 +115,20 @@ export const TaskDeadlineIndicator: React.FC<TaskDeadlineIndicatorProps> = ({
   const status = getDeadlineStatus(new Date(task.dueDate));
   const text = getDeadlineText(status.type, status.daysRemaining);
   const icon = getDeadlineIcon(status.type);
+
+  // Em atraso: só ícone com tooltip (dias em atraso)
+  if (status.type === 'overdue') {
+    return (
+      <IndicatorContainer
+        type='overdue'
+        className={className}
+        title={text}
+        as='span'
+      >
+        {icon}
+      </IndicatorContainer>
+    );
+  }
 
   return (
     <IndicatorContainer type={status.type} className={className}>

@@ -4,22 +4,29 @@ export const KanbanContainer = styled.div`
   padding: 24px;
   min-height: 100vh;
   width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden; /* Desktop: sem scroll horizontal */
+  max-width: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   position: relative;
   box-sizing: border-box;
   background: #fff;
+  -webkit-overflow-scrolling: touch;
 
-  /* Tablet: manter comportamento desktop */
+  /* Tablet */
   @media (max-width: 1024px) and (min-width: 769px) {
     padding: 16px;
   }
 
-  /* Mobile: ajustar padding e permitir scroll horizontal no wrapper */
+  /* Mobile */
   @media (max-width: 768px) {
     padding: 12px 8px;
-    overflow-x: hidden; /* Container não tem scroll, apenas o wrapper interno */
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  /* Mobile pequeno */
+  @media (max-width: 480px) {
+    padding: 10px 6px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 `;
 
@@ -32,12 +39,22 @@ export const KanbanHeader = styled.div`
   flex-wrap: wrap;
   gap: 16px;
   position: relative;
+  min-width: 0;
+
+  @media (max-width: 1024px) {
+    margin-bottom: 20px;
+  }
 
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     gap: 12px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+    gap: 10px;
   }
 `;
 
@@ -49,6 +66,21 @@ export const KanbanTitleSection = styled.div`
   min-width: 0;
 `;
 
+/** Linha que alinha título e ícones (notificação + 3 pontos) na mesma altura */
+export const KanbanTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+`;
+
 export const KanbanTitle = styled.h1`
   font-size: 2rem;
   font-weight: 700;
@@ -58,10 +90,22 @@ export const KanbanTitle = styled.h1`
   align-items: center;
   gap: 12px;
   line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+
+  @media (max-width: 1024px) {
+    font-size: 1.65rem;
+  }
 
   @media (max-width: 768px) {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
+    gap: 6px;
   }
 `;
 
@@ -86,35 +130,51 @@ export const TeamMembersSection = styled.div`
   margin-top: 4px;
 `;
 
+/** Equipe + avatares (filtro responsável) no header, à direita */
+export const KanbanHeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    order: 1;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
+`;
+
 export const KanbanActions = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
+  min-width: 0;
+  flex-shrink: 0;
 
   @media (max-width: 1024px) and (min-width: 769px) {
     gap: 6px;
   }
 
   @media (max-width: 768px) {
-    width: 100%;
     gap: 8px;
     flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-    justify-content: flex-start;
+    justify-content: flex-end;
+  }
 
-    /* Esconder scrollbar mas manter funcionalidade */
-    &::-webkit-scrollbar {
-      height: 2px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: ${props => props.theme.colors.border};
-      border-radius: 2px;
-    }
+  /* Mobile: ícones na mesma linha do título, alinhados verticalmente */
+  @media (max-width: 480px) {
+    gap: 6px;
+    flex-shrink: 0;
+    align-items: center;
   }
 `;
 
@@ -208,6 +268,7 @@ export const SettingsButton = styled.button`
   transition: all 0.2s ease;
   min-width: 40px;
   min-height: 40px;
+  flex-shrink: 0;
 
   &:hover {
     background: ${props => props.theme.colors.border};
@@ -222,10 +283,15 @@ export const SettingsButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    padding: 8px;
-    flex-shrink: 0;
+    padding: 10px;
     min-width: 40px;
     min-height: 40px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
   }
 `;
 
@@ -303,12 +369,18 @@ export const KanbanBoardWrapper = styled.div<{ $hasManyColumns?: boolean }>`
     overflow-x: auto;
     overflow-y: visible;
     padding: 0 0 16px 0;
-    cursor: default;
-    -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    cursor: grab;
+    -webkit-overflow-scrolling: touch;
 
     &:active {
-      cursor: default;
+      cursor: grabbing;
     }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 0 12px 0;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 `;
 
@@ -337,9 +409,9 @@ export const KanbanBoard = styled.div<{
       props.$hasManyColumns
         ? `
         flex: 0 0 auto;
-        width: 280px;
-        min-width: 280px;
-        max-width: 280px;
+        width: 320px;
+        min-width: 320px;
+        max-width: 320px;
       `
         : `
         flex: 1;
@@ -358,9 +430,9 @@ export const KanbanBoard = styled.div<{
         props.$hasManyColumns
           ? `
           flex: 0 0 auto;
-          width: 260px;
-          min-width: 260px;
-          max-width: 260px;
+          width: 300px;
+          min-width: 300px;
+          max-width: 300px;
         `
           : `
           flex: 1;
@@ -373,11 +445,22 @@ export const KanbanBoard = styled.div<{
   @media (max-width: 768px) {
     gap: 12px;
     min-height: auto;
-    width: max-content; /* Permitir que o conteúdo defina a largura */
+    width: max-content;
 
     & > * {
-      flex: 0 0 auto; /* Não distribuir igualmente, usar largura fixa */
+      flex: 0 0 auto;
+      min-width: 300px;
+      max-width: 300px;
+    }
+  }
+
+  /* Mobile pequeno: coluna mais estreita para caber na tela */
+  @media (max-width: 480px) {
+    gap: 10px;
+
+    & > * {
       min-width: 280px;
+      max-width: 280px;
     }
   }
 
@@ -457,15 +540,202 @@ export const EmptyMessage = styled.p`
 `;
 
 export const SearchInputWrapper = styled.div`
-  flex: 0 0 70%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0; /* Permite que o input encolha */
 
   @media (max-width: 1024px) {
-    flex: 1;
-    width: 100%;
+    min-width: 140px;
+  }
+`;
+
+/** Botão para abrir a busca (ícone + "Buscar") */
+export const SearchToggleButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid ${props => props.theme.colors.border};
+  background: ${props => props.theme.colors.cardBackground};
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+    background: ${props => props.theme.colors.primary + '12'};
+    color: ${props => props.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    gap: 6px;
+  }
+`;
+
+/** Input de busca moderno (pill com ícone) */
+export const SearchInputModern = styled.input`
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 16px 10px 40px;
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 999px;
+  background: ${props => props.theme.colors.cardBackground};
+  color: ${props => props.theme.colors.text};
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+    box-shadow: 0 0 0 2px ${props => props.theme.colors.primary}20;
+  }
+
+  &::placeholder {
+    color: ${props => props.theme.colors.textSecondary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 14px 8px 36px;
+    font-size: 0.8125rem;
+  }
+`;
+
+export const SearchInputWrapWithIcon = styled.div`
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+
+  svg.search-icon {
+    position: absolute;
+    left: 14px;
+    color: ${props => props.theme.colors.textSecondary};
+    pointer-events: none;
+    font-size: 1.125rem;
+  }
+`;
+
+/** Equipe fixa à esquerda da toolbar (alinhada com Filtros e seletor de funil) */
+export const ToolbarLeftFixed = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 4px;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    flex: 1 1 auto;
+    min-width: 140px;
+    max-width: 100%;
+  }
+
+  /* Mobile: equipe compacta na mesma linha que Filtros, não ocupa linha inteira */
+  @media (max-width: 480px) {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 52%;
+  }
+`;
+
+/** Uma única linha: equipe (esquerda) + Filtros + seletor de funil */
+export const ToolbarRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+
+  @media (max-width: 1024px) {
+    gap: 10px;
+    padding: 10px 0;
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 768px) {
+    gap: 8px;
+    padding: 8px 0;
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    padding: 8px 0;
+    margin-bottom: 6px;
+  }
+`;
+
+/** Botão de filtros moderno (pill com ícone + texto + badge opcional) */
+export const FilterButton = styled.button<{ $active?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid
+    ${props =>
+      props.$active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${props =>
+    props.$active ? props.theme.colors.primary + '12' : props.theme.colors.cardBackground};
+  color: ${props =>
+    props.$active ? props.theme.colors.primary : props.theme.colors.text};
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 44px;
+
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+    background: ${props => props.theme.colors.primary + '18'};
+    color: ${props => props.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    gap: 6px;
+    min-height: 40px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    gap: 6px;
+    min-height: 44px;
+  }
+`;
+
+export const FilterButtonBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  @media (max-width: 480px) {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    font-size: 0.7rem;
   }
 `;
 
@@ -547,17 +817,25 @@ export const ClearSearchButton = styled.button`
 export const NegotiationsCountBar = styled.div`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   padding: 8px 0;
   margin-bottom: 12px;
   font-size: 0.875rem;
   color: ${props =>
     props.theme.colors.textSecondary || props.theme.colors.text};
   font-weight: 500;
+  min-width: 0;
 
   @media (max-width: 768px) {
     padding: 6px 0;
     margin-bottom: 10px;
     font-size: 0.8125rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 4px 0;
+    margin-bottom: 8px;
+    font-size: 0.75rem;
   }
 `;
 

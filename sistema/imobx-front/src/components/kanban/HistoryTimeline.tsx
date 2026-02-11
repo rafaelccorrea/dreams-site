@@ -12,21 +12,31 @@ import { formatCurrencyValue, getNumericValue } from '../../utils/masks';
 const TimelineContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
 `;
 
 const TimelineItem = styled.div`
   display: flex;
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  padding: 14px 18px;
   background: ${props => props.theme.colors.cardBackground};
   border-radius: 12px;
   border: 1px solid ${props => props.theme.colors.border};
   transition: all 0.2s ease;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 
   &:hover {
     border-color: ${props => props.theme.colors.primary}40;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 14px;
+    gap: 12px;
   }
 `;
 
@@ -166,9 +176,64 @@ const LoadingState = styled.div`
   font-size: 0.875rem;
 `;
 
+const PaginationWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid ${props => props.theme.colors.border};
+  width: 100%;
+`;
+
+const LoadMoreButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: 1px solid
+    ${props =>
+      props.$variant === 'secondary'
+        ? props.theme.colors.border
+        : props.theme.colors.primary};
+  background: ${props =>
+    props.$variant === 'secondary'
+      ? 'transparent'
+      : props.theme.colors.primary};
+  color: ${props =>
+    props.$variant === 'secondary'
+      ? props.theme.colors.textSecondary
+      : 'white'};
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    ${props =>
+      props.$variant === 'secondary' &&
+      `
+      background: ${props.theme.colors.backgroundSecondary};
+      color: ${props.theme.colors.text};
+    `}
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const PaginationInfo = styled.span`
+  font-size: 0.8125rem;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
 interface HistoryTimelineProps {
   history: TaskHistoryEntry[];
   loading?: boolean;
+  /** Quantidade de itens por página (padrão 20) */
+  pageSize?: number;
 }
 
 interface UserInfo {
@@ -252,12 +317,21 @@ const formatHistoryDate = (dateString: string): string => {
   }
 };
 
+const HISTORY_PAGE_SIZE = 20;
+
 export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({
   history,
   loading = false,
+  pageSize = HISTORY_PAGE_SIZE,
 }) => {
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+
+  // Resetar paginação quando a lista de histórico mudar
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [history?.length, pageSize]);
 
   // Carregar lista de usuários para resolver IDs
   useEffect(() => {
@@ -404,9 +478,13 @@ export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({
     return <EmptyState>Nenhum histórico disponível</EmptyState>;
   }
 
+  const visibleHistory = history.slice(0, visibleCount);
+  const hasMore = history.length > visibleCount;
+  const total = history.length;
+
   return (
     <TimelineContainer>
-      {history.map(entry => {
+      {visibleHistory.map(entry => {
         const formattedOldValue = formatValue(entry.oldValue, entry.action);
         const formattedNewValue = formatValue(entry.newValue, entry.action);
         const showOldAvatar = shouldShowAvatar(entry.oldValue, entry.action);
@@ -490,6 +568,32 @@ export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({
           </TimelineItem>
         );
       })}
+      {hasMore && (
+        <PaginationWrap>
+          <PaginationInfo>
+            Exibindo {visibleCount} de {total} registros
+          </PaginationInfo>
+          <LoadMoreButton
+            type="button"
+            onClick={() =>
+              setVisibleCount(prev => Math.min(prev + pageSize, total))
+            }
+          >
+            Carregar mais
+          </LoadMoreButton>
+        </PaginationWrap>
+      )}
+      {visibleCount > pageSize && visibleCount >= total && total > pageSize && (
+        <PaginationWrap>
+          <LoadMoreButton
+            type="button"
+            $variant="secondary"
+            onClick={() => setVisibleCount(pageSize)}
+          >
+            Ver menos
+          </LoadMoreButton>
+        </PaginationWrap>
+      )}
     </TimelineContainer>
   );
 };

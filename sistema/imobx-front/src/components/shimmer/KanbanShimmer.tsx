@@ -115,7 +115,7 @@ const KanbanBoard = styled.div`
 
 // Coluna do Kanban
 const KanbanColumn = styled.div`
-  min-width: 280px;
+  min-width: 320px;
   background: ${props => props.theme.colors.cardBackground};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 12px;

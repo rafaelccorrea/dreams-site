@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import {
   MdAdd,
@@ -82,20 +82,26 @@ const ProjectSelectWrapperInline = styled.div`
   max-width: 300px;
 
   @media (max-width: 1024px) {
-    flex: 1;
+    flex: 1 1 100%;
     width: 100%;
     max-width: 100%;
-    min-width: 100%;
+    min-width: 0;
   }
 
   @media (max-width: 768px) {
-    min-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
   }
 `;
 
 const MoreMenuWrapper = styled.div`
   position: relative;
   display: inline-block;
+  flex-shrink: 0;
 `;
 
 const MoreDropdown = styled.div<{ $open: boolean }>`
@@ -103,37 +109,59 @@ const MoreDropdown = styled.div<{ $open: boolean }>`
   top: 100%;
   right: 0;
   margin-top: 4px;
-  min-width: 180px;
-  background: #fff;
+  min-width: 200px;
+  background: ${props => props.theme.colors.cardBackground};
   border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 100;
   display: ${props => (props.$open ? 'block' : 'none')};
-  padding: 4px 0;
+  padding: 6px 0;
+
+  @media (max-width: 768px) {
+    right: 0;
+    left: auto;
+    min-width: 180px;
+    max-width: min(280px, calc(100vw - 24px));
+  }
+
+  @media (max-width: 480px) {
+    right: 0;
+    left: auto;
+    min-width: 160px;
+    max-width: calc(100vw - 24px);
+  }
 `;
 
 const MoreMenuItem = styled.button`
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 10px 16px;
   border: none;
   background: none;
   color: ${props => props.theme.colors.text};
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   text-align: left;
   transition: background 0.15s;
 
   &:hover {
-    background: #f1f5f9;
+    background: ${props => props.theme.colors.border};
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    font-size: 0.8125rem;
+    gap: 8px;
+    min-height: 44px;
   }
 `;
 
@@ -141,6 +169,7 @@ import {
   KanbanContainer,
   KanbanHeader,
   KanbanTitleSection,
+  KanbanTitleRow,
   KanbanTitle,
   KanbanProjectDescription,
   TeamMembersSection,
@@ -156,10 +185,10 @@ import {
   EmptyState,
   EmptyTitle,
   EmptyMessage,
-  SearchBar,
-  SearchInputWrapper,
-  SearchInput,
-  ClearSearchButton,
+  ToolbarRow,
+  ToolbarLeftFixed,
+  FilterButton,
+  FilterButtonBadge,
   NegotiationsCountBar,
   NegotiationsCountValue,
 } from '../../styles/components/KanbanBoardStyles';
@@ -797,7 +826,6 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
   const [selectedAssigneeId, setSelectedAssigneeId] = useState<string | null>(
     null
   );
-  const [searchText, setSearchText] = useState('');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -815,6 +843,15 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMoreMenu]);
+
+  const activeFiltersCount = useMemo(() => {
+    return Object.entries(filters).filter(([, v]) => {
+      if (Array.isArray(v)) return v.length > 0;
+      if (v instanceof Date) return true;
+      if (typeof v === 'object' && v !== null) return true;
+      return v !== undefined && v !== '';
+    }).length;
+  }, [filters]);
 
   const user = getCurrentUser();
 
@@ -1056,34 +1093,11 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       // console.log('🔍 KanbanBoard - filteredTasks - após filtro responsável:', tasks);
     }
 
-    // Filtro por busca de texto
-    if (searchText && viewSettings?.showSearchBar !== false) {
-      const searchLower = searchText.toLowerCase();
-      tasks = tasks.filter(task => {
-        const titleMatch = task.title.toLowerCase().includes(searchLower);
-        const descriptionMatch = task.description
-          ?.toLowerCase()
-          .includes(searchLower);
-        const assigneeMatch = task.assignedTo?.name
-          .toLowerCase()
-          .includes(searchLower);
-
-        return titleMatch || descriptionMatch || assigneeMatch;
-      });
-      // console.log('🔍 KanbanBoard - filteredTasks - após filtro busca:', tasks);
-    }
-
     // Ordenar tarefas
     tasks = sortTasks(tasks);
     // console.log('🔍 KanbanBoard - filteredTasks - após ordenação:', tasks);
     return tasks;
-  }, [
-    board.tasks,
-    selectedAssigneeId,
-    searchText,
-    viewSettings?.showSearchBar,
-    sortTasks,
-  ]);
+  }, [board.tasks, selectedAssigneeId, sortTasks]);
 
   // Verificar permissões para criar equipes
   const canCreateTeams = () => {
@@ -2367,9 +2381,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     );
   }
 
-  if (loading) {
-    return <KanbanShimmer columnCount={4} taskCountPerColumn={3} />;
-  }
+  // Quando loading (ex.: troca de funil), manter header/toolbar montados e mostrar shimmer só na área do board (evita desmontar ProjectSelect e recarregar lista de funis)
 
   // Verificar se há projeto selecionado (considerar initialProjectId também)
   const hasProjectSelected = selectedProjectId || initialProjectId;
@@ -2399,17 +2411,19 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       <KanbanContainer>
         <KanbanHeader>
           <KanbanTitleSection>
-            <KanbanTitle>
-              <MdDragIndicator size={24} />
-              {projectData?.name || 'Funil de Vendas'}
-            </KanbanTitle>
+            <KanbanTitleRow>
+              <KanbanTitle>
+                <MdDragIndicator size={24} />
+                {projectData?.name || 'Funil de Vendas'}
+              </KanbanTitle>
+              <KanbanActions />
+            </KanbanTitleRow>
             {projectData?.description && (
               <KanbanProjectDescription>
                 {projectData.description}
               </KanbanProjectDescription>
             )}
           </KanbanTitleSection>
-          <KanbanActions></KanbanActions>
         </KanbanHeader>
 
         {/* Drawer de Filtros */}
@@ -2434,15 +2448,51 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     );
   }
 
-  if (board.columns.length === 0) {
+  if (board.columns.length === 0 && !loading) {
     return (
       <KanbanContainer>
         <KanbanHeader>
           <KanbanTitleSection>
-            <KanbanTitle>
-              <MdDragIndicator size={24} />
-              {projectData?.name || 'Funil de Vendas'}
-            </KanbanTitle>
+            <KanbanTitleRow>
+              <KanbanTitle>
+                <MdDragIndicator size={24} />
+                {projectData?.name || 'Funil de Vendas'}
+              </KanbanTitle>
+              <KanbanActions>
+                <KanbanNotifications tasks={board.tasks} />
+                <MoreMenuWrapper ref={moreMenuRef}>
+                  <SettingsButton
+                    onClick={() => setShowMoreMenu(prev => !prev)}
+                    title='Mais opções'
+                  >
+                    <MdMoreVert size={22} />
+                  </SettingsButton>
+                  <MoreDropdown $open={showMoreMenu}>
+                    <MoreMenuItem
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        setIsFiltersDrawerOpen(true);
+                      }}
+                    >
+                      <MdFilterList size={18} />
+                      Filtros
+                    </MoreMenuItem>
+                    {permissions.canCreateColumns && (
+                      <MoreMenuItem
+                        onClick={e => {
+                          e.preventDefault();
+                          setShowMoreMenu(false);
+                          handleAddColumn(e as any);
+                        }}
+                      >
+                        <MdAdd size={18} />
+                        Adicionar coluna
+                      </MoreMenuItem>
+                    )}
+                  </MoreDropdown>
+                </MoreMenuWrapper>
+              </KanbanActions>
+            </KanbanTitleRow>
             {projectData?.description && (
               <KanbanProjectDescription>
                 {projectData.description}
@@ -2452,35 +2502,17 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
               {/* TeamAvatars será implementado quando os dados da equipe estiverem disponíveis */}
             </TeamMembersSection>
           </KanbanTitleSection>
-          <KanbanActions>
-            <KanbanNotifications tasks={board.tasks} />
-
-            {/* Botão de Filtros */}
-            <SettingsButton
-              onClick={() => setIsFiltersDrawerOpen(true)}
-              title='Filtros do Kanban'
-            >
-              <MdFilterList size={20} />
-            </SettingsButton>
-
-            {permissions.canCreateColumns && (
-              <AddColumnButton
-                onClick={e => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleAddColumn(e);
-                }}
-                onMouseDown={e => {
-                  e.stopPropagation();
-                }}
-              >
-                <MdAdd size={16} />
-                Adicionar coluna
-              </AddColumnButton>
-            )}
-          </KanbanActions>
         </KanbanHeader>
 
+        <KanbanFiltersDrawer
+          isOpen={isFiltersDrawerOpen}
+          onClose={() => setIsFiltersDrawerOpen(false)}
+          filters={filters}
+          filterOptions={filterOptions}
+          filterOptionsLoading={filterOptionsLoading}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={handleClearFilters}
+        />
         <EmptyState>
           <EmptyTitle>Nenhuma coluna encontrada</EmptyTitle>
           <EmptyMessage>
@@ -2501,155 +2533,130 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     <KanbanContainer ref={kanbanContainerRef}>
       <KanbanHeader>
         <KanbanTitleSection>
-          <KanbanTitle>
-            <MdDragIndicator size={24} />
-            {projectData?.name || 'Funil de Vendas'}
-          </KanbanTitle>
+          <KanbanTitleRow>
+            <KanbanTitle>
+              <MdDragIndicator size={24} />
+              {projectData?.name || 'Funil de Vendas'}
+            </KanbanTitle>
+            <KanbanActions>
+              <KanbanNotifications tasks={board.tasks} />
+              <MoreMenuWrapper ref={moreMenuRef}>
+                <SettingsButton
+                  onClick={() => setShowMoreMenu(prev => !prev)}
+                  title='Mais opções'
+                >
+                  <MdMoreVert size={22} />
+                </SettingsButton>
+                <MoreDropdown $open={showMoreMenu}>
+                  {canViewMetrics() && (
+                    <MoreMenuItem
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        navigate('/kanban/metrics');
+                      }}
+                    >
+                      <MdBarChart size={18} />
+                      Métricas e Analytics
+                    </MoreMenuItem>
+                  )}
+                  {canViewMetrics() && (
+                    <MoreMenuItem
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        const params = new URLSearchParams();
+                        if (currentTeamId && !isPersonalWorkspace)
+                          params.set('teamId', currentTeamId);
+                        if (selectedProjectId)
+                          params.set('projectId', selectedProjectId);
+                        navigate(
+                          `/kanban/insights${params.toString() ? `?${params.toString()}` : ''}`
+                        );
+                      }}
+                    >
+                      <MdAutoAwesome size={18} />
+                      Insights IA
+                    </MoreMenuItem>
+                  )}
+                  {canManageColorRules() && (
+                    <MoreMenuItem
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        handleOpenColorRules();
+                      }}
+                    >
+                      <MdColorLens size={18} />
+                      Regras de Cor
+                    </MoreMenuItem>
+                  )}
+                  {permissions.canCreateColumns && (
+                    <MoreMenuItem
+                      onClick={e => {
+                        e.preventDefault();
+                        setShowMoreMenu(false);
+                        handleAddColumn(e as any);
+                      }}
+                      disabled={localColumns.length >= 6}
+                      title={
+                        localColumns.length >= 6
+                          ? 'Máximo de 6 colunas atingido'
+                          : 'Adicionar nova coluna'
+                      }
+                    >
+                      <MdAdd size={18} />
+                      Nova Coluna
+                      {localColumns.length >= 6 && ' (6/6)'}
+                    </MoreMenuItem>
+                  )}
+                </MoreDropdown>
+              </MoreMenuWrapper>
+            </KanbanActions>
+          </KanbanTitleRow>
           {projectData?.description && (
             <KanbanProjectDescription>
               {projectData.description}
             </KanbanProjectDescription>
           )}
         </KanbanTitleSection>
-        <KanbanActions>
-          <KanbanNotifications tasks={board.tasks} />
+      </KanbanHeader>
 
-          {canViewMetrics() && (
-            <SettingsButton
-              onClick={() => navigate('/kanban/metrics')}
-              title='Métricas e Analytics do Funil de Vendas'
-            >
-              <MdBarChart size={20} />
-            </SettingsButton>
-          )}
-          {canViewMetrics() && (
-            <SettingsButton
-              onClick={() => {
-                const params = new URLSearchParams();
-                if (currentTeamId && !isPersonalWorkspace)
-                  params.set('teamId', currentTeamId);
-                if (selectedProjectId)
-                  params.set('projectId', selectedProjectId);
-                navigate(
-                  `/kanban/insights${params.toString() ? `?${params.toString()}` : ''}`
-                );
-              }}
-              title='Insights IA — resumo e prioridades do funil'
-            >
-              <MdAutoAwesome size={20} />
-            </SettingsButton>
-          )}
-          {canManageColorRules() && (
-            <SettingsButton
-              onClick={handleOpenColorRules}
-              title='Regras de Cor do Funil de Vendas'
-            >
-              <MdColorLens size={20} />
-            </SettingsButton>
-          )}
-          {permissions.canCreateColumns && (
-            <MoreMenuWrapper ref={moreMenuRef}>
-              <SettingsButton
-                onClick={() => setShowMoreMenu(prev => !prev)}
-                title='Mais opções'
-              >
-                <MdMoreVert size={20} />
-              </SettingsButton>
-              <MoreDropdown $open={showMoreMenu}>
-                <MoreMenuItem
-                  onClick={e => {
-                    e.preventDefault();
-                    setShowMoreMenu(false);
-                    handleAddColumn(e as any);
-                  }}
-                  disabled={localColumns.length >= 6}
-                  title={
-                    localColumns.length >= 6
-                      ? 'Máximo de 6 colunas atingido'
-                      : 'Adicionar nova coluna'
-                  }
-                >
-                  <MdAdd size={16} />
-                  Nova Coluna
-                  {localColumns.length >= 6 && ' (6/6)'}
-                </MoreMenuItem>
-              </MoreDropdown>
-            </MoreMenuWrapper>
-          )}
-
-          {/* Seletor de equipe compacto - só mostra se houver mais de 1 equipe */}
-          {!isPersonalWorkspace && teams && teams.length > 1 && (
+      {/* Toolbar: Equipe (esquerda) + Avatares + Filtros + Seletor de funil — tudo na mesma linha */}
+      <ToolbarRow>
+        {!isPersonalWorkspace && teams && teams.length > 1 && (
+          <ToolbarLeftFixed>
             <TeamSelectorCompact
               teams={teams}
               selectedTeam={selectedTeam}
               onTeamSelect={handleTeamSelect}
             />
-          )}
-        </KanbanActions>
-      </KanbanHeader>
-
-      {/* Filtro por responsável com avatares e botão de filtros */}
-      {!isPersonalWorkspace && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '20px',
-          }}
-        >
+          </ToolbarLeftFixed>
+        )}
+        {!isPersonalWorkspace && (
           <AssigneeFilter
             tasks={board.tasks}
             selectedAssigneeId={selectedAssigneeId}
             onAssigneeSelect={setSelectedAssigneeId}
           />
-          <SettingsButton
-            onClick={() => setIsFiltersDrawerOpen(true)}
-            title='Filtros do Kanban'
-          >
-            <MdFilterList size={20} />
-          </SettingsButton>
-        </div>
-      )}
-
-      {/* Barra de busca com select de projeto ao lado */}
-      {viewSettings?.showSearchBar !== false && (
-        <SearchBar>
-          <SearchInputWrapper>
-            {isPersonalWorkspace && (
-              <SettingsButton
-                onClick={() => setIsFiltersDrawerOpen(true)}
-                title='Filtros do Kanban'
-              >
-                <MdFilterList size={20} />
-              </SettingsButton>
-            )}
-            <SearchInput
-              type='text'
-              placeholder={
-                isPersonalWorkspace
-                  ? 'Buscar tarefas por título ou descrição...'
-                  : 'Buscar tarefas por título, descrição ou responsável...'
-              }
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-            />
-            {searchText && (
-              <ClearSearchButton onClick={() => setSearchText('')}>
-                <MdClose size={16} />
-              </ClearSearchButton>
-            )}
-          </SearchInputWrapper>
-          {onProjectChange && (
-            <ProjectSelectWrapperInline>
-              <ProjectSelect
-                selectedProjectId={selectedProjectIdProp || selectedProjectId}
-                onProjectChange={onProjectChange}
-              />
-            </ProjectSelectWrapperInline>
+        )}
+        <FilterButton
+          $active={activeFiltersCount > 0}
+          onClick={() => setIsFiltersDrawerOpen(true)}
+          title='Filtros do Kanban'
+        >
+          <MdFilterList size={18} />
+          Filtros
+          {activeFiltersCount > 0 && (
+            <FilterButtonBadge>{activeFiltersCount}</FilterButtonBadge>
           )}
-        </SearchBar>
-      )}
+        </FilterButton>
+        {onProjectChange && (
+          <ProjectSelectWrapperInline>
+            <ProjectSelect
+              selectedProjectId={selectedProjectIdProp || selectedProjectId}
+              onProjectChange={onProjectChange}
+            />
+          </ProjectSelectWrapperInline>
+        )}
+      </ToolbarRow>
 
       <NegotiationsCountBar>
         <NegotiationsCountValue>{filteredTasks.length}</NegotiationsCountValue>
@@ -2680,7 +2687,11 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
         onClearFilters={handleClearFilters}
       />
 
-      <DndContext
+      {loading ? (
+        <KanbanShimmer columnCount={4} taskCountPerColumn={3} />
+      ) : (
+        <>
+          <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
@@ -2964,7 +2975,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
                 {
                   transform: 'rotate(2deg) scale(1.05)',
                   boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-                  width: '280px',
+                  width: '320px',
                 } as React.CSSProperties
               }
             >
@@ -3095,6 +3106,8 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       <ScrollControls
         containerRef={kanbanContainerRef as React.RefObject<HTMLDivElement>}
       />
+        </>
+      )}
 
       {/* Modal de Feedback de Validações e Ações */}
       <ValidationFeedbackModal

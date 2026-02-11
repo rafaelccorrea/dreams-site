@@ -108,9 +108,9 @@ export const useKanban = () => {
         if (columnIdOnly) {
           filterParams.columnId = columnIdOnly;
         }
-        // Paginação por coluna: carregar apenas N cards por coluna no início
+        // Paginação por coluna: carregar menos cards no início para resposta mais rápida; "Carregar mais" traz o restante
         if (!columnIdOnly) {
-          filterParams.perColumnLimit = 20;
+          filterParams.perColumnLimit = 12;
         }
 
         // Converter filtros para formato da API
@@ -966,7 +966,8 @@ export const useKanban = () => {
     };
   }, []);
 
-  const PER_COLUMN_PAGE_SIZE = 20;
+  /** Mesmo valor do perColumnLimit do getBoard: primeira tela rápida; "Carregar mais" traz o próximo bloco. */
+  const PER_COLUMN_PAGE_SIZE = 12;
 
   /** Carrega mais cards de uma coluna (paginação). */
   const loadMoreColumnTasks = useCallback(

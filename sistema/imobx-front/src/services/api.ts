@@ -286,21 +286,17 @@ api.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
-    // NÃO interceptar 401 dos endpoints de autenticação em fluxos esperados:
-    // - /auth/login com 2FA_REQUIRED (deve ser tratado pelo fluxo de login)
-    // - /auth/verify-2fa com INVALID_2FA_CODE (deve ser exibido ao usuário)
+    // NÃO interceptar 401 dos endpoints de autenticação — o consumidor trata e exibe mensagem (sem reload):
+    // - /auth/login: credenciais inválidas, 2FA_REQUIRED, etc.
+    // - /auth/verify-2fa: INVALID_2FA_CODE, etc.
     try {
       const url = originalRequest?.url || '';
       const isAuthLogin = url.includes('/auth/login');
       const isAuthVerify2FA = url.includes('/auth/verify-2fa');
-      const errorCode = error?.response?.data?.errorCode;
       if (
-        (isAuthLogin &&
-          error?.response?.status === 401 &&
-          errorCode === '2FA_REQUIRED') ||
-        (isAuthVerify2FA && error?.response?.status === 401)
+        error?.response?.status === 401 &&
+        (isAuthLogin || isAuthVerify2FA)
       ) {
-        // Deixar o consumidor tratar esse 401 específico
         return Promise.reject(error);
       }
     } catch {
