@@ -209,7 +209,14 @@ export const ProjectMultiSelect: React.FC<ProjectMultiSelectProps> = ({
   const [allProjects, setAllProjects] = useState<KanbanProject[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Carregar todos os projetos
+  // Estabilizar dependências para evitar chamadas repetidas à API (evita refetch a cada re-render)
+  const teamIdsKey = teams
+    .map(t => t.id)
+    .sort()
+    .join(',');
+  const personalWorkspaceId = personalWorkspace?.id ?? '';
+
+  // Carregar todos os projetos (apenas quando a lista de equipes ou workspace pessoal mudar)
   useEffect(() => {
     const loadAllProjects = async () => {
       setLoading(true);
@@ -237,7 +244,8 @@ export const ProjectMultiSelect: React.FC<ProjectMultiSelectProps> = ({
     if (teams.length > 0 || personalWorkspace) {
       loadAllProjects();
     }
-  }, [teams, personalWorkspace]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamIdsKey, personalWorkspaceId]);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {

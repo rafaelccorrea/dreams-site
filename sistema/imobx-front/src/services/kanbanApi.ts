@@ -207,6 +207,7 @@ class KanbanApiService {
 
       const response = await api.get(`${this.baseUrl}/board/${teamId}`, {
         params,
+        timeout: 60000, // 60s para quadros grandes (paginação no backend reduz carga)
       });
       if (import.meta.env.DEV) {
         console.log('✅ kanbanApi - Quadro Kanban obtido:', {
@@ -668,7 +669,10 @@ class KanbanApiService {
     }
   }
 
-  async getProjectMembers(projectId: string): Promise<
+  async getProjectMembers(
+    projectId: string,
+    options?: { page?: number; limit?: number }
+  ): Promise<
     Array<{
       id: string;
       role: 'member' | 'leader';
@@ -683,8 +687,14 @@ class KanbanApiService {
     }>
   > {
     try {
-      const response = await api.get(`/kanban/projects/${projectId}/members`);
-      return response.data;
+      const params: Record<string, number> = {};
+      if (options?.page != null) params.page = options.page;
+      if (options?.limit != null) params.limit = options.limit;
+      const response = await api.get(`/kanban/projects/${projectId}/members`, {
+        params: Object.keys(params).length ? params : undefined,
+      });
+      const body = response.data;
+      return Array.isArray(body) ? body : body?.data ?? [];
     } catch (error: any) {
       console.error('❌ Erro ao buscar membros do projeto:', error);
       throw this.handleError(error);

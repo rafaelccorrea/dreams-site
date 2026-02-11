@@ -277,7 +277,15 @@ export const ProjectSelect: React.FC<ProjectSelectProps> = ({
     return null;
   };
 
-  // Carregar todos os funis
+  // Estabilizar dependências para evitar chamadas repetidas à API quando apenas
+  // a referência de `teams` ou `personalWorkspace` muda (re-renders).
+  const teamIdsKey = teams
+    .map(t => t.id)
+    .sort()
+    .join(',');
+  const personalWorkspaceId = personalWorkspace?.id ?? '';
+
+  // Carregar todos os funis (apenas quando a lista de equipes ou workspace pessoal mudar de fato)
   useEffect(() => {
     const loadAllProjects = async () => {
       setLoading(true);
@@ -308,7 +316,9 @@ export const ProjectSelect: React.FC<ProjectSelectProps> = ({
     if (teams.length > 0 || personalWorkspace) {
       loadAllProjects();
     }
-  }, [teams, personalWorkspace]);
+    // teamIdsKey e personalWorkspaceId estabilizam o efeito; teams/personalWorkspace vêm do closure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamIdsKey, personalWorkspaceId]);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {

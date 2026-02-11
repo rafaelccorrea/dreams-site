@@ -521,12 +521,16 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     board.columns,
   ]);
 
-  // Carregar valores das colunas ao montar e quando dependências mudarem
+  // Carregar valores das colunas após o board estar visível (evita competir com getBoard no carregamento inicial)
+  const DEFER_SECONDARY_MS = 600;
   useEffect(() => {
-    loadColumnValues();
+    const t = setTimeout(() => {
+      loadColumnValues();
+    }, DEFER_SECONDARY_MS);
+    return () => clearTimeout(t);
   }, [loadColumnValues]);
 
-  /** Carregar insights IA do funil apenas para quem tem permissão kanban:view_analytics (SDR/métricas) */
+  /** Carregar insights IA do funil após o board (adiado para não travar a tela) */
   useEffect(() => {
     if (!canViewMetrics()) {
       setFunnelInsights(null);
@@ -542,20 +546,23 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       return;
     }
     let cancelled = false;
-    setInsightsLoading(true);
-    kanbanMetricsApi
-      .getFunnelInsights(currentTeamId, selectedProjectId)
-      .then(data => {
-        if (!cancelled) setFunnelInsights(data);
-      })
-      .catch(() => {
-        if (!cancelled) setFunnelInsights(null);
-      })
-      .finally(() => {
-        if (!cancelled) setInsightsLoading(false);
-      });
+    const t = setTimeout(() => {
+      setInsightsLoading(true);
+      kanbanMetricsApi
+        .getFunnelInsights(currentTeamId, selectedProjectId)
+        .then(data => {
+          if (!cancelled) setFunnelInsights(data);
+        })
+        .catch(() => {
+          if (!cancelled) setFunnelInsights(null);
+        })
+        .finally(() => {
+          if (!cancelled) setInsightsLoading(false);
+        });
+    }, DEFER_SECONDARY_MS);
     return () => {
       cancelled = true;
+      clearTimeout(t);
     };
   }, [
     currentTeamId,
