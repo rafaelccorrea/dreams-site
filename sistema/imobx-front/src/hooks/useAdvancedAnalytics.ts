@@ -61,6 +61,22 @@ const getInitialFilters = (): AdvancedAnalyticsFilters => {
   };
 };
 
+/** Estrutura vazia para renderização progressiva (mostrar layout e skeletons por seção) */
+export const EMPTY_ADVANCED_ANALYTICS_DATA: AdvancedAnalyticsData = {
+  companyPerformance: null,
+  pendingMatches: { total: 0, matches: [], overdue: 0, warning: 0 },
+  brokersPerformance: [],
+  churnAnalysis: {
+    totalClients: 0,
+    highRisk: 0,
+    mediumRisk: 0,
+    lowRisk: 0,
+    churnRate: 0,
+    atRiskClients: [],
+  },
+  conversionFunnel: null,
+};
+
 export const useAdvancedAnalytics = () => {
   const [filters, setFilters] =
     useState<AdvancedAnalyticsFilters>(getInitialFilters());
@@ -1071,5 +1087,9 @@ export const useAdvancedAnalytics = () => {
     cacheInfo,
     conversionFunnelLoading,
     conversionFunnelError,
+    performanceLoading,
+    matchesLoading,
+    brokersLoading,
+    churnLoading,
   };
 };

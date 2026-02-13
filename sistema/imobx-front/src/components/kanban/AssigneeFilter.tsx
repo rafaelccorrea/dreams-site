@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
-import { MdPersonOff, MdClear } from 'react-icons/md';
+import React, { useMemo, useState } from 'react';
+import styled, { keyframes } from 'styled-components';
+import { MdPersonOff, MdClear, MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { Avatar } from '../common/Avatar';
 import type { KanbanTask } from '../../types/kanban';
+
+const MAX_COLLAPSED = 6;
+const MAX_VISIBLE_IN_ROW = 10;
 
 const FilterContainer = styled.div`
   display: flex;
@@ -231,6 +234,114 @@ const AvatarWrapper = styled.div`
   margin-bottom: -4px;
 `;
 
+const expandIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const VerMaisButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  margin-left: 4px;
+  background: ${props => props.theme.colors.primary}18;
+  border: 2px solid ${props => props.theme.colors.primary};
+  border-radius: 20px;
+  color: ${props => props.theme.colors.primary};
+  font-size: 0.813rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  &:hover {
+    background: ${props => props.theme.colors.primary}28;
+    transform: scale(1.03);
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const CarouselWrapper = styled.div<{ $visible: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Até ~10 avatares visíveis na linha; o restante por scroll (carrossel) */
+  max-width: min(100%, ${(36 + 8) * MAX_VISIBLE_IN_ROW + 24}px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 4px 4px 0;
+  -webkit-overflow-scrolling: touch;
+  animation: ${expandIn} 0.25s ease-out forwards;
+  scrollbar-width: thin;
+  flex: 1;
+  min-width: 0;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${props => props.theme.colors.background};
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.colors.border};
+    border-radius: 3px;
+  }
+`;
+
+const CarouselAvatarButton = styled.button<{ $isActive: boolean }>`
+  flex-shrink: 0;
+  background: ${props => props.theme.colors.cardBackground};
+  border: 2px solid
+    ${props =>
+      props.$isActive ? props.theme.colors.primary : props.theme.colors.cardBackground};
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px ${props => props.theme.colors.cardBackground};
+
+  &:hover {
+    transform: scale(1.08);
+    border-color: ${props =>
+      props.$isActive ? props.theme.colors.primary : props.theme.colors.border};
+  }
+`;
+
+const VerMenosButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+  background: ${props => props.theme.colors.border};
+  border: none;
+  border-radius: 16px;
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.theme.colors.primary}20;
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
 interface AssigneeFilterProps {
   tasks: KanbanTask[];
   selectedAssigneeId: string | null;
@@ -242,6 +353,8 @@ export const AssigneeFilter: React.FC<AssigneeFilterProps> = ({
   selectedAssigneeId,
   onAssigneeSelect,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // Extrair responsáveis únicos com contagem de tarefas
   const assignees = useMemo(() => {
     const assigneeMap = new Map<
@@ -283,7 +396,6 @@ export const AssigneeFilter: React.FC<AssigneeFilterProps> = ({
   }, [tasks]);
 
   const handleAssigneeClick = (assigneeId: string | null) => {
-    // Se clicar no mesmo, desseleciona
     if (selectedAssigneeId === assigneeId) {
       onAssigneeSelect(null);
     } else {
@@ -295,56 +407,104 @@ export const AssigneeFilter: React.FC<AssigneeFilterProps> = ({
     onAssigneeSelect(null);
   };
 
-  // Se não há responsáveis, não mostrar filtro
   if (assignees.assigned.length === 0 && assignees.unassignedCount === 0) {
     return null;
   }
 
-  // Determinar tamanho do avatar baseado na largura da tela
   const avatarSize =
     typeof window !== 'undefined' && window.innerWidth <= 768 ? 32 : 36;
+  const showVerMais = assignees.assigned.length > MAX_COLLAPSED;
+  const visibleCollapsed = assignees.assigned.slice(0, MAX_COLLAPSED);
 
   return (
     <FilterContainer>
       <FilterLabel>Equipe:</FilterLabel>
 
-      {/* Avatares da equipe em stack sobreposto */}
-      <AvatarStack>
-        {/* Cards sem responsável - primeiro da pilha */}
-        {assignees.unassignedCount > 0 && (
-          <AvatarWrapper>
-            <UnassignedButton
-              $isActive={selectedAssigneeId === 'unassigned'}
-              onClick={() => handleAssigneeClick('unassigned')}
-              title={`${assignees.unassignedCount} tarefa(s) sem responsável`}
+      {!isExpanded ? (
+        <>
+          <AvatarStack>
+            {assignees.unassignedCount > 0 && (
+              <AvatarWrapper>
+                <UnassignedButton
+                  $isActive={selectedAssigneeId === 'unassigned'}
+                  onClick={() => handleAssigneeClick('unassigned')}
+                  title={`${assignees.unassignedCount} tarefa(s) sem responsável`}
+                >
+                  <MdPersonOff size={avatarSize === 32 ? 14 : 16} />
+                </UnassignedButton>
+                <TaskCount>{assignees.unassignedCount}</TaskCount>
+              </AvatarWrapper>
+            )}
+            {visibleCollapsed.map((assignee, index) => (
+              <AvatarWrapper key={assignee.id}>
+                <AvatarButton
+                  $isActive={selectedAssigneeId === assignee.id}
+                  $overlap={index > 0 || assignees.unassignedCount > 0}
+                  onClick={() => handleAssigneeClick(assignee.id)}
+                  title={`${assignee.name} - ${assignee.count} tarefa(s)`}
+                >
+                  <Avatar
+                    name={assignee.name}
+                    image={assignee.avatar}
+                    size={avatarSize}
+                  />
+                </AvatarButton>
+                <TaskCount>{assignee.count}</TaskCount>
+              </AvatarWrapper>
+            ))}
+          </AvatarStack>
+          {showVerMais && (
+            <VerMaisButton
+              type="button"
+              onClick={() => setIsExpanded(true)}
+              aria-label="Ver mais usuários da equipe"
             >
-              <MdPersonOff size={avatarSize === 32 ? 14 : 16} />
-            </UnassignedButton>
-            <TaskCount>{assignees.unassignedCount}</TaskCount>
-          </AvatarWrapper>
-        )}
+              <MdExpandMore size={18} />
+              Ver mais ({assignees.assigned.length - MAX_COLLAPSED}+)
+            </VerMaisButton>
+          )}
+        </>
+      ) : (
+        <CarouselWrapper $visible={isExpanded}>
+          {assignees.unassignedCount > 0 && (
+            <AvatarWrapper>
+              <UnassignedButton
+                $isActive={selectedAssigneeId === 'unassigned'}
+                onClick={() => handleAssigneeClick('unassigned')}
+                title={`${assignees.unassignedCount} tarefa(s) sem responsável`}
+              >
+                <MdPersonOff size={avatarSize === 32 ? 14 : 16} />
+              </UnassignedButton>
+              <TaskCount>{assignees.unassignedCount}</TaskCount>
+            </AvatarWrapper>
+          )}
+          {assignees.assigned.map(assignee => (
+            <AvatarWrapper key={assignee.id}>
+              <CarouselAvatarButton
+                $isActive={selectedAssigneeId === assignee.id}
+                onClick={() => handleAssigneeClick(assignee.id)}
+                title={`${assignee.name} - ${assignee.count} tarefa(s)`}
+              >
+                <Avatar
+                  name={assignee.name}
+                  image={assignee.avatar}
+                  size={avatarSize}
+                />
+              </CarouselAvatarButton>
+              <TaskCount>{assignee.count}</TaskCount>
+            </AvatarWrapper>
+          ))}
+          <VerMenosButton
+            type="button"
+            onClick={() => setIsExpanded(false)}
+            aria-label="Recolher lista"
+          >
+            <MdExpandLess size={18} />
+            Ver menos
+          </VerMenosButton>
+        </CarouselWrapper>
+      )}
 
-        {/* Responsáveis - sobrepostos */}
-        {assignees.assigned.map((assignee, index) => (
-          <AvatarWrapper key={assignee.id}>
-            <AvatarButton
-              $isActive={selectedAssigneeId === assignee.id}
-              $overlap={index > 0 || assignees.unassignedCount > 0}
-              onClick={() => handleAssigneeClick(assignee.id)}
-              title={`${assignee.name} - ${assignee.count} tarefa(s)`}
-            >
-              <Avatar
-                name={assignee.name}
-                image={assignee.avatar}
-                size={avatarSize}
-              />
-            </AvatarButton>
-            <TaskCount>{assignee.count}</TaskCount>
-          </AvatarWrapper>
-        ))}
-      </AvatarStack>
-
-      {/* Botão de limpar filtro */}
       {selectedAssigneeId && (
         <ClearButton onClick={handleClearFilter}>
           <MdClear size={16} />

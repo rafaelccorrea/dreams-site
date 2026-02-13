@@ -15,8 +15,35 @@ export interface KanbanPermissions {
 }
 
 /**
- * Hook com permissões do Kanban para controlar visualização, criação, edição e exclusão.
- * Super admin (kanban:manage_users) pode gerir permissões dos demais usuários no Kanban.
+ * Permissões do funil que são OPERACIONAIS: todos os usuários têm por padrão
+ * (visualização, criação/edição de quadros, criação de projetos, histórico).
+ */
+export const KANBAN_OPERATIONAL_PERMISSIONS = [
+  'kanban:view',
+  'kanban:create',
+  'kanban:update',
+  'kanban:view_history',
+  'kanban:project:create',
+] as const;
+
+/**
+ * Permissões do funil que são ADMINISTRATIVAS: não vêm pré-definidas;
+ * apenas usuários com permissão explícita (ex.: gerente, master) as possuem.
+ * Não podem ser alteradas livremente na criação de usuário (são restritas).
+ */
+export const KANBAN_ADMINISTRATIVE_PERMISSIONS = [
+  'kanban:delete',
+  'kanban:manage_validations_actions',
+  'kanban:view_analytics',
+  'kanban:manage_users',
+] as const;
+
+/**
+ * Hook com permissões do Kanban.
+ * Todos os usuários autenticados têm acesso operacional ao funil (visualizar,
+ * criar/editar quadros, criar projetos, ver histórico). Apenas a parte
+ * administrativa (excluir, gerenciar validações, analytics, gerenciar usuários)
+ * depende de permissão explícita.
  */
 function roleToString(r: unknown): string {
   if (r == null) return '';
@@ -60,18 +87,20 @@ export const useKanbanPermissions = (): KanbanPermissions => {
       };
     }
 
+    // Todos os usuários têm acesso operacional ao funil (quadros, visualização, criação, edição, projetos, histórico).
+    // Apenas a parte administrativa depende de permissão explícita.
     return {
-      canView: hasPermission('kanban:view'),
-      canCreate: hasPermission('kanban:create'),
-      canUpdate: hasPermission('kanban:update'),
+      canView: true,
+      canCreate: true,
+      canUpdate: true,
+      canViewHistory: true,
+      canCreateProject: true,
       canDelete: hasPermission('kanban:delete'),
-      canViewHistory: hasPermission('kanban:view_history'),
       canManageValidationsActions: hasPermission(
         'kanban:manage_validations_actions'
       ),
       canViewAnalytics: hasPermission('kanban:view_analytics'),
       canManageUsers: hasPermission('kanban:manage_users'),
-      canCreateProject: hasPermission('kanban:project:create'),
     };
   }, [user, hasPermission]);
 };

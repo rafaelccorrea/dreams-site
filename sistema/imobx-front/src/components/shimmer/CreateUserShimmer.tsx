@@ -1,17 +1,11 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 
-// Animação do shimmer
 const shimmer = keyframes`
-  0% {
-    background-position: -200px 0;
-  }
-  100% {
-    background-position: calc(200px + 100%) 0;
-  }
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
 `;
 
-// Base do shimmer
 export const ShimmerBase = styled.div<{
   $width?: string;
   $height?: string;
@@ -32,105 +26,34 @@ export const ShimmerBase = styled.div<{
   margin: ${props => props.$margin || '0'};
 `;
 
-// Container principal
 const PageContainer = styled.div`
-  min-height: 100vh;
-  background: ${props => props.theme.colors.background};
-  padding: 24px;
+  padding: 32px;
   width: 100%;
 
   @media (max-width: 768px) {
-    padding: 16px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 12px;
+    padding: 20px;
   }
 `;
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 24px;
-    gap: 16px;
-  }
 `;
 
-const PageTitleContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-`;
-
-const ContentContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-`;
-
-// Cards
-const FormContainer = styled.div`
-  background: ${props => props.theme.colors.cardBackground};
-  border-radius: 24px;
-  padding: 32px;
+const SectionBlock = styled.div`
   margin-bottom: 32px;
-  box-shadow: 0 8px 30px
-    ${props =>
-      props.theme.mode === 'dark'
-        ? 'rgba(0, 0, 0, 0.3)'
-        : 'rgba(0, 0, 0, 0.08)'};
-  border: 1px solid ${props => props.theme.colors.border};
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(
-      90deg,
-      ${props => props.theme.colors.primary} 0%,
-      ${props => props.theme.colors.primaryDark} 100%
-    );
-  }
-
-  @media (max-width: 768px) {
-    padding: 24px;
-    border-radius: 20px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 20px;
-    border-radius: 16px;
-  }
 `;
 
 const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
 `;
 
 const RowContainer = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  margin-bottom: 20px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -138,14 +61,13 @@ const RowContainer = styled.div`
   }
 `;
 
-const FieldContainer = styled.div`
-  margin-bottom: 20px;
+const FieldWrap = styled.div`
+  margin-bottom: 0;
 `;
 
-// Info Box
 const InfoBox = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 20px 24px;
   background: linear-gradient(
@@ -158,7 +80,20 @@ const InfoBox = styled.div`
   margin-bottom: 24px;
 `;
 
-// Permissions Grid
+const FormActions = styled.div`
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid ${props => props.theme.colors.border};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+`;
+
 const PermissionsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -171,7 +106,7 @@ const PermissionsGrid = styled.div`
   }
 `;
 
-const PermissionCategory = styled.div`
+const CategoryCard = styled.div`
   background: ${props => props.theme.colors.backgroundSecondary};
   border-radius: 16px;
   padding: 24px;
@@ -191,300 +126,154 @@ const PermissionItem = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ModeRow = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
   margin-bottom: 8px;
-`;
-
-const PermissionInfo = styled.div`
-  flex: 1;
-`;
-
-// Actions
-const FormActions = styled.div`
-  display: flex;
-  gap: 20px;
-  justify-content: space-between;
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid ${props => props.theme.colors.border};
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-  }
-`;
-
-const Button = styled.div`
-  padding: 16px 32px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    justify-content: center;
-  }
 `;
 
 export const CreateUserShimmer: React.FC = () => {
   return (
     <PageContainer>
+      <ShimmerBase $width='120px' $height='40px' $borderRadius='8px' $margin='0 0 24px 0' />
+
       <PageHeader>
-        <PageTitleContainer>
-          <ShimmerBase $width='120px' $height='40px' $borderRadius='12px' />
-          <ShimmerBase $width='300px' $height='48px' $borderRadius='8px' />
-        </PageTitleContainer>
-        <ShimmerBase $width='200px' $height='20px' $borderRadius='8px' />
+        <ShimmerBase $width='280px' $height='36px' $borderRadius='8px' $margin='0 0 8px 0' />
+        <ShimmerBase $width='420px' $height='20px' $borderRadius='6px' />
       </PageHeader>
 
-      <ContentContainer>
-        {/* Informações Básicas */}
-        <FormContainer>
-          <SectionHeader>
-            <ShimmerBase $width='40px' $height='40px' $borderRadius='12px' />
-            <ShimmerBase $width='200px' $height='28px' $borderRadius='8px' />
-          </SectionHeader>
+      {/* Informações Básicas */}
+      <SectionBlock>
+        <SectionHeader>
+          <ShimmerBase $width='220px' $height='24px' $borderRadius='6px' $margin='0 0 8px 0' />
+          <ShimmerBase $width='100%' $height='16px' $borderRadius='4px' />
+        </SectionHeader>
 
-          <RowContainer>
-            {/* Primeira linha */}
-            <FieldContainer>
-              <ShimmerBase
-                $width='120px'
-                $height='16px'
-                $borderRadius='4px'
-                $margin='0 0 8px 0'
-              />
-              <ShimmerBase $width='100%' $height='56px' $borderRadius='12px' />
-            </FieldContainer>
-            <FieldContainer>
-              <ShimmerBase
-                $width='80px'
-                $height='16px'
-                $borderRadius='4px'
-                $margin='0 0 8px 0'
-              />
-              <ShimmerBase $width='100%' $height='56px' $borderRadius='12px' />
-            </FieldContainer>
-          </RowContainer>
+        <RowContainer>
+          <FieldWrap>
+            <ShimmerBase $width='120px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+            <ShimmerBase $width='100%' $height='44px' $borderRadius='8px' />
+          </FieldWrap>
+          <FieldWrap>
+            <ShimmerBase $width='80px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+            <ShimmerBase $width='100%' $height='44px' $borderRadius='8px' />
+          </FieldWrap>
+        </RowContainer>
 
-          <RowContainer>
-            {/* Segunda linha */}
-            <FieldContainer>
-              <ShimmerBase
-                $width='100px'
-                $height='16px'
-                $borderRadius='4px'
-                $margin='0 0 8px 0'
-              />
-              <ShimmerBase $width='100%' $height='56px' $borderRadius='12px' />
-            </FieldContainer>
-            <FieldContainer>
-              <ShimmerBase
-                $width='140px'
-                $height='16px'
-                $borderRadius='4px'
-                $margin='0 0 8px 0'
-              />
-              <ShimmerBase $width='100%' $height='56px' $borderRadius='12px' />
-            </FieldContainer>
-          </RowContainer>
+        <RowContainer>
+          <FieldWrap>
+            <ShimmerBase $width='60px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+            <ShimmerBase $width='100%' $height='44px' $borderRadius='8px' />
+          </FieldWrap>
+          <FieldWrap>
+            <ShimmerBase $width='100px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+            <ShimmerBase $width='100%' $height='44px' $borderRadius='8px' />
+          </FieldWrap>
+        </RowContainer>
 
-          <RowContainer>
-            {/* Terceira linha */}
-            <FieldContainer>
-              <ShimmerBase
-                $width='90px'
-                $height='16px'
-                $borderRadius='4px'
-                $margin='0 0 8px 0'
-              />
-              <ShimmerBase $width='100%' $height='56px' $borderRadius='12px' />
-            </FieldContainer>
-            <FieldContainer>
-              <ShimmerBase
-                $width='70px'
-                $height='16px'
-                $borderRadius='4px'
-                $margin='0 0 8px 0'
-              />
-              <ShimmerBase $width='100%' $height='56px' $borderRadius='12px' />
-            </FieldContainer>
-          </RowContainer>
-        </FormContainer>
+        <RowContainer>
+          <FieldWrap>
+            <ShimmerBase $width='80px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+            <ShimmerBase $width='100%' $height='44px' $borderRadius='8px' />
+          </FieldWrap>
+          <FieldWrap>
+            <ShimmerBase $width='60px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+            <ShimmerBase $width='100%' $height='44px' $borderRadius='8px' />
+          </FieldWrap>
+        </RowContainer>
 
-        {/* Permissões */}
-        <FormContainer>
-          <SectionHeader>
-            <ShimmerBase $width='40px' $height='40px' $borderRadius='12px' />
-            <ShimmerBase $width='150px' $height='28px' $borderRadius='8px' />
-          </SectionHeader>
+        <RowContainer>
+          <FieldWrap>
+            <ShimmerBase $width='140px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+            <ShimmerBase $width='100%' $height='48px' $borderRadius='8px' />
+          </FieldWrap>
+        </RowContainer>
 
-          <InfoBox>
-            <ShimmerBase $width='24px' $height='24px' $borderRadius='50%' />
-            <ShimmerBase $width='400px' $height='20px' $borderRadius='8px' />
-          </InfoBox>
+        <RowContainer>
+          <FieldWrap style={{ width: '100%' }}>
+            <ShimmerBase $width='100%' $height='72px' $borderRadius='12px' />
+          </FieldWrap>
+        </RowContainer>
+      </SectionBlock>
 
-          <FieldContainer>
-            <ShimmerBase
-              $width='150px'
-              $height='16px'
-              $borderRadius='4px'
-              $margin='0 0 8px 0'
-            />
-            <ShimmerBase $width='100%' $height='56px' $borderRadius='12px' />
-          </FieldContainer>
+      {/* Permissões */}
+      <SectionBlock>
+        <SectionHeader>
+          <ShimmerBase $width='140px' $height='24px' $borderRadius='6px' $margin='0 0 8px 0' />
+          <ShimmerBase $width='100%' $height='16px' $borderRadius='4px' />
+        </SectionHeader>
 
-          <PermissionsGrid>
-            {/* Categoria 1 */}
-            <PermissionCategory>
+        <InfoBox>
+          <ShimmerBase $width='24px' $height='24px' $borderRadius='50%' $margin='0' />
+          <ShimmerBase $width='100%' $height='20px' $borderRadius='6px' />
+        </InfoBox>
+
+        <FieldWrap style={{ marginBottom: 20 }}>
+          <ShimmerBase $width='140px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+          <ModeRow>
+            <ShimmerBase $width='100px' $height='40px' $borderRadius='8px' />
+            <ShimmerBase $width='110px' $height='40px' $borderRadius='8px' />
+          </ModeRow>
+          <ShimmerBase $width='320px' $height='14px' $borderRadius='4px' $margin='4px 0 0 0' />
+        </FieldWrap>
+
+        <FieldWrap style={{ marginBottom: 24 }}>
+          <ShimmerBase $width='130px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+          <ShimmerBase $width='100%' $height='44px' $borderRadius='8px' />
+        </FieldWrap>
+
+        <PermissionsGrid>
+          {[1, 2, 3].map(cat => (
+            <CategoryCard key={cat}>
               <CategoryHeader>
-                <ShimmerBase
-                  $width='40px'
-                  $height='40px'
-                  $borderRadius='12px'
-                />
-                <ShimmerBase
-                  $width='180px'
-                  $height='20px'
-                  $borderRadius='8px'
-                />
+                <ShimmerBase $width='40px' $height='40px' $borderRadius='10px' />
+                <ShimmerBase $width='160px' $height='20px' $borderRadius='6px' />
               </CategoryHeader>
-
-              {[1, 2, 3].map(item => (
+              {[1, 2, 3, 4].map(item => (
                 <PermissionItem key={item}>
-                  <ShimmerBase
-                    $width='20px'
-                    $height='20px'
-                    $borderRadius='4px'
-                  />
-                  <PermissionInfo>
-                    <ShimmerBase
-                      $width='150px'
-                      $height='16px'
-                      $borderRadius='4px'
-                      $margin='0 0 4px 0'
-                    />
-                    <ShimmerBase
-                      $width='100px'
-                      $height='14px'
-                      $borderRadius='4px'
-                    />
-                  </PermissionInfo>
+                  <ShimmerBase $width='20px' $height='20px' $borderRadius='4px' />
+                  <div style={{ flex: 1 }}>
+                    <ShimmerBase $width='70%' $height='14px' $borderRadius='4px' $margin='0 0 4px 0' />
+                    <ShimmerBase $width='50%' $height='12px' $borderRadius='4px' />
+                  </div>
                 </PermissionItem>
               ))}
-            </PermissionCategory>
+            </CategoryCard>
+          ))}
+        </PermissionsGrid>
+      </SectionBlock>
 
-            {/* Categoria 2 */}
-            <PermissionCategory>
-              <CategoryHeader>
-                <ShimmerBase
-                  $width='40px'
-                  $height='40px'
-                  $borderRadius='12px'
-                />
-                <ShimmerBase
-                  $width='160px'
-                  $height='20px'
-                  $borderRadius='8px'
-                />
-              </CategoryHeader>
+      {/* Tags */}
+      <SectionBlock>
+        <SectionHeader>
+          <ShimmerBase $width='100px' $height='24px' $borderRadius='6px' $margin='0 0 8px 0' />
+          <ShimmerBase $width='100%' $height='16px' $borderRadius='4px' />
+        </SectionHeader>
 
-              {[1, 2, 3].map(item => (
-                <PermissionItem key={item}>
-                  <ShimmerBase
-                    $width='20px'
-                    $height='20px'
-                    $borderRadius='4px'
-                  />
-                  <PermissionInfo>
-                    <ShimmerBase
-                      $width='140px'
-                      $height='16px'
-                      $borderRadius='4px'
-                      $margin='0 0 4px 0'
-                    />
-                    <ShimmerBase
-                      $width='90px'
-                      $height='14px'
-                      $borderRadius='4px'
-                    />
-                  </PermissionInfo>
-                </PermissionItem>
-              ))}
-            </PermissionCategory>
+        <InfoBox>
+          <ShimmerBase $width='24px' $height='24px' $borderRadius='50%' $margin='0' />
+          <ShimmerBase $width='280px' $height='20px' $borderRadius='6px' />
+        </InfoBox>
 
-            {/* Categoria 3 */}
-            <PermissionCategory>
-              <CategoryHeader>
-                <ShimmerBase
-                  $width='40px'
-                  $height='40px'
-                  $borderRadius='12px'
-                />
-                <ShimmerBase
-                  $width='140px'
-                  $height='20px'
-                  $borderRadius='8px'
-                />
-              </CategoryHeader>
+        <FieldWrap>
+          <ShimmerBase $width='120px' $height='16px' $borderRadius='4px' $margin='0 0 8px 0' />
+          <ShimmerBase $width='100%' $height='120px' $borderRadius='12px' />
+        </FieldWrap>
+      </SectionBlock>
 
-              {[1, 2].map(item => (
-                <PermissionItem key={item}>
-                  <ShimmerBase
-                    $width='20px'
-                    $height='20px'
-                    $borderRadius='4px'
-                  />
-                  <PermissionInfo>
-                    <ShimmerBase
-                      $width='160px'
-                      $height='16px'
-                      $borderRadius='4px'
-                      $margin='0 0 4px 0'
-                    />
-                    <ShimmerBase
-                      $width='110px'
-                      $height='14px'
-                      $borderRadius='4px'
-                    />
-                  </PermissionInfo>
-                </PermissionItem>
-              ))}
-            </PermissionCategory>
-          </PermissionsGrid>
-        </FormContainer>
-
-        {/* Tags */}
-        <FormContainer>
-          <SectionHeader>
-            <ShimmerBase $width='40px' $height='40px' $borderRadius='12px' />
-            <ShimmerBase $width='80px' $height='28px' $borderRadius='8px' />
-          </SectionHeader>
-
-          <InfoBox>
-            <ShimmerBase $width='24px' $height='24px' $borderRadius='50%' />
-            <ShimmerBase $width='350px' $height='20px' $borderRadius='8px' />
-          </InfoBox>
-
-          <FieldContainer>
-            <ShimmerBase
-              $width='120px'
-              $height='16px'
-              $borderRadius='4px'
-              $margin='0 0 8px 0'
-            />
-            <ShimmerBase $width='100%' $height='120px' $borderRadius='12px' />
-          </FieldContainer>
-        </FormContainer>
-
-        {/* Botões de ação */}
-        <FormActions>
-          <ShimmerBase $width='120px' $height='56px' $borderRadius='12px' />
-          <ShimmerBase $width='150px' $height='56px' $borderRadius='12px' />
-        </FormActions>
-      </ContentContainer>
+      <FormActions>
+        <ShimmerBase $width='120px' $height='48px' $borderRadius='10px' />
+        <ShimmerBase $width='160px' $height='48px' $borderRadius='10px' />
+      </FormActions>
     </PageContainer>
   );
 };

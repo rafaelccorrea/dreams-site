@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useUsers } from '../hooks/useUsers';
+import { usersApi } from '../services/usersApi';
 import { usePermissions } from '../hooks/usePermissions';
 import { useTags } from '../hooks/useTags';
 import { useModules } from '../hooks/useModules';
@@ -32,17 +33,17 @@ import {
   hasDreamKeysAppPermissionChanged,
   hasAllDreamKeysAppPermissions,
 } from '../utils/dreamKeysAppPermissions';
+import { KANBAN_OPERATIONAL_PERMISSIONS } from '../hooks/useKanbanPermissions';
+import {
+  getSystemRequiredPermissionIds,
+  isSystemRequiredPermission,
+} from '../utils/requiredPermissions';
 import { MdArrowBack, MdSave, MdInfo } from 'react-icons/md';
 import type { Permission } from '../services/permissionsApi';
 import styled from 'styled-components';
 
-// Permissões fixas de corretor (Funil de Vendas) que não podem ser removidas
-const BROKER_FIXED_PERMISSIONS = [
-  'kanban:view',
-  'kanban:create',
-  'kanban:update',
-  'kanban:delete',
-] as const;
+/** Permissões operacionais do funil: todos os usuários têm por padrão (visualização, quadros, projetos, histórico). Não podem ser removidas. */
+const BROKER_FIXED_PERMISSIONS = [...KANBAN_OPERATIONAL_PERMISSIONS] as readonly string[];
 import {
   PageContainer,
   PageHeader,
@@ -60,6 +61,13 @@ import {
   FieldSelect,
   FieldContainerWithError,
   RowContainer,
+  AppAccessCard,
+  AppAccessLabel,
+  AppAccessDescription,
+  AppAccessAlertBox,
+  AppAccessAlertTitle,
+  AppAccessAlertText,
+  AppAccessRow,
   InfoBox,
   PermissionsGrid,
   PermissionCategory,
@@ -266,6 +274,8 @@ const CreateUserPage: React.FC = () => {
   const { tags, loading: tagsLoading, loadTags } = useTags();
   const { hasModule } = useModules();
 
+  const [canCreateUser, setCanCreateUser] = useState<boolean | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -282,6 +292,8 @@ const CreateUserPage: React.FC = () => {
   const [selectedProfile, setSelectedProfile] = useState<string>('empty');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validatingEmail, setValidatingEmail] = useState(false);
+  const [validatingDocument, setValidatingDocument] = useState(false);
   const [permissionSearch, setPermissionSearch] = useState('');
   const [permissionMode, setPermissionMode] = useState<'basic' | 'advanced'>(
     'basic'
@@ -308,6 +320,16 @@ const CreateUserPage: React.FC = () => {
       .map(p => p.id);
   }, [availablePermissions]);
 
+  /** Permissões fixas = Funil (corretor) + obrigatórias do sistema (user:view, team:view) */
+  const getFixedPermissionIds = React.useCallback(() => {
+    return [
+      ...new Set([
+        ...getBrokerFixedPermissionIds(),
+        ...getSystemRequiredPermissionIds(availablePermissions),
+      ]),
+    ];
+  }, [availablePermissions, getBrokerFixedPermissionIds]);
+
   // Verificar se uma permissão é fixa de corretor
   const isBrokerFixedPermission = React.useCallback(
     (permissionId: string) => {
@@ -318,6 +340,31 @@ const CreateUserPage: React.FC = () => {
     },
     [availablePermissions]
   );
+
+  // Bloquear acesso se limite de usuários atingido (não deixar nem ver a tela)
+  useEffect(() => {
+    let cancelled = false;
+    usersApi
+      .getCanCreateUser()
+      .then(data => {
+        if (cancelled) return;
+        if (!data.allowed) {
+          toast.error(
+            data.message ||
+              'Limite de usuários atingido. Atualize seu plano para adicionar mais usuários.'
+          );
+          navigate('/users', { replace: true });
+          return;
+        }
+        setCanCreateUser(true);
+      })
+      .catch(() => {
+        if (!cancelled) setCanCreateUser(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   // Carregar permissões e tags ao montar o componente
   useEffect(() => {
@@ -358,18 +405,17 @@ const CreateUserPage: React.FC = () => {
     }
   }, [formData.role, availablePermissions]);
 
-  // Garantir que permissões fixas de corretor (Funil de Vendas) estejam sempre incluídas
+  // Garantir que permissões fixas (funil + obrigatórias do sistema) estejam sempre incluídas
   useEffect(() => {
     if (availablePermissions.length > 0) {
-      const fixedPermissionIds = getBrokerFixedPermissionIds();
+      const fixedPermissionIds = getFixedPermissionIds();
       if (fixedPermissionIds.length > 0) {
-        setSelectedPermissions(prev => {
-          const newPermissions = [...new Set([...prev, ...fixedPermissionIds])];
-          return newPermissions;
-        });
+        setSelectedPermissions(prev => [
+          ...new Set([...prev, ...fixedPermissionIds]),
+        ]);
       }
     }
-  }, [availablePermissions, getBrokerFixedPermissionIds]);
+  }, [availablePermissions, getFixedPermissionIds]);
 
   // Selecionar automaticamente permissões do Intellisys App quando a flag for ativada
   useEffect(() => {
@@ -455,6 +501,45 @@ const CreateUserPage: React.FC = () => {
     }
   };
 
+  const handleValidateEmail = async () => {
+    const email = formData.email?.trim();
+    if (!email || !/\S+@\S+\.\S+/.test(email)) return;
+    setValidatingEmail(true);
+    try {
+      const { available } = await usersApi.validateEmail(email);
+      setErrors(prev => ({
+        ...prev,
+        email: available ? '' : 'Email já está em uso',
+      }));
+    } catch {
+      setErrors(prev => ({ ...prev, email: 'Erro ao verificar disponibilidade' }));
+    } finally {
+      setValidatingEmail(false);
+    }
+  };
+
+  const handleValidateDocument = async () => {
+    const document = formData.document?.trim();
+    if (!document) return;
+    const digitsOnly = document.replace(/\D/g, '');
+    if (digitsOnly.length < 11) return;
+    setValidatingDocument(true);
+    try {
+      const { available } = await usersApi.validateDocument(document);
+      setErrors(prev => ({
+        ...prev,
+        document: available ? '' : 'CPF/CNPJ já está em uso',
+      }));
+    } catch {
+      setErrors(prev => ({
+        ...prev,
+        document: 'Erro ao verificar disponibilidade',
+      }));
+    } finally {
+      setValidatingDocument(false);
+    }
+  };
+
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
     // Verificar se é uma permissão de usuário e se o role é manager ou admin
     const permission = availablePermissions.find(p => p.id === permissionId);
@@ -475,6 +560,15 @@ const CreateUserPage: React.FC = () => {
     if (!checked && isBrokerFixedPermission(permissionId)) {
       toast.warning(
         'Permissões de Funil de Vendas são obrigatórias para corretores e não podem ser removidas'
+      );
+      return;
+    }
+
+    // Verificar se é uma permissão obrigatória do sistema (user:view, team:view)
+    const perm = availablePermissions.find(p => p.id === permissionId);
+    if (!checked && perm && isSystemRequiredPermission(perm.name)) {
+      toast.warning(
+        'Visualização de usuários e equipes é obrigatória para o funcionamento do sistema e não pode ser removida'
       );
       return;
     }
@@ -524,8 +618,8 @@ const CreateUserPage: React.FC = () => {
         newPermissions = result.permissions;
       }
 
-      // Garantir que permissões fixas de corretor estejam sempre incluídas
-      const fixedPermissionIds = getBrokerFixedPermissionIds();
+      // Garantir que permissões fixas (funil + obrigatórias do sistema) estejam sempre incluídas
+      const fixedPermissionIds = getFixedPermissionIds();
       const allPermissions = [
         ...new Set([...newPermissions, ...fixedPermissionIds]),
       ];
@@ -573,6 +667,10 @@ const CreateUserPage: React.FC = () => {
           availablePermissions
         );
 
+        // Sempre incluir permissões fixas (funil + obrigatórias do sistema)
+        const fixedIds = getFixedPermissionIds();
+        const withFixed = [...new Set([...permissionIds, ...fixedIds])];
+
         // Se for Manager ou Admin, preservar permissões de usuário obrigatórias
         if (formData.role === 'manager' || formData.role === 'admin') {
           const userPermissions = availablePermissions.filter(
@@ -582,14 +680,12 @@ const CreateUserPage: React.FC = () => {
               p.category === 'Gestão de Usuários'
           );
           const userPermissionIds = userPermissions.map(p => p.id);
-
-          // Combinar permissões do perfil com permissões obrigatórias de usuário
           const combinedPermissions = [
-            ...new Set([...permissionIds, ...userPermissionIds]),
+            ...new Set([...withFixed, ...userPermissionIds]),
           ];
           setSelectedPermissions(combinedPermissions);
         } else {
-          setSelectedPermissions(permissionIds);
+          setSelectedPermissions(withFixed);
         }
 
         toast.success(
@@ -628,13 +724,12 @@ const CreateUserPage: React.FC = () => {
       toast.error('É obrigatório selecionar pelo menos 1 permissão');
     }
 
-    // Garantir que permissões fixas de corretor (Funil de Vendas) estejam sempre incluídas
-    const fixedPermissionIds = getBrokerFixedPermissionIds();
+    // Garantir que permissões fixas (funil + obrigatórias do sistema) estejam sempre incluídas
+    const fixedPermissionIds = getFixedPermissionIds();
     const missingFixedPermissions = fixedPermissionIds.filter(
       id => !selectedPermissions.includes(id)
     );
     if (missingFixedPermissions.length > 0) {
-      // Adicionar automaticamente as permissões fixas que estão faltando
       setSelectedPermissions(prev => [
         ...new Set([...prev, ...fixedPermissionIds]),
       ]);
@@ -671,27 +766,27 @@ const CreateUserPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // Garantir que todas as dependências de permissões estejam incluídas
-      // Exemplo: se tem team:view, deve ter user:view
-      const finalPermissions = [...selectedPermissions];
-      const userViewPermission = availablePermissions.find(
-        p => p.name === 'user:view'
-      );
-
-      // Verificar se tem permissões de team sem user:view
-      const hasTeamPermissions = finalPermissions.some(permId => {
-        const perm = availablePermissions.find(p => p.id === permId);
-        return perm && perm.name.startsWith('team:');
-      });
-
-      if (
-        hasTeamPermissions &&
-        userViewPermission &&
-        !finalPermissions.includes(userViewPermission.id)
-      ) {
-        // Adicionar user:view automaticamente
-        finalPermissions.push(userViewPermission.id);
+      // Validar disponibilidade de email e CPF/CNPJ antes de enviar
+      const [emailCheck, documentCheck] = await Promise.all([
+        usersApi.validateEmail(formData.email.trim()),
+        usersApi.validateDocument(formData.document.trim()),
+      ]);
+      if (!emailCheck.available) {
+        setErrors(prev => ({ ...prev, email: 'Email já está em uso' }));
+        setIsSubmitting(false);
+        return;
       }
+      if (!documentCheck.available) {
+        setErrors(prev => ({ ...prev, document: 'CPF/CNPJ já está em uso' }));
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Garantir permissões fixas (funil + obrigatórias do sistema: user:view, team:view)
+      const fixedIds = getFixedPermissionIds();
+      const finalPermissions = [
+        ...new Set([...selectedPermissions, ...fixedIds]),
+      ];
 
       const userData = {
         name: formData.name,
@@ -836,20 +931,20 @@ const CreateUserPage: React.FC = () => {
     const isSelected = isCategorySelected(category);
 
     if (isSelected) {
-      // Remover todas as permissões da categoria, exceto as fixas de corretor
-      const fixedPermissionIds = getBrokerFixedPermissionIds();
+      // Remover apenas as que não são fixas (funil + obrigatórias do sistema)
+      const fixedPermissionIds = getFixedPermissionIds();
       const removableIds = categoryPermissionIds.filter(
         id => !fixedPermissionIds.includes(id)
       );
 
       if (removableIds.length === 0) {
         toast.warning(
-          'Permissões de Funil de Vendas são obrigatórias e não podem ser removidas'
+          'Esta categoria contém permissões obrigatórias do sistema e não podem ser removidas'
         );
         return;
       }
       setSelectedPermissions(prev =>
-        prev.filter(id => !categoryPermissionIds.includes(id))
+        prev.filter(id => !removableIds.includes(id))
       );
     } else {
       // Adicionar todas as permissões da categoria
@@ -865,7 +960,7 @@ const CreateUserPage: React.FC = () => {
     }
   };
 
-  if (permissionsLoading || tagsLoading) {
+  if (canCreateUser === null || permissionsLoading || tagsLoading) {
     return (
       <Layout>
         <CreateUserShimmer />
@@ -915,11 +1010,17 @@ const CreateUserPage: React.FC = () => {
               <FieldContainerWithError $hasError={!!errors.email}>
                 <FieldLabel>
                   Email <RequiredIndicator>*</RequiredIndicator>
+                  {validatingEmail && (
+                    <span style={{ fontWeight: 400, fontSize: '0.8rem', marginLeft: 6 }}>
+                      Verificando...
+                    </span>
+                  )}
                 </FieldLabel>
                 <FieldInput
                   type='email'
                   value={formData.email}
                   onChange={e => handleInputChange('email', e.target.value)}
+                  onBlur={handleValidateEmail}
                   placeholder='email@exemplo.com'
                 />
                 {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
@@ -945,11 +1046,17 @@ const CreateUserPage: React.FC = () => {
               <FieldContainerWithError $hasError={!!errors.document}>
                 <FieldLabel>
                   CPF/CNPJ <RequiredIndicator>*</RequiredIndicator>
+                  {validatingDocument && (
+                    <span style={{ fontWeight: 400, fontSize: '0.8rem', marginLeft: 6 }}>
+                      Verificando...
+                    </span>
+                  )}
                 </FieldLabel>
                 <FieldInput
                   type='text'
                   value={formData.document}
                   onChange={e => handleInputChange('document', e.target.value)}
+                  onBlur={handleValidateDocument}
                   placeholder='123.456.789-00 ou CK.LZH.YDS/0001-91'
                   maxLength={18}
                 />
@@ -1005,26 +1112,12 @@ const CreateUserPage: React.FC = () => {
               </RowContainer>
             )}
 
-            {/* Acesso ao Aplicativo Dream Keys - apenas para usuários do tipo 'user' */}
+            {/* Acesso ao Aplicativo Intellisys - apenas para usuários do tipo 'user' (com espaço após Gestor Responsável) */}
             {formData.role === 'user' && (
               <>
-                <RowContainer>
+                <AppAccessRow>
                   <FieldContainer style={{ width: '100%' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '16px',
-                        background: formData.hasAppAccess
-                          ? '#DBEAFE'
-                          : '#f3f4f6',
-                        border: `2px solid ${
-                          formData.hasAppAccess ? '#3B82F6' : '#e5e7eb'
-                        }`,
-                        borderRadius: '8px',
-                      }}
-                    >
+                    <AppAccessCard $active={formData.hasAppAccess}>
                       <input
                         type='checkbox'
                         id='hasAppAccess'
@@ -1183,34 +1276,22 @@ const CreateUserPage: React.FC = () => {
                           width: '20px',
                           height: '20px',
                           cursor: 'pointer',
+                          flexShrink: 0,
                         }}
                       />
-                      <label
-                        htmlFor='hasAppAccess'
-                        style={{
-                          flex: 1,
-                          cursor: 'pointer',
-                          fontSize: '0.95rem',
-                          fontWeight: 500,
-                          color: '#1f2937',
-                        }}
-                      >
-                        📱 Acesso ao aplicativo Intellisys
-                      </label>
-                    </div>
-                    <div
-                      style={{
-                        marginTop: '8px',
-                        fontSize: '0.8rem',
-                        color: '#6b7280',
-                      }}
-                    >
-                      {formData.hasAppAccess
-                        ? 'Todas as permissões necessárias para o app serão selecionadas automaticamente'
-                        : 'Ative para conceder acesso completo ao aplicativo móvel Intellisys'}
-                    </div>
+                      <div style={{ flex: 1 }}>
+                        <AppAccessLabel htmlFor='hasAppAccess'>
+                          📱 Acesso ao aplicativo Intellisys
+                        </AppAccessLabel>
+                        <AppAccessDescription>
+                          {formData.hasAppAccess
+                            ? 'Todas as permissões necessárias para o app serão selecionadas automaticamente'
+                            : 'Ative para conceder acesso completo ao aplicativo móvel Intellisys'}
+                        </AppAccessDescription>
+                      </div>
+                    </AppAccessCard>
                   </FieldContainer>
-                </RowContainer>
+                </AppAccessRow>
 
                 {/* Card de Alerta - Mostrar quando permissões do Intellisys App foram alteradas */}
                 {!formData.hasAppAccess &&
@@ -1221,16 +1302,7 @@ const CreateUserPage: React.FC = () => {
                     availablePermissions
                   ) && (
                     <RowContainer>
-                      <div
-                        style={{
-                          width: '100%',
-                          padding: '16px',
-                          background: '#FEF3C7',
-                          border: '2px solid #F59E0B',
-                          borderRadius: '8px',
-                          marginTop: '8px',
-                        }}
-                      >
+                      <AppAccessAlertBox>
                         <div
                           style={{
                             display: 'flex',
@@ -1240,31 +1312,18 @@ const CreateUserPage: React.FC = () => {
                         >
                           <span style={{ fontSize: '1.5rem' }}>⚠️</span>
                           <div style={{ flex: 1 }}>
-                            <div
-                              style={{
-                                fontWeight: 600,
-                                fontSize: '0.95rem',
-                                color: '#92400E',
-                                marginBottom: '4px',
-                              }}
-                            >
-                              Acesso ao aplicativo Dream Keys desativado
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '0.85rem',
-                                color: '#78350F',
-                                lineHeight: '1.5',
-                              }}
-                            >
+                            <AppAccessAlertTitle>
+                              Acesso ao aplicativo Intellisys desativado
+                            </AppAccessAlertTitle>
+                            <AppAccessAlertText>
                               O usuário possui todas as permissões necessárias
-                              para o aplicativo Dream Keys, mas o acesso está
+                              para o aplicativo Intellisys, mas o acesso está
                               desativado. Ative a opção acima para conceder
                               acesso ao app.
-                            </div>
+                            </AppAccessAlertText>
                           </div>
                         </div>
-                      </div>
+                      </AppAccessAlertBox>
                     </RowContainer>
                   )}
               </>
@@ -1459,10 +1518,14 @@ const CreateUserPage: React.FC = () => {
                       const isUserCategory =
                         category === 'user' ||
                         category === 'Gestão de Usuários';
+                      const isKanbanCategory =
+                        category === 'kanban' ||
+                        category === 'Funil de Vendas';
                       const isLocked =
-                        (formData.role === 'manager' ||
+                        ((formData.role === 'manager' ||
                           formData.role === 'admin') &&
-                        isUserCategory;
+                          isUserCategory) ||
+                        isKanbanCategory;
                       const isSelected = isCategorySelected(category);
 
                       return (
@@ -1682,26 +1745,30 @@ const CreateUserPage: React.FC = () => {
                             permission.category === 'user' ||
                             permission.name.startsWith('user:') ||
                             permission.category === 'Gestão de Usuários';
-                          const isLocked =
-                            (formData.role === 'manager' ||
+                          const isRequiredPermission =
+                            isBrokerFixedPermission(permission.id) ||
+                            isSystemRequiredPermission(permission.name) ||
+                            ((formData.role === 'manager' ||
                               formData.role === 'admin') &&
-                            isUserPermission;
+                              isUserPermission);
 
                           return (
                             <PermissionItem
                               key={permission.id}
-                              style={{ opacity: isLocked ? 0.6 : 1 }}
+                              style={{
+                                opacity: isRequiredPermission ? 0.6 : 1,
+                              }}
                             >
                               <input
                                 type='checkbox'
                                 checked={
-                                  isLocked
+                                  isRequiredPermission
                                     ? true
                                     : selectedPermissions.includes(
                                         permission.id
                                       )
                                 }
-                                disabled={isLocked}
+                                disabled={isRequiredPermission}
                                 onChange={e =>
                                   handlePermissionChange(
                                     permission.id,
@@ -1709,13 +1776,15 @@ const CreateUserPage: React.FC = () => {
                                   )
                                 }
                                 style={{
-                                  cursor: isLocked ? 'not-allowed' : 'pointer',
+                                  cursor: isRequiredPermission
+                                    ? 'not-allowed'
+                                    : 'pointer',
                                 }}
                               />
                               <PermissionInfo>
                                 <PermissionName>
                                   {getPermissionLabel(permission)}
-                                  {isLocked && (
+                                  {isRequiredPermission && (
                                     <PermissionLockBadge>
                                       🔒 (obrigatório)
                                     </PermissionLockBadge>

@@ -174,16 +174,18 @@ import {
   hasAllDreamKeysAppPermissions,
 } from '../utils/dreamKeysAppPermissions';
 import type { UpdateUserData, User } from '../services/usersApi';
+import { usersApi } from '../services/usersApi';
 import type { Permission } from '../services/permissionsApi';
+import { permissionsApi } from '../services/permissionsApi';
 import { toast } from 'react-toastify';
+import { KANBAN_OPERATIONAL_PERMISSIONS } from '../hooks/useKanbanPermissions';
+import {
+  getSystemRequiredPermissionIds,
+  isSystemRequiredPermission,
+} from '../utils/requiredPermissions';
 
-// Permissões fixas de corretor (Funil de Vendas) que não podem ser removidas
-const BROKER_FIXED_PERMISSIONS = [
-  'kanban:view',
-  'kanban:create',
-  'kanban:update',
-  'kanban:delete',
-] as const;
+/** Permissões operacionais do funil: todos os usuários têm por padrão. Não podem ser removidas. */
+const BROKER_FIXED_PERMISSIONS = [...KANBAN_OPERATIONAL_PERMISSIONS] as readonly string[];
 import {
   MdArrowBack,
   MdSave,
@@ -196,231 +198,42 @@ import {
   MdPeople,
 } from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
-
-// Styled Components
-const PageContainer = styled.div`
-  padding: 24px;
-  width: 100%;
-`;
-
-const PageHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 32px;
-`;
-
-const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: ${props => props.theme.colors.backgroundTertiary};
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 12px;
-  color: ${props => props.theme.colors.text};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-
-  &:hover {
-    background: ${props => props.theme.colors.hover};
-    border-color: ${props => props.theme.colors.borderLight};
-  }
-`;
-
-const PageTitle = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: ${props => props.theme.colors.text};
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const PageSubtitle = styled.p`
-  color: ${props => props.theme.colors.textSecondary};
-  margin: 0;
-  font-size: 1rem;
-`;
-
-const ContentGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  margin-bottom: 32px;
-`;
-
-const Card = styled.div`
-  background: ${props => props.theme.colors.cardBackground};
-  border-radius: 20px;
-  padding: 28px 32px;
-  box-shadow: 0 8px 30px
-    ${props =>
-      props.theme.mode === 'dark'
-        ? 'rgba(0, 0, 0, 0.3)'
-        : 'rgba(0, 0, 0, 0.08)'};
-  border: 1px solid ${props => props.theme.colors.border};
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(
-      90deg,
-      ${props => props.theme.colors.primary} 0%,
-      ${props => props.theme.colors.primaryDark} 100%
-    );
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px
-      ${props =>
-        props.theme.mode === 'dark'
-          ? 'rgba(0, 0, 0, 0.4)'
-          : 'rgba(0, 0, 0, 0.12)'};
-    border-color: ${props => props.theme.colors.primary}30;
-  }
-`;
-
-const CardHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 28px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid ${props => props.theme.colors.primary}20;
-`;
-
-const CardTitle = styled.h3`
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: ${props => props.theme.colors.text};
-  margin: 0;
-  letter-spacing: -0.025em;
-`;
-
-const CardIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: ${props => `${props.theme.colors.primary}20`};
-  color: ${props => props.theme.colors.primary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  box-shadow: 0 4px 12px ${props => props.theme.colors.primary}25;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 20px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const Label = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.text};
-  margin-bottom: 10px;
-  letter-spacing: -0.01em;
-
-  svg {
-    color: ${props => props.theme.colors.primary};
-    font-size: 16px;
-  }
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 14px 18px;
-  border: 2px solid ${props => props.theme.colors.border};
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: ${props => props.theme.colors.background};
-  color: ${props => props.theme.colors.text};
-  font-weight: 500;
-
-  &:hover {
-    border-color: ${props => props.theme.colors.primary}60;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 4px ${props => props.theme.colors.primary}15;
-  }
-
-  &::placeholder {
-    color: ${props => props.theme.colors.textSecondary};
-    font-weight: 400;
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 14px 18px;
-  border: 2px solid ${props => props.theme.colors.border};
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: ${props => props.theme.colors.background};
-  color: ${props => props.theme.colors.text};
-  cursor: pointer;
-  font-weight: 500;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 18px;
-  padding-right: 44px;
-
-  &:hover {
-    border-color: ${props => props.theme.colors.primary}60;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 4px ${props => props.theme.colors.primary}15;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  color: ${props => props.theme.colors.error};
-  font-size: 0.875rem;
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-`;
-
-const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
+import {
+  AppAccessCard,
+  AppAccessLabel,
+  AppAccessDescription,
+  AppAccessAlertBox,
+  AppAccessAlertTitle,
+  AppAccessAlertText,
+  AppAccessSwitchTrack,
+  AppAccessSwitchThumb,
+} from '../styles/pages/CreateUserPageStyles';
+import {
+  PageContainer,
+  PageHeader,
+  HeaderLeft,
+  BackButton,
+  PageTitle,
+  PageSubtitle,
+  ContentGrid,
+  LeftColumn,
+  RightColumn,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardIcon,
+  FormGroup,
+  Label,
+  Input,
+  Select,
+  FormGrid,
+  ErrorMessage,
+  InfoBox,
+  InfoText,
+  ActionBar,
+  ActionBarSummary,
+  SaveButton,
+} from '../styles/pages/EditUserPageStyles';
 
 const PermissionsGrid = styled.div`
   display: grid;
@@ -503,71 +316,6 @@ const PermissionDescription = styled.div`
   line-height: 1.4;
 `;
 
-const ActionBar = styled.div`
-  background: ${props => props.theme.colors.cardBackground};
-  border-radius: 20px;
-  padding: 20px 32px;
-  box-shadow: 0 8px 30px
-    ${props =>
-      props.theme.mode === 'dark'
-        ? 'rgba(0, 0, 0, 0.3)'
-        : 'rgba(0, 0, 0, 0.08)'};
-  border: 1px solid ${props => props.theme.colors.border};
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  position: sticky;
-  bottom: 24px;
-  z-index: 10;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 12px;
-  }
-`;
-
-const SaveButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 32px;
-  background: linear-gradient(
-    135deg,
-    ${props => props.theme.colors.primary} 0%,
-    ${props => props.theme.colors.primaryDark} 100%
-  );
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px ${props => props.theme.colors.primary}30;
-  min-width: 200px;
-  justify-content: center;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px ${props => props.theme.colors.primary}40;
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-`;
-
 const LoadingSpinner = styled.div`
   width: 20px;
   height: 20px;
@@ -584,23 +332,6 @@ const LoadingSpinner = styled.div`
       transform: rotate(360deg);
     }
   }
-`;
-
-const InfoBox = styled.div`
-  background: ${props => `${props.theme.colors.primary}10`};
-  border: 1px solid ${props => `${props.theme.colors.primary}30`};
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-`;
-
-const InfoText = styled.div`
-  color: ${props => props.theme.colors.primary};
-  font-size: 0.875rem;
-  font-weight: 500;
 `;
 
 const EditUserPage: React.FC = () => {
@@ -636,6 +367,16 @@ const EditUserPage: React.FC = () => {
       .filter(p => BROKER_FIXED_PERMISSIONS.includes(p.name as any))
       .map(p => p.id);
   }, [availablePermissions]);
+
+  /** Permissões fixas = Funil (corretor) + obrigatórias do sistema (user:view, team:view) */
+  const getFixedPermissionIds = React.useCallback(() => {
+    return [
+      ...new Set([
+        ...getBrokerFixedPermissionIds(),
+        ...getSystemRequiredPermissionIds(availablePermissions),
+      ]),
+    ];
+  }, [availablePermissions, getBrokerFixedPermissionIds]);
 
   // Verificar se uma permissão é fixa de corretor
   const isBrokerFixedPermission = React.useCallback(
@@ -677,11 +418,15 @@ const EditUserPage: React.FC = () => {
   const [selectedProfile, setSelectedProfile] = useState<string>('empty');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [validatingEmail, setValidatingEmail] = useState(false);
   const [permissionSearch, setPermissionSearch] = useState('');
   const [permissionMode, setPermissionMode] = useState<'basic' | 'advanced'>(
     'basic'
   );
   const [previousPermissions, setPreviousPermissions] = useState<string[]>([]); // Para rastrear mudanças
+  const [loadedUserPermissionNames, setLoadedUserPermissionNames] = useState<
+    string[] | null
+  >(null); // Nomes carregados do backend para resolver IDs pela lista disponível
 
   const isOwnerSelfPermissionLocked = Boolean(
     currentUser &&
@@ -747,16 +492,31 @@ const EditUserPage: React.FC = () => {
           hasAppAccess: userData.hasAppAccess || false,
         });
 
-        // Carregar permissões do usuário se existirem
-        if (userData.permissions) {
-          const permissionIds = userData.permissions.map(
-            (p: Permission) => p.id
+        // Carregar permissões do usuário: usar endpoint dedicado para garantir lista correta
+        try {
+          const userPermsResponse = await permissionsApi.getUserPermissionsById(
+            userData.id
           );
+          const perms = userPermsResponse?.permissions ?? [];
+          const names = perms.map((p: Permission) => p.name);
+          setLoadedUserPermissionNames(names);
+          // Definir IDs agora; serão re-resolvidos quando availablePermissions carregar (por nome)
+          const permissionIds = perms.map((p: Permission) => String(p.id));
           setSelectedPermissions(permissionIds);
-          setPreviousPermissions(permissionIds); // Inicializar referência
-        } else {
-          setSelectedPermissions([]);
-          setPreviousPermissions([]);
+          setPreviousPermissions(permissionIds);
+        } catch {
+          // Fallback: usar permissões vindas do próprio user (getUserById com relations)
+          if (userData.permissions && userData.permissions.length > 0) {
+            const perms = userData.permissions as Permission[];
+            setLoadedUserPermissionNames(perms.map(p => p.name));
+            const permissionIds = perms.map(p => String(p.id));
+            setSelectedPermissions(permissionIds);
+            setPreviousPermissions(permissionIds);
+          } else {
+            setLoadedUserPermissionNames([]);
+            setSelectedPermissions([]);
+            setPreviousPermissions([]);
+          }
         }
 
         // Carregar tags do usuário
@@ -764,7 +524,6 @@ const EditUserPage: React.FC = () => {
           const userTags = await getUserTags(userData.id);
           setSelectedTags(userTags.map(tag => tag.id));
         } catch {
-          // console.log('Erro ao carregar tags do usuário');
           setSelectedTags([]);
         }
       } catch (error: any) {
@@ -776,20 +535,41 @@ const EditUserPage: React.FC = () => {
     loadUser();
   }, [id, getUserById, navigate, getUserTags]);
 
-  // Garantir que permissões fixas de corretor (Funil de Vendas) estejam sempre incluídas
+  // Quando a lista de permissões disponíveis carregar, resolver as permissões do usuário por nome
+  // para garantir que os IDs usados são os mesmos da lista (evita pré-seleção falhar por ID diferente).
+  useEffect(() => {
+    if (
+      loadedUserPermissionNames !== null &&
+      availablePermissions.length > 0
+    ) {
+      const idsFromNames = loadedUserPermissionNames
+        .map(name => availablePermissions.find(p => p.name === name)?.id)
+        .filter((id): id is string => id != null);
+      const fixedIds = getFixedPermissionIds();
+      const merged = [...new Set([...idsFromNames, ...fixedIds])];
+      setSelectedPermissions(merged);
+      setPreviousPermissions(merged);
+      setLoadedUserPermissionNames(null); // Aplicado uma vez
+    }
+  }, [
+    loadedUserPermissionNames,
+    availablePermissions,
+    getFixedPermissionIds,
+  ]);
+
+  // Garantir que permissões fixas (funil + obrigatórias do sistema) estejam sempre incluídas
   useEffect(() => {
     if (availablePermissions.length > 0 && selectedPermissions.length > 0) {
-      const fixedPermissionIds = getBrokerFixedPermissionIds();
+      const fixedPermissionIds = getFixedPermissionIds();
       if (fixedPermissionIds.length > 0) {
-        setSelectedPermissions(prev => {
-          const newPermissions = [...new Set([...prev, ...fixedPermissionIds])];
-          return newPermissions;
-        });
+        setSelectedPermissions(prev => [
+          ...new Set([...prev, ...fixedPermissionIds]),
+        ]);
       }
     }
   }, [
     availablePermissions,
-    getBrokerFixedPermissionIds,
+    getFixedPermissionIds,
     selectedPermissions.length,
   ]);
 
@@ -869,6 +649,24 @@ const EditUserPage: React.FC = () => {
     }
   };
 
+  const handleValidateEmail = async () => {
+    const email = formData.email?.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    if (!user?.id) return;
+    setValidatingEmail(true);
+    try {
+      const { available } = await usersApi.validateEmail(email, user.id);
+      setErrors(prev => ({
+        ...prev,
+        email: available ? '' : 'Email já está em uso',
+      }));
+    } catch {
+      setErrors(prev => ({ ...prev, email: 'Erro ao verificar disponibilidade' }));
+    } finally {
+      setValidatingEmail(false);
+    }
+  };
+
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
     if (isOwnerSelfPermissionLocked) {
       toast.warning(
@@ -897,6 +695,15 @@ const EditUserPage: React.FC = () => {
     if (!checked && isBrokerFixedPermission(permissionId)) {
       toast.warning(
         'Permissões de Funil de Vendas são obrigatórias para corretores e não podem ser removidas'
+      );
+      return;
+    }
+
+    // Verificar se é uma permissão obrigatória do sistema (user:view, team:view)
+    const perm = availablePermissions.find(p => p.id === permissionId);
+    if (!checked && perm && isSystemRequiredPermission(perm.name)) {
+      toast.warning(
+        'Visualização de usuários e equipes é obrigatória para o funcionamento do sistema e não pode ser removida'
       );
       return;
     }
@@ -946,8 +753,8 @@ const EditUserPage: React.FC = () => {
         newPermissions = result.permissions;
       }
 
-      // Garantir que permissões fixas de corretor estejam sempre incluídas
-      const fixedPermissionIds = getBrokerFixedPermissionIds();
+      // Garantir que permissões fixas (funil + obrigatórias do sistema) estejam sempre incluídas
+      const fixedPermissionIds = getFixedPermissionIds();
       const allPermissions = [
         ...new Set([...newPermissions, ...fixedPermissionIds]),
       ];
@@ -1002,6 +809,10 @@ const EditUserPage: React.FC = () => {
           availablePermissions
         );
 
+        // Sempre incluir permissões fixas (funil + obrigatórias do sistema)
+        const fixedIds = getFixedPermissionIds();
+        const withFixed = [...new Set([...permissionIds, ...fixedIds])];
+
         // Se for Manager ou Admin, preservar permissões de usuário obrigatórias
         if (
           formData.role &&
@@ -1014,14 +825,12 @@ const EditUserPage: React.FC = () => {
               p.category === 'Gestão de Usuários'
           );
           const userPermissionIds = userPermissions.map(p => p.id);
-
-          // Combinar permissões do perfil com permissões obrigatórias de usuário
           const combinedPermissions = [
-            ...new Set([...permissionIds, ...userPermissionIds]),
+            ...new Set([...withFixed, ...userPermissionIds]),
           ];
           setSelectedPermissions(combinedPermissions);
         } else {
-          setSelectedPermissions(permissionIds);
+          setSelectedPermissions(withFixed);
         }
 
         toast.success(
@@ -1060,13 +869,12 @@ const EditUserPage: React.FC = () => {
       toast.error('É obrigatório selecionar pelo menos 1 permissão');
     }
 
-    // Garantir que permissões fixas de corretor (Funil de Vendas) estejam sempre incluídas
-    const fixedPermissionIds = getBrokerFixedPermissionIds();
+    // Garantir que permissões fixas (funil + obrigatórias do sistema) estejam sempre incluídas
+    const fixedPermissionIds = getFixedPermissionIds();
     const missingFixedPermissions = fixedPermissionIds.filter(
       id => !selectedPermissions.includes(id)
     );
     if (missingFixedPermissions.length > 0) {
-      // Adicionar automaticamente as permissões fixas que estão faltando
       setSelectedPermissions(prev => [
         ...new Set([...prev, ...fixedPermissionIds]),
       ]);
@@ -1097,27 +905,22 @@ const EditUserPage: React.FC = () => {
         return;
       }
 
-      // Garantir que todas as dependências de permissões estejam incluídas
-      // Exemplo: se tem team:view, deve ter user:view
-      const finalPermissionsArray = [...selectedPermissions];
-      const userViewPermission = availablePermissions.find(
-        p => p.name === 'user:view'
+      // Validar disponibilidade do email antes de salvar (exclui o próprio usuário)
+      const { available } = await usersApi.validateEmail(
+        formData.email?.trim() ?? '',
+        user.id
       );
-
-      // Verificar se tem permissões de team sem user:view
-      const hasTeamPermissions = finalPermissionsArray.some(permId => {
-        const perm = availablePermissions.find(p => p.id === permId);
-        return perm && perm.name.startsWith('team:');
-      });
-
-      if (
-        hasTeamPermissions &&
-        userViewPermission &&
-        !finalPermissionsArray.includes(userViewPermission.id)
-      ) {
-        // Adicionar user:view automaticamente
-        finalPermissionsArray.push(userViewPermission.id);
+      if (!available) {
+        setErrors(prev => ({ ...prev, email: 'Email já está em uso' }));
+        setIsSaving(false);
+        return;
       }
+
+      // Garantir permissões fixas (funil + obrigatórias do sistema: user:view, team:view)
+      const fixedIds = getFixedPermissionIds();
+      const finalPermissionsArray = [
+        ...new Set([...selectedPermissions, ...fixedIds]),
+      ];
 
       const updateData: UpdateUserData = {
         name: formData.name,
@@ -1278,20 +1081,20 @@ const EditUserPage: React.FC = () => {
     const isSelected = isCategorySelected(category);
 
     if (isSelected) {
-      // Remover todas as permissões da categoria, exceto as fixas de corretor
-      const fixedPermissionIds = getBrokerFixedPermissionIds();
+      // Remover apenas as que não são fixas (funil + obrigatórias do sistema)
+      const fixedPermissionIds = getFixedPermissionIds();
       const removableIds = categoryPermissionIds.filter(
         id => !fixedPermissionIds.includes(id)
       );
 
       if (removableIds.length === 0) {
         toast.warning(
-          'Permissões de Funil de Vendas são obrigatórias e não podem ser removidas'
+          'Esta categoria contém permissões obrigatórias do sistema e não podem ser removidas'
         );
         return;
       }
       setSelectedPermissions(prev =>
-        prev.filter(id => !categoryPermissionIds.includes(id))
+        prev.filter(id => !removableIds.includes(id))
       );
     } else {
       // Adicionar todas as permissões da categoria
@@ -1319,19 +1122,24 @@ const EditUserPage: React.FC = () => {
     <Layout>
       <PageContainer>
         <PageHeader>
-          <div>
-            <PageTitle>Editar Usuário</PageTitle>
-            <PageSubtitle>
-              Atualize as informações e permissões do usuário
-            </PageSubtitle>
-          </div>
-          <BackButton onClick={() => navigate('/users')}>
-            <MdArrowBack size={20} />
-            Voltar
-          </BackButton>
+          <HeaderLeft>
+            <BackButton onClick={() => navigate('/users')}>
+              <MdArrowBack size={20} />
+              Voltar
+            </BackButton>
+            <div>
+              <PageTitle>Editar Usuário</PageTitle>
+              <PageSubtitle>
+                {user?.name
+                  ? `Editando ${user.name}`
+                  : 'Atualize as informações e permissões'}
+              </PageSubtitle>
+            </div>
+          </HeaderLeft>
         </PageHeader>
 
         <ContentGrid>
+          <LeftColumn>
           {/* Informações Básicas */}
           <Card>
             <CardHeader>
@@ -1360,11 +1168,17 @@ const EditUserPage: React.FC = () => {
                 <Label>
                   <MdEmail size={16} />
                   Email
+                  {validatingEmail && (
+                    <span style={{ fontWeight: 400, fontSize: '0.8rem', marginLeft: 6 }}>
+                      Verificando...
+                    </span>
+                  )}
                 </Label>
                 <Input
                   type='email'
                   value={formData.email}
                   onChange={e => handleInputChange('email', e.target.value)}
+                  onBlur={handleValidateEmail}
                   placeholder='email@exemplo.com'
                 />
                 {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
@@ -1483,95 +1297,61 @@ const EditUserPage: React.FC = () => {
                 </div>
               </FormGroup>
 
-              {/* Acesso ao Aplicativo Móvel - apenas para corretores (role: 'user') */}
+              {/* Acesso ao Aplicativo Intellisys - apenas para corretores (role: 'user'), adaptado dark/light */}
               {formData.role === 'user' && (
                 <>
                   <FormGroup style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '16px',
-                        background: formData.hasAppAccess
-                          ? '#DBEAFE'
-                          : 'var(--color-background-secondary)',
-                        borderRadius: '8px',
-                        border: `2px solid ${formData.hasAppAccess ? '#3B82F6' : 'var(--color-border)'}`,
-                      }}
-                    >
+                    <AppAccessCard $active={formData.hasAppAccess}>
                       <div style={{ flex: 1 }}>
-                        <Label
+                        <AppAccessLabel
+                          as='div'
                           style={{ marginBottom: '4px', display: 'block' }}
                         >
-                          📱 Acesso ao aplicativo móvel
-                        </Label>
-                        <InfoText>
+                          📱 Acesso ao aplicativo Intellisys
+                        </AppAccessLabel>
+                        <AppAccessDescription>
                           {formData.hasAppAccess
                             ? 'O usuário tem acesso ao aplicativo móvel'
                             : 'Ative para conceder acesso ao aplicativo móvel'}
-                        </InfoText>
+                        </AppAccessDescription>
                       </div>
                       <label
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           cursor: 'pointer',
-                          gap: '12px',
+                          flexShrink: 0,
                           position: 'relative',
                         }}
                       >
-                        <div
+                        <input
+                          type='checkbox'
+                          checked={formData.hasAppAccess || false}
+                          onChange={e => {
+                            const shouldEnable = e.target.checked;
+                            setFormData(prev => ({
+                              ...prev,
+                              hasAppAccess: shouldEnable,
+                            }));
+                          }}
                           style={{
-                            position: 'relative',
+                            position: 'absolute',
+                            opacity: 0,
                             width: '48px',
                             height: '24px',
-                            background: formData.hasAppAccess
-                              ? '#3B82F6'
-                              : 'var(--color-border)',
-                            borderRadius: '12px',
-                            transition: 'all 0.3s ease',
+                            margin: 0,
                             cursor: 'pointer',
+                            zIndex: 1,
                           }}
-                        >
-                          <input
-                            type='checkbox'
-                            checked={formData.hasAppAccess || false}
-                            onChange={e => {
-                              const shouldEnable = e.target.checked;
-                              setFormData(prev => ({
-                                ...prev,
-                                hasAppAccess: shouldEnable,
-                              }));
-                            }}
-                            style={{
-                              position: 'absolute',
-                              opacity: 0,
-                              width: '100%',
-                              height: '100%',
-                              margin: 0,
-                              cursor: 'pointer',
-                            }}
-                          />
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '2px',
-                              left: formData.hasAppAccess ? '26px' : '2px',
-                              width: '20px',
-                              height: '20px',
-                              background: 'white',
-                              borderRadius: '50%',
-                              transition: 'all 0.3s ease',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                            }}
-                          />
-                        </div>
+                        />
+                        <AppAccessSwitchTrack $active={formData.hasAppAccess}>
+                          <AppAccessSwitchThumb $active={formData.hasAppAccess} />
+                        </AppAccessSwitchTrack>
                       </label>
-                    </div>
+                    </AppAccessCard>
                   </FormGroup>
 
-                  {/* Card de Alerta - Mostrar quando permissões do Dream Keys foram alteradas */}
+                  {/* Card de Alerta - Mostrar quando permissões do Intellisys foram alteradas (dark/light) */}
                   {!formData.hasAppAccess &&
                     availablePermissions.length > 0 &&
                     selectedPermissions.length > 0 &&
@@ -1582,15 +1362,7 @@ const EditUserPage: React.FC = () => {
                       <FormGroup
                         style={{ gridColumn: '1 / -1', marginTop: '8px' }}
                       >
-                        <div
-                          style={{
-                            width: '100%',
-                            padding: '16px',
-                            background: '#FEF3C7',
-                            border: '2px solid #F59E0B',
-                            borderRadius: '8px',
-                          }}
-                        >
+                        <AppAccessAlertBox>
                           <div
                             style={{
                               display: 'flex',
@@ -1600,40 +1372,27 @@ const EditUserPage: React.FC = () => {
                           >
                             <span style={{ fontSize: '1.5rem' }}>⚠️</span>
                             <div style={{ flex: 1 }}>
-                              <div
-                                style={{
-                                  fontWeight: 600,
-                                  fontSize: '0.95rem',
-                                  color: '#92400E',
-                                  marginBottom: '4px',
-                                }}
-                              >
+                              <AppAccessAlertTitle>
                                 Acesso ao aplicativo Intellisys desativado
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: '0.85rem',
-                                  color: '#78350F',
-                                  lineHeight: '1.5',
-                                }}
-                              >
+                              </AppAccessAlertTitle>
+                              <AppAccessAlertText>
                                 O usuário possui todas as permissões necessárias
                                 para o aplicativo Intellisys, mas o acesso está
                                 desativado. Ative a opção acima para conceder
                                 acesso ao app.
-                              </div>
+                              </AppAccessAlertText>
                             </div>
                           </div>
-                        </div>
+                        </AppAccessAlertBox>
                       </FormGroup>
                     )}
                 </>
               )}
             </FormGrid>
 
-            {/* Gestor Responsável - apenas para usuários */}
+            {/* Gestor Responsável - apenas para usuários (com espaço para o bloco) */}
             {formData.role === 'user' && (
-              <FormGroup style={{ marginTop: '20px' }}>
+              <FormGroup style={{ marginTop: '24px' }}>
                 <ManagerSelector
                   value={formData.managerId ?? null}
                   onChange={managerId =>
@@ -1666,6 +1425,25 @@ const EditUserPage: React.FC = () => {
             </FormGroup>
           </Card>
 
+          {/* Tags */}
+          <Card>
+            <CardHeader>
+              <CardIcon>🏷️</CardIcon>
+              <CardTitle>Tags</CardTitle>
+            </CardHeader>
+
+            <FormGroup>
+              <Label>Tags do Usuário</Label>
+              <TagSelector
+                selectedTagIds={selectedTags}
+                onTagChange={setSelectedTags}
+                maxTags={10}
+              />
+            </FormGroup>
+          </Card>
+          </LeftColumn>
+
+          <RightColumn>
           {/* Permissões */}
           <Card>
             <CardHeader>
@@ -1755,11 +1533,15 @@ const EditUserPage: React.FC = () => {
                       const isUserCategory =
                         category === 'user' ||
                         category === 'Gestão de Usuários';
+                      const isKanbanCategory =
+                        category === 'kanban' ||
+                        category === 'Funil de Vendas';
                       const isLocked =
-                        formData.role &&
-                        (formData.role === 'manager' ||
-                          formData.role === 'admin') &&
-                        isUserCategory;
+                        (formData.role &&
+                          (formData.role === 'manager' ||
+                            formData.role === 'admin') &&
+                          isUserCategory) ||
+                        isKanbanCategory;
                       const isSelfLocked = isOwnerSelfPermissionLocked;
                       const cardLocked = isLocked || isSelfLocked;
                       const isSelected = isCategorySelected(category);
@@ -2031,13 +1813,16 @@ const EditUserPage: React.FC = () => {
                             permission.category === 'user' ||
                             permission.name.startsWith('user:') ||
                             permission.category === 'Gestão de Usuários';
-                          const isLocked =
-                            formData.role &&
-                            (formData.role === 'manager' ||
-                              formData.role === 'admin') &&
-                            isUserPermission;
+                          const isRequiredPermission =
+                            isBrokerFixedPermission(permission.id) ||
+                            isSystemRequiredPermission(permission.name) ||
+                            (formData.role &&
+                              (formData.role === 'manager' ||
+                                formData.role === 'admin') &&
+                              isUserPermission);
                           const isSelfLocked = isOwnerSelfPermissionLocked;
-                          const isCheckboxLocked = isLocked || isSelfLocked;
+                          const isCheckboxLocked =
+                            isRequiredPermission || isSelfLocked;
 
                           return (
                             <PermissionItem
@@ -2047,7 +1832,7 @@ const EditUserPage: React.FC = () => {
                               <input
                                 type='checkbox'
                                 checked={
-                                  isLocked
+                                  isRequiredPermission
                                     ? true
                                     : selectedPermissions.includes(
                                         permission.id
@@ -2069,12 +1854,12 @@ const EditUserPage: React.FC = () => {
                               <PermissionInfo>
                                 <PermissionName>
                                   {getPermissionLabel(permission)}
-                                  {isLocked && (
+                                  {isRequiredPermission && (
                                     <PermissionLockBadge>
                                       🔒 (obrigatório)
                                     </PermissionLockBadge>
                                   )}
-                                  {isSelfLocked && !isLocked && (
+                                  {isSelfLocked && !isRequiredPermission && (
                                     <PermissionLockBadge>
                                       🔒 (bloqueado)
                                     </PermissionLockBadge>
@@ -2126,40 +1911,17 @@ const EditUserPage: React.FC = () => {
               </SummaryText>
             </PermissionSummary>
           </Card>
-
-          {/* Tags */}
-          <Card>
-            <CardHeader>
-              <CardIcon>🏷️</CardIcon>
-              <CardTitle>Tags</CardTitle>
-            </CardHeader>
-
-            <InfoBox>
-              <MdInfo size={20} />
-              <InfoText>
-                Selecione as tags que serão associadas a este usuário
-              </InfoText>
-            </InfoBox>
-
-            <FormGroup>
-              <Label>Tags do Usuário</Label>
-              <TagSelector
-                selectedTagIds={selectedTags}
-                onTagChange={setSelectedTags}
-                maxTags={10}
-              />
-            </FormGroup>
-          </Card>
+          </RightColumn>
         </ContentGrid>
 
         <ActionBar>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <MdInfo size={20} color='#6b7280' />
-            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+          <ActionBarSummary>
+            <MdInfo size={20} />
+            <span>
               {selectedPermissions.length} permissões e {selectedTags.length}{' '}
               tags selecionadas
             </span>
-          </div>
+          </ActionBarSummary>
 
           <SaveButton onClick={handleSave} disabled={isSaving}>
             {isSaving ? <LoadingSpinner /> : <MdSave size={20} />}

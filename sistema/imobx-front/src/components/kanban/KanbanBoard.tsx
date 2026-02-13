@@ -718,6 +718,9 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
   });
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
   const [localColumns, setLocalColumns] = useState<KanbanColumn[]>([]);
+  // Evitar frame sem colunas: usar board.columns enquanto localColumns ainda não sincronizou (após loading)
+  const displayColumns =
+    localColumns.length > 0 ? localColumns : board.columns;
   const [activeColumn, setActiveColumn] = useState<KanbanColumn | null>(null);
   // selectedTask removido - usando navegação para TaskDetailsPage
   const [overTaskId, setOverTaskId] = useState<string | null>(null);
@@ -815,7 +818,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
   }, [activeTask, activeColumn]);
 
   // Hook de scroll - apenas ativo quando há 5+ colunas
-  const hasManyColumns = localColumns.length >= 5;
+  const hasManyColumns = displayColumns.length >= 5;
   const kanbanScrollRef = useKanbanScroll({ hasManyColumns });
 
   // Debug: Monitorar mudanças nas configurações
@@ -1233,7 +1236,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     }
 
     // Verificar limite de colunas (máximo 6)
-    if (localColumns.length >= 6) {
+    if (displayColumns.length >= 6) {
       showError(
         'Máximo de 6 colunas permitidas para manter o layout otimizado'
       );
@@ -1382,7 +1385,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     }
 
     // Verificar se é uma coluna sendo arrastada
-    const column = localColumns.find(col => col.id === active.id);
+    const column = displayColumns.find(col => col.id === active.id);
     if (column) {
       setActiveColumn(column);
       setActiveTask(null);
@@ -1415,7 +1418,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     }
 
     // Se não é tarefa, verificar se é coluna
-    const isColumn = localColumns.some(col => col.id === over.id);
+    const isColumn = displayColumns.some(col => col.id === over.id);
     if (isColumn) {
       setOverTaskId(null);
       console.log('🔄 handleDragOver - sobre coluna, limpando overTaskId');
@@ -1451,7 +1454,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     }
 
     // Verificar se estamos arrastando uma coluna
-    const isColumn = localColumns.some(col => col.id === active.id);
+    const isColumn = displayColumns.some(col => col.id === active.id);
     console.log('📋 handleDragEnd - isColumn:', isColumn);
 
     if (isColumn && active.id !== over.id) {
@@ -1459,8 +1462,8 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       console.log('📋 active.id:', active.id);
       console.log('📋 over.id:', over.id);
       console.log(
-        '📋 localColumns:',
-        localColumns.map(c => ({ id: c.id, name: c.name }))
+        '📋 displayColumns:',
+        displayColumns.map(c => ({ id: c.id, name: c.name }))
       );
       const columnIdToMove = active.id as string;
 
@@ -1524,8 +1527,8 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
           }
 
           // Se passou na validação, proceder com a movimentação
-          // IMPORTANTE: Garantir que localColumns está ordenado por position antes de encontrar índices
-          const sortedColumns = [...localColumns].sort(
+          // IMPORTANTE: Garantir que displayColumns está ordenado por position antes de encontrar índices
+          const sortedColumns = [...displayColumns].sort(
             (a, b) => a.position - b.position
           );
           const oldIndex = sortedColumns.findIndex(col => col.id === active.id);
@@ -1788,7 +1791,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       );
     }
 
-    const isOverColumn = localColumns.some(col => col.id === over.id);
+    const isOverColumn = displayColumns.some(col => col.id === over.id);
 
     console.log('🎯 handleDragEnd - over.id:', over.id);
     console.log('🎯 handleDragEnd - trackedOverTaskId:', trackedOverTaskId);
@@ -2592,16 +2595,16 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
                         setShowMoreMenu(false);
                         handleAddColumn(e as any);
                       }}
-                      disabled={localColumns.length >= 6}
+                      disabled={displayColumns.length >= 6}
                       title={
-                        localColumns.length >= 6
+                        displayColumns.length >= 6
                           ? 'Máximo de 6 colunas atingido'
                           : 'Adicionar nova coluna'
                       }
                     >
                       <MdAdd size={18} />
                       Nova Coluna
-                      {localColumns.length >= 6 && ' (6/6)'}
+                      {displayColumns.length >= 6 && ' (6/6)'}
                     </MoreMenuItem>
                   )}
                   {permissions.canManageUsers && (
@@ -2725,20 +2728,20 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={localColumns.map(col => col.id)}
+          items={displayColumns.map(col => col.id)}
           strategy={horizontalListSortingStrategy}
         >
           <KanbanBoardWrapper
             ref={kanbanScrollRef}
-            $hasManyColumns={localColumns.length >= 5}
+            $hasManyColumns={displayColumns.length >= 5}
             data-kanban-board='true'
           >
             <KanbanBoard
               $viewMode={viewSettings.viewMode}
               $zoomLevel={viewSettings.zoomLevel}
-              $hasManyColumns={localColumns.length >= 5}
+              $hasManyColumns={displayColumns.length >= 5}
             >
-              {localColumns
+              {displayColumns
                 .sort((a, b) => a.position - b.position)
                 .map(column => {
                   const columnValue = columnValues.get(column.id);
@@ -3075,7 +3078,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
           }
         }}
         column={configuringColumn}
-        columns={localColumns.map(col => ({
+        columns={displayColumns.map(col => ({
           id: col.id,
           title: col.title,
           position: col.position,
@@ -3116,7 +3119,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
           }
         }}
         column={configuringColumn}
-        columns={localColumns.map(col => ({
+        columns={displayColumns.map(col => ({
           id: col.id,
           title: col.title,
           position: col.position,

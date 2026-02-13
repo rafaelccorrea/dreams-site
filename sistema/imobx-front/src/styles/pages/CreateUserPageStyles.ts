@@ -340,6 +340,87 @@ export const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   }
 `;
 
+// Card e textos do "Acesso ao aplicativo Intellisys" (dark/light)
+export const AppAccessCard = styled.div<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: ${props =>
+    props.$active ? props.theme.colors.infoBackground : props.theme.colors.backgroundSecondary};
+  border: 2px solid
+    ${props =>
+      props.$active ? props.theme.colors.infoBorder : props.theme.colors.border};
+  border-radius: 8px;
+  width: 100%;
+`;
+
+export const AppAccessLabel = styled.label`
+  flex: 1;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: ${props => props.theme.colors.text};
+`;
+
+export const AppAccessDescription = styled.div`
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+export const AppAccessAlertBox = styled.div`
+  width: 100%;
+  padding: 16px;
+  background: ${props => props.theme.colors.warningBackground};
+  border: 2px solid ${props => props.theme.colors.warningBorder};
+  border-radius: 8px;
+  margin-top: 8px;
+`;
+
+export const AppAccessAlertTitle = styled.div`
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: ${props => props.theme.colors.warningText};
+  margin-bottom: 4px;
+`;
+
+export const AppAccessAlertText = styled.div`
+  font-size: 0.85rem;
+  color: ${props => props.theme.colors.warningText};
+  line-height: 1.5;
+  opacity: 0.95;
+`;
+
+export const AppAccessSwitchTrack = styled.div<{ $active?: boolean }>`
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: ${props =>
+    props.$active ? props.theme.colors.info : props.theme.colors.border};
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+`;
+
+export const AppAccessSwitchThumb = styled.div<{ $active?: boolean }>`
+  position: absolute;
+  top: 2px;
+  left: ${props => (props.$active ? '26px' : '2px')};
+  width: 20px;
+  height: 20px;
+  background: ${props => props.theme.colors.cardBackground};
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+`;
+
+/** Row com margem superior para separar do bloco "Gestor Responsável" */
+export const AppAccessRow = styled(FormGrid)`
+  margin-top: 24px;
+`;
+
 // Aliases para manter compatibilidade
 export const PageContainer = Container;
 export const PageContent = Container;

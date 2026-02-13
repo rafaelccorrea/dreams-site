@@ -1,5 +1,8 @@
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import { useAdvancedAnalytics } from '../hooks/useAdvancedAnalytics';
+import {
+  useAdvancedAnalytics,
+  EMPTY_ADVANCED_ANALYTICS_DATA,
+} from '../hooks/useAdvancedAnalytics';
 import { formatCurrency } from '../utils/formatNumbers';
 import { InfoTooltip } from '../components/common/InfoTooltip';
 import { LottieLoading } from '../components/common/LottieLoading';
@@ -79,6 +82,12 @@ import {
   EmptyStateTitle,
   EmptyStateDescription,
   LoadingContainer,
+  SectionSkeleton,
+  SectionSkeletonTitle,
+  SectionSkeletonLine,
+  SectionSkeletonGrid,
+  SectionSkeletonCard,
+  SectionSkeletonLabel,
   ErrorContainer,
   ErrorTitle,
   ErrorMessage,
@@ -139,7 +148,12 @@ const AdvancedAnalyticsPage: React.FC = () => {
     cacheInfo,
     conversionFunnelLoading,
     conversionFunnelError,
+    performanceLoading,
+    matchesLoading,
+    brokersLoading,
+    churnLoading,
   } = useAdvancedAnalytics();
+  const safeData = data ?? EMPTY_ADVANCED_ANALYTICS_DATA;
   const [showFilters, setShowFilters] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
@@ -308,64 +322,27 @@ const AdvancedAnalyticsPage: React.FC = () => {
     v => v !== undefined && v !== 'none'
   ).length;
 
-  // Funções helper para verificar se dados são vazios
-  const hasCompanyPerformanceData = () => {
-    // Sempre mostrar a seção se houver dados (mesmo que companyPerformance seja null)
-    // Os cards sempre aparecerão com valores zerados se necessário
-    return !!data;
-  };
-
-  const hasPendingMatchesData = () => {
-    // Sempre mostrar a seção se houver dados de matches (mesmo que total seja 0)
-    // Os cards sempre aparecerão, mesmo sem matches na lista
-    return data?.pendingMatches !== undefined && data?.pendingMatches !== null;
-  };
-
-  const hasBrokersPerformanceData = () => {
-    // Mostrar se houver qualquer corretor no array, mesmo com valores zerados
-    return (
-      data?.brokersPerformance &&
-      Array.isArray(data.brokersPerformance) &&
-      data.brokersPerformance.length > 0
-    );
-  };
-
+  // Funções helper para verificar se dados são vazios (usam safeData para render progressivo)
+  const hasCompanyPerformanceData = () => !!safeData;
+  const hasPendingMatchesData = () =>
+    safeData?.pendingMatches !== undefined &&
+    safeData?.pendingMatches !== null;
+  const hasBrokersPerformanceData = () =>
+    safeData?.brokersPerformance &&
+    Array.isArray(safeData.brokersPerformance) &&
+    safeData.brokersPerformance.length > 0;
   const hasChurnAnalysisData = () => {
-    if (!data?.churnAnalysis) return false;
-    // Mostrar se houver clientes em risco, mesmo que totalClients seja 0
-    // ou se totalClients for > 0
-    const atRiskCount = data.churnAnalysis.atRiskClients?.length || 0;
-    const totalClients = data.churnAnalysis.totalClients || 0;
-    const highRisk = data.churnAnalysis.highRisk || 0;
-    const mediumRisk = data.churnAnalysis.mediumRisk || 0;
-    const lowRisk = data.churnAnalysis.lowRisk || 0;
-
+    if (!safeData?.churnAnalysis) return false;
+    const c = safeData.churnAnalysis;
     return (
-      atRiskCount > 0 ||
-      totalClients > 0 ||
-      highRisk > 0 ||
-      mediumRisk > 0 ||
-      lowRisk > 0
+      (c.atRiskClients?.length || 0) > 0 ||
+      (c.totalClients || 0) > 0 ||
+      (c.highRisk || 0) > 0 ||
+      (c.mediumRisk || 0) > 0 ||
+      (c.lowRisk || 0) > 0
     );
   };
-
-  const hasConversionFunnelData = () => {
-    // Mostrar se houver dados de funil, mesmo que sejam vazios (para debug)
-    const hasData = !!data?.conversionFunnel;
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('🔍 [AdvancedAnalyticsPage] VERIFICANDO FUNIL DE CONVERSÃO');
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('Has Conversion Funnel:', hasData);
-    console.log('Total Leads:', data?.conversionFunnel?.totalLeads);
-    console.log('Stages Count:', data?.conversionFunnel?.stages?.length);
-    console.log('Has Analysis:', !!data?.conversionFunnel?.analysis);
-    console.log(
-      'Full Conversion Funnel:',
-      JSON.stringify(data?.conversionFunnel, null, 2)
-    );
-    console.log('═══════════════════════════════════════════════════════════');
-    return hasData;
-  };
+  const hasConversionFunnelData = () => !!safeData?.conversionFunnel;
 
   const hasCapturesStatisticsData = () => {
     if (!capturesStatistics) return false;
@@ -389,92 +366,33 @@ const AdvancedAnalyticsPage: React.FC = () => {
     );
   };
 
-  if (loading) {
+  // Erro crítico: só tela de erro se não tivermos nenhum dado
+  if (error && !data) {
     return (
       <PageContainer>
-        <LoadingContainer>
-          <LottieLoading />
-        </LoadingContainer>
+        <ErrorContainer>
+          <ErrorTitle>Erro ao carregar análise avançada</ErrorTitle>
+          <ErrorMessage>{error}</ErrorMessage>
+          <RetryButton onClick={handleRefresh}>
+            <MdRefresh /> Tentar Novamente
+          </RetryButton>
+        </ErrorContainer>
       </PageContainer>
     );
   }
 
-  if (error) {
-    console.error('❌ [AdvancedAnalyticsPage] Erro detectado na página:', {
-      error,
-      hasData: !!data,
-      hasCompanyPerformance: !!data?.companyPerformance,
-      hasPendingMatches: !!data?.pendingMatches,
-      hasBrokersPerformance: !!data?.brokersPerformance,
-      hasChurnAnalysis: !!data?.churnAnalysis,
-      hasConversionFunnel: !!data?.conversionFunnel,
-    });
-
-    // Se temos dados mesmo com erro, mostrar a página com dados parciais
-    if (
-      data &&
-      (data.companyPerformance ||
-        data.pendingMatches ||
-        data.brokersPerformance ||
-        data.churnAnalysis ||
-        data.conversionFunnel)
-    ) {
-      console.warn(
-        '⚠️ [AdvancedAnalyticsPage] Temos dados parciais - mostrando página mesmo com erro'
-      );
-      // Continuar renderizando a página com dados disponíveis
-    } else {
-      // Só mostrar erro se realmente não tivermos nenhum dado
-      return (
-        <PageContainer>
-          <ErrorContainer>
-            <ErrorTitle>Erro ao carregar análise avançada</ErrorTitle>
-            <ErrorMessage>{error}</ErrorMessage>
-            <RetryButton onClick={handleRefresh}>
-              <MdRefresh /> Tentar Novamente
-            </RetryButton>
-          </ErrorContainer>
-        </PageContainer>
-      );
-    }
-  }
-
-  if (!data) {
-    console.log('⏳ [AdvancedAnalyticsPage] Aguardando dados...', {
-      loading,
-      error,
-    });
-
-    return (
-      <PageContainer>
-        <LoadingContainer>
-          <LottieLoading />
-        </LoadingContainer>
-      </PageContainer>
-    );
-  }
-
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('✅ [AdvancedAnalyticsPage] RENDERIZANDO PÁGINA COM DADOS');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('Has Company Performance:', !!data.companyPerformance);
-  console.log('Pending Matches Total:', data.pendingMatches?.total || 0);
-  console.log('Brokers Count:', data.brokersPerformance?.length || 0);
-  console.log('Churn Total Clients:', data.churnAnalysis?.totalClients || 0);
-  console.log('Has Conversion Funnel:', !!data.conversionFunnel);
-  console.log('Conversion Funnel Loading:', conversionFunnelLoading);
-  console.log('Conversion Funnel Error:', conversionFunnelError);
-  if (data.conversionFunnel) {
-    console.log('Conversion Funnel Details:', {
-      totalLeads: data.conversionFunnel.totalLeads,
-      stagesCount: data.conversionFunnel.stages?.length,
-      hasAnalysis: !!data.conversionFunnel.analysis,
-      overallConversionRate: data.conversionFunnel.overallConversionRate,
-      period: data.conversionFunnel.period,
-    });
-  }
-  console.log('Full Data:', JSON.stringify(data, null, 2));
-  console.log('═══════════════════════════════════════════════════════════');
+  // Bloco reutilizável de skeleton para seção (título + grid de cards)
+  const renderSectionSkeleton = (label: string) => (
+    <Section>
+      <SectionSkeletonTitle />
+      <SectionSkeletonLabel>{label}</SectionSkeletonLabel>
+      <SectionSkeletonGrid>
+        {[1, 2, 3, 4].map(i => (
+          <SectionSkeletonCard key={i} />
+        ))}
+      </SectionSkeletonGrid>
+    </Section>
+  );
 
   return (
     <PageContainer>
@@ -617,7 +535,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
       )}
 
       {/* Seção 1: Performance da Empresa */}
-      {hasCompanyPerformanceData() && (
+      {performanceLoading && !safeData.companyPerformance
+        ? renderSectionSkeleton('Carregando performance da empresa...')
+        : hasCompanyPerformanceData() && (
         <Section>
           <SectionTitle>
             <MdBarChart />
@@ -627,7 +547,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
               direction='down'
             />
           </SectionTitle>
-          {!data?.companyPerformance && (
+          {!safeData?.companyPerformance && (
             <div
               style={{
                 marginBottom: '16px',
@@ -649,7 +569,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </StatIcon>
               </StatHeader>
               <StatValue>
-                {data?.companyPerformance?.companyStats?.totalMatches || 0}
+                {safeData?.companyPerformance?.companyStats?.totalMatches || 0}
               </StatValue>
               <StatLabel>
                 Total de Matches
@@ -667,7 +587,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </StatIcon>
               </StatHeader>
               <StatValue>
-                {data?.companyPerformance?.companyStats?.acceptedMatches || 0}
+                {safeData?.companyPerformance?.companyStats?.acceptedMatches || 0}
               </StatValue>
               <StatLabel>
                 Matches Aceitos
@@ -685,9 +605,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </StatIcon>
               </StatHeader>
               <StatValue>
-                {(data?.companyPerformance?.companyStats?.avgAcceptanceRate &&
-                !isNaN(data.companyPerformance.companyStats.avgAcceptanceRate)
-                  ? data.companyPerformance.companyStats.avgAcceptanceRate
+                {(safeData?.companyPerformance?.companyStats?.avgAcceptanceRate &&
+                !isNaN(safeData.companyPerformance.companyStats.avgAcceptanceRate)
+                  ? safeData.companyPerformance.companyStats.avgAcceptanceRate
                   : 0
                 ).toFixed(1)}
                 %
@@ -708,9 +628,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </StatIcon>
               </StatHeader>
               <StatValue>
-                {(data?.companyPerformance?.companyStats?.avgMatchScore &&
-                !isNaN(data.companyPerformance.companyStats.avgMatchScore)
-                  ? data.companyPerformance.companyStats.avgMatchScore
+                {(safeData?.companyPerformance?.companyStats?.avgMatchScore &&
+                !isNaN(safeData.companyPerformance.companyStats.avgMatchScore)
+                  ? safeData.companyPerformance.companyStats.avgMatchScore
                   : 0
                 ).toFixed(1)}
               </StatValue>
@@ -730,7 +650,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </StatIcon>
               </StatHeader>
               <StatValue>
-                {data?.companyPerformance?.companyStats?.totalTasksCreated || 0}
+                {safeData?.companyPerformance?.companyStats?.totalTasksCreated || 0}
               </StatValue>
               <StatLabel>
                 Tarefas Criadas
@@ -748,7 +668,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </StatIcon>
               </StatHeader>
               <StatValue>
-                {data?.companyPerformance?.companyStats?.totalTasksCompleted ||
+                {safeData?.companyPerformance?.companyStats?.totalTasksCompleted ||
                   0}
               </StatValue>
               <StatLabel>
@@ -762,7 +682,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
           </StatsGrid>
 
           {/* Gráficos de Performance */}
-          {data?.companyPerformance && (
+          {safeData?.companyPerformance && (
             <StatsGrid style={{ marginTop: '24px' }}>
               <TableCard>
                 <TableTitle>
@@ -776,25 +696,25 @@ const AdvancedAnalyticsPage: React.FC = () => {
                         {
                           label: 'Total Matches',
                           value:
-                            data.companyPerformance?.companyStats
+                            safeData.companyPerformance?.companyStats
                               ?.totalMatches || 0,
                         },
                         {
                           label: 'Matches Aceitos',
                           value:
-                            data.companyPerformance?.companyStats
+                            safeData.companyPerformance?.companyStats
                               ?.acceptedMatches || 0,
                         },
                         {
                           label: 'Tarefas Criadas',
                           value:
-                            data.companyPerformance?.companyStats
+                            safeData.companyPerformance?.companyStats
                               ?.totalTasksCreated || 0,
                         },
                         {
                           label: 'Tarefas Concluídas',
                           value:
-                            data.companyPerformance?.companyStats
+                            safeData.companyPerformance?.companyStats
                               ?.totalTasksCompleted || 0,
                         },
                       ]}
@@ -818,13 +738,13 @@ const AdvancedAnalyticsPage: React.FC = () => {
                         {
                           label: 'Taxa Aceitação',
                           value:
-                            data.companyPerformance?.companyStats
+                            safeData.companyPerformance?.companyStats
                               ?.avgAcceptanceRate || 0,
                         },
                         {
                           label: 'Score Médio',
                           value:
-                            data.companyPerformance?.companyStats
+                            safeData.companyPerformance?.companyStats
                               ?.avgMatchScore || 0,
                         },
                       ]}
@@ -841,7 +761,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
       )}
 
       {/* Seção 2: Matches Pendentes */}
-      {hasPendingMatchesData() && (
+      {matchesLoading && !safeData?.pendingMatches ? (
+        renderSectionSkeleton('Carregando matches pendentes...')
+      ) : hasPendingMatchesData() ? (
         <Section>
           <SectionTitle>
             <MdWarning />
@@ -858,7 +780,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <MdWarning />
                 </StatIcon>
               </StatHeader>
-              <StatValue>{data.pendingMatches?.total || 0}</StatValue>
+              <StatValue>{safeData.pendingMatches?.total || 0}</StatValue>
               <StatLabel>
                 Total de Matches Pendentes
                 <InfoTooltip
@@ -873,7 +795,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <MdWarning />
                 </StatIcon>
               </StatHeader>
-              <StatValue>{data?.pendingMatches?.overdue || 0}</StatValue>
+              <StatValue>{safeData?.pendingMatches?.overdue || 0}</StatValue>
               <StatLabel>
                 Em Atraso (&gt;7 dias)
                 <InfoTooltip
@@ -888,7 +810,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <MdWarning />
                 </StatIcon>
               </StatHeader>
-              <StatValue>{data?.pendingMatches?.warning || 0}</StatValue>
+              <StatValue>{safeData?.pendingMatches?.warning || 0}</StatValue>
               <StatLabel>
                 Atenção (&gt;3 dias)
                 <InfoTooltip
@@ -899,8 +821,8 @@ const AdvancedAnalyticsPage: React.FC = () => {
             </StatCard>
           </StatsGrid>
 
-          {data.pendingMatches?.matches &&
-          data.pendingMatches.matches.length > 0 ? (
+          {safeData.pendingMatches?.matches &&
+          safeData.pendingMatches.matches.length > 0 ? (
             <TableCard>
               <TableTitle>Lista de Matches Pendentes</TableTitle>
               <TableContainer>
@@ -915,7 +837,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                     </tr>
                   </TableHeader>
                   <TableBody>
-                    {data.pendingMatches?.matches?.map(match => {
+                    {safeData.pendingMatches?.matches?.map(match => {
                       const createdAt = new Date(match.createdAt);
                       const now = new Date();
                       const daysSinceCreated = Math.floor(
@@ -984,10 +906,12 @@ const AdvancedAnalyticsPage: React.FC = () => {
             </TableCard>
           ) : null}
         </Section>
-      )}
+      ) : null}
 
       {/* Seção 3: Performance de Corretores */}
-      {hasBrokersPerformanceData() && (
+      {brokersLoading && !safeData?.brokersPerformance?.length ? (
+        renderSectionSkeleton('Carregando performance de corretores...')
+      ) : hasBrokersPerformanceData() ? (
         <Section>
           <SectionTitle>
             <MdPeople />
@@ -1005,7 +929,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
               dataSource='dados de performance de corretores'
             />
           )}
-          {data?.brokersPerformance && data.brokersPerformance.length > 0 ? (
+          {safeData?.brokersPerformance && safeData.brokersPerformance.length > 0 ? (
             <>
               <TableCard>
                 <TableTitle>Ranking de Performance</TableTitle>
@@ -1072,7 +996,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                       </tr>
                     </TableHeader>
                     <TableBody>
-                      {data.brokersPerformance
+                      {safeData.brokersPerformance
                         .slice(0, brokersToShow)
                         .map((broker, index) => {
                           const overallScore =
@@ -1167,7 +1091,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
-                {data.brokersPerformance.length > brokersToShow && (
+                {safeData.brokersPerformance.length > brokersToShow && (
                   <div
                     style={{
                       display: 'flex',
@@ -1178,7 +1102,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                     <FilterButton
                       onClick={() =>
                         setBrokersToShow(prev =>
-                          Math.min(prev + 5, data.brokersPerformance.length)
+                          Math.min(prev + 5, safeData.brokersPerformance.length)
                         )
                       }
                       style={{
@@ -1193,9 +1117,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
                       Ver Mais (
                       {Math.min(
                         5,
-                        data.brokersPerformance.length - brokersToShow
+                        safeData.brokersPerformance.length - brokersToShow
                       )}{' '}
-                      de {data.brokersPerformance.length - brokersToShow}{' '}
+                      de {safeData.brokersPerformance.length - brokersToShow}{' '}
                       restantes)
                     </FilterButton>
                   </div>
@@ -1212,7 +1136,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <div style={{ padding: '20px' }}>
                     <Suspense fallback={<LottieLoading />}>
                       <BarChart
-                        data={data.brokersPerformance
+                        data={safeData.brokersPerformance
                           .slice(0, 5)
                           .map(broker => ({
                             label:
@@ -1238,7 +1162,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <div style={{ padding: '20px' }}>
                     <Suspense fallback={<LottieLoading />}>
                       <BarChart
-                        data={data.brokersPerformance
+                        data={safeData.brokersPerformance
                           .slice(0, 5)
                           .map(broker => ({
                             label:
@@ -1264,7 +1188,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <div style={{ padding: '20px' }}>
                     <Suspense fallback={<LottieLoading />}>
                       <BarChart
-                        data={data.brokersPerformance
+                        data={safeData.brokersPerformance
                           .slice(0, 5)
                           .map(broker => ({
                             label:
@@ -1293,7 +1217,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
             </EmptyState>
           )}
         </Section>
-      )}
+      ) : null}
 
       {/* Seção 4: Funil de Conversão */}
       {(hasConversionFunnelData() || conversionFunnelLoading) && (
@@ -1314,10 +1238,16 @@ const AdvancedAnalyticsPage: React.FC = () => {
               dataSource='dados do funil de conversão'
             />
           )}
-          {conversionFunnelLoading && (
-            <LoadingContainer>
-              <LottieLoading message='Carregando funil de conversão...' />
-            </LoadingContainer>
+          {conversionFunnelLoading && !hasConversionFunnelData() && (
+            <SectionSkeleton>
+              <SectionSkeletonTitle />
+              <SectionSkeletonLabel>Carregando funil de conversão...</SectionSkeletonLabel>
+              <SectionSkeletonGrid>
+                {[1, 2, 3, 4].map(i => (
+                  <SectionSkeletonCard key={i} />
+                ))}
+              </SectionSkeletonGrid>
+            </SectionSkeleton>
           )}
           {conversionFunnelError && !conversionFunnelLoading && (
             <ErrorContainer>
@@ -1340,7 +1270,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                       </StatIcon>
                     </StatHeader>
                     <StatValue>
-                      {data.conversionFunnel?.totalLeads || 0}
+                      {safeData.conversionFunnel?.totalLeads || 0}
                     </StatValue>
                     <StatLabel>
                       Total de Leads
@@ -1357,9 +1287,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
                       </StatIcon>
                     </StatHeader>
                     <StatValue>
-                      {(data.conversionFunnel?.overallConversionRate != null &&
-                      !isNaN(data.conversionFunnel.overallConversionRate)
-                        ? data.conversionFunnel.overallConversionRate
+                      {(safeData.conversionFunnel?.overallConversionRate != null &&
+                      !isNaN(safeData.conversionFunnel.overallConversionRate)
+                        ? safeData.conversionFunnel.overallConversionRate
                         : 0
                       ).toFixed(2)}
                       %
@@ -1381,10 +1311,10 @@ const AdvancedAnalyticsPage: React.FC = () => {
                     <StatValue>
                       <FunnelScore
                         $score={
-                          data.conversionFunnel?.analysis?.overallScore || 0
+                          safeData.conversionFunnel?.analysis?.overallScore || 0
                         }
                       >
-                        {data.conversionFunnel?.analysis?.overallScore || 0}/100
+                        {safeData.conversionFunnel?.analysis?.overallScore || 0}/100
                       </FunnelScore>
                     </StatValue>
                     <StatLabel>
@@ -1402,7 +1332,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                       </StatIcon>
                     </StatHeader>
                     <StatValue style={{ fontSize: '0.875rem' }}>
-                      {data.conversionFunnel?.period || '-'}
+                      {safeData.conversionFunnel?.period || '-'}
                     </StatValue>
                     <StatLabel>
                       Período
@@ -1423,8 +1353,8 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <div style={{ padding: '20px' }}>
                     <Suspense fallback={<LottieLoading />}>
                       <FunnelChart
-                        stages={data.conversionFunnel?.stages || []}
-                        totalLeads={data.conversionFunnel?.totalLeads || 0}
+                        stages={safeData.conversionFunnel?.stages || []}
+                        totalLeads={safeData.conversionFunnel?.totalLeads || 0}
                         loading={conversionFunnelLoading}
                         emptyMessage='Nenhum dado do funil disponível'
                       />
@@ -1433,18 +1363,18 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </TableCard>
 
                 {/* Análise do Funil */}
-                {data.conversionFunnel?.analysis && (
+                {safeData.conversionFunnel?.analysis && (
                   <FunnelAnalysisCard style={{ marginTop: '24px' }}>
                     <FunnelAnalysisTitle>
                       📊 Análise do Funil
                     </FunnelAnalysisTitle>
                     <FunnelAnalysisText>
-                      {data.conversionFunnel.analysis.summary ||
+                      {safeData.conversionFunnel.analysis.summary ||
                         'Nenhuma análise disponível.'}
                     </FunnelAnalysisText>
 
-                    {data.conversionFunnel?.analysis?.strengths &&
-                      data.conversionFunnel.analysis.strengths.length > 0 && (
+                    {safeData.conversionFunnel?.analysis?.strengths &&
+                      safeData.conversionFunnel.analysis.strengths.length > 0 && (
                         <div style={{ marginTop: '20px' }}>
                           <FunnelAnalysisTitle
                             style={{ fontSize: '1rem', marginBottom: '12px' }}
@@ -1452,7 +1382,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                             ✅ Pontos Fortes
                           </FunnelAnalysisTitle>
                           <FunnelList>
-                            {data.conversionFunnel?.analysis?.strengths?.map(
+                            {safeData.conversionFunnel?.analysis?.strengths?.map(
                               (strength, index) => (
                                 <FunnelListItem key={index} $type='success'>
                                   {strength}
@@ -1463,8 +1393,8 @@ const AdvancedAnalyticsPage: React.FC = () => {
                         </div>
                       )}
 
-                    {data.conversionFunnel?.analysis?.bottlenecks &&
-                      data.conversionFunnel.analysis.bottlenecks.length > 0 && (
+                    {safeData.conversionFunnel?.analysis?.bottlenecks &&
+                      safeData.conversionFunnel.analysis.bottlenecks.length > 0 && (
                         <div style={{ marginTop: '20px' }}>
                           <FunnelAnalysisTitle
                             style={{ fontSize: '1rem', marginBottom: '12px' }}
@@ -1472,7 +1402,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                             ⚠️ Gargalos
                           </FunnelAnalysisTitle>
                           <FunnelList>
-                            {data.conversionFunnel?.analysis?.bottlenecks?.map(
+                            {safeData.conversionFunnel?.analysis?.bottlenecks?.map(
                               (bottleneck, index) => (
                                 <FunnelListItem key={index} $type='warning'>
                                   {bottleneck}
@@ -1483,8 +1413,8 @@ const AdvancedAnalyticsPage: React.FC = () => {
                         </div>
                       )}
 
-                    {data.conversionFunnel?.analysis?.opportunities &&
-                      data.conversionFunnel.analysis.opportunities.length >
+                    {safeData.conversionFunnel?.analysis?.opportunities &&
+                      safeData.conversionFunnel.analysis.opportunities.length >
                         0 && (
                         <div style={{ marginTop: '20px' }}>
                           <FunnelAnalysisTitle
@@ -1493,7 +1423,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                             🎯 Oportunidades
                           </FunnelAnalysisTitle>
                           <FunnelList>
-                            {data.conversionFunnel?.analysis?.opportunities?.map(
+                            {safeData.conversionFunnel?.analysis?.opportunities?.map(
                               (opportunity, index) => (
                                 <FunnelListItem key={index} $type='info'>
                                   {opportunity}
@@ -1506,13 +1436,13 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   </FunnelAnalysisCard>
                 )}
 
-                {data.conversionFunnel?.analysis?.insights &&
-                  data.conversionFunnel.analysis.insights.length > 0 && (
+                {safeData.conversionFunnel?.analysis?.insights &&
+                  safeData.conversionFunnel.analysis.insights.length > 0 && (
                     <div style={{ marginTop: '24px' }}>
                       <FunnelAnalysisTitle style={{ marginBottom: '20px' }}>
                         💡 Insights Detalhados
                       </FunnelAnalysisTitle>
-                      {data.conversionFunnel?.analysis?.insights?.map(
+                      {safeData.conversionFunnel?.analysis?.insights?.map(
                         (insight, index) => (
                           <FunnelInsightCard
                             key={index}
@@ -1565,7 +1495,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
       )}
 
       {/* Seção 5: Análise de Churn */}
-      {hasChurnAnalysisData() && (
+      {churnLoading && !safeData?.churnAnalysis ? (
+        renderSectionSkeleton('Carregando análise de churn...')
+      ) : hasChurnAnalysisData() ? (
         <Section>
           <SectionTitle>
             <MdWarning />
@@ -1590,7 +1522,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <MdPeople />
                 </StatIcon>
               </StatHeader>
-              <StatValue>{data?.churnAnalysis?.totalClients || 0}</StatValue>
+              <StatValue>{safeData?.churnAnalysis?.totalClients || 0}</StatValue>
               <StatLabel>
                 Total de Clientes Analisados
                 <InfoTooltip
@@ -1605,7 +1537,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <MdWarning />
                 </StatIcon>
               </StatHeader>
-              <StatValue>{data?.churnAnalysis?.highRisk || 0}</StatValue>
+              <StatValue>{safeData?.churnAnalysis?.highRisk || 0}</StatValue>
               <StatLabel>
                 Risco Alto
                 <InfoTooltip
@@ -1620,7 +1552,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <MdWarning />
                 </StatIcon>
               </StatHeader>
-              <StatValue>{data?.churnAnalysis?.mediumRisk || 0}</StatValue>
+              <StatValue>{safeData?.churnAnalysis?.mediumRisk || 0}</StatValue>
               <StatLabel>
                 Risco Médio
                 <InfoTooltip
@@ -1635,7 +1567,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                   <MdCheckCircle />
                 </StatIcon>
               </StatHeader>
-              <StatValue>{data?.churnAnalysis?.lowRisk || 0}</StatValue>
+              <StatValue>{safeData?.churnAnalysis?.lowRisk || 0}</StatValue>
               <StatLabel>
                 Risco Baixo
                 <InfoTooltip
@@ -1651,9 +1583,9 @@ const AdvancedAnalyticsPage: React.FC = () => {
                 </StatIcon>
               </StatHeader>
               <StatValue>
-                {(data?.churnAnalysis?.churnRate &&
-                !isNaN(data.churnAnalysis.churnRate)
-                  ? data.churnAnalysis.churnRate
+                {(safeData?.churnAnalysis?.churnRate &&
+                !isNaN(safeData.churnAnalysis.churnRate)
+                  ? safeData.churnAnalysis.churnRate
                   : 0
                 ).toFixed(1)}
                 %
@@ -1668,10 +1600,10 @@ const AdvancedAnalyticsPage: React.FC = () => {
             </StatCard>
           </StatsGrid>
 
-          {data?.churnAnalysis?.atRiskClients &&
-          data.churnAnalysis.atRiskClients.length > 0 ? (
+          {safeData?.churnAnalysis?.atRiskClients &&
+          safeData.churnAnalysis.atRiskClients.length > 0 ? (
             <div>
-              {data?.churnAnalysis?.atRiskClients
+              {safeData?.churnAnalysis?.atRiskClients
                 ?.slice(0, churnToShow)
                 .map(client => (
                   <ChurnRiskCard
@@ -1757,8 +1689,8 @@ const AdvancedAnalyticsPage: React.FC = () => {
                     </ChurnRiskFactors>
                   </ChurnRiskCard>
                 ))}
-              {data?.churnAnalysis?.atRiskClients &&
-                data.churnAnalysis.atRiskClients.length > churnToShow && (
+              {safeData?.churnAnalysis?.atRiskClients &&
+                safeData.churnAnalysis.atRiskClients.length > churnToShow && (
                   <div
                     style={{
                       display: 'flex',
@@ -1771,7 +1703,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
                         setChurnToShow(prev =>
                           Math.min(
                             prev + 5,
-                            data.churnAnalysis?.atRiskClients?.length || 0
+                            safeData.churnAnalysis?.atRiskClients?.length || 0
                           )
                         )
                       }
@@ -1787,11 +1719,11 @@ const AdvancedAnalyticsPage: React.FC = () => {
                       Ver Mais (
                       {Math.min(
                         5,
-                        (data.churnAnalysis?.atRiskClients?.length || 0) -
+                        (safeData.churnAnalysis?.atRiskClients?.length || 0) -
                           churnToShow
                       )}{' '}
                       de{' '}
-                      {(data.churnAnalysis?.atRiskClients?.length || 0) -
+                      {(safeData.churnAnalysis?.atRiskClients?.length || 0) -
                         churnToShow}{' '}
                       restantes)
                     </FilterButton>
@@ -1808,10 +1740,10 @@ const AdvancedAnalyticsPage: React.FC = () => {
             </EmptyState>
           )}
         </Section>
-      )}
+      ) : null}
 
       {/* Seção de Análise de Captadores */}
-      {hasCapturesStatisticsData() && (
+      {(hasCapturesStatisticsData() || loadingCaptures) && (
         <Section>
           <SectionTitle>
             <MdPeople />
@@ -1853,10 +1785,15 @@ const AdvancedAnalyticsPage: React.FC = () => {
             </select>
           </div>
 
-          {loadingCaptures ? (
-            <LoadingContainer>
-              <LottieLoading message='Carregando estatísticas de captadores...' />
-            </LoadingContainer>
+          {loadingCaptures && !capturesStatistics ? (
+            <SectionSkeleton>
+              <SectionSkeletonLabel>Carregando estatísticas de captadores...</SectionSkeletonLabel>
+              <SectionSkeletonGrid>
+                {[1, 2, 3, 4].map(i => (
+                  <SectionSkeletonCard key={i} />
+                ))}
+              </SectionSkeletonGrid>
+            </SectionSkeleton>
           ) : capturesError ? (
             <ErrorContainer>
               <ErrorTitle>Erro ao carregar estatísticas</ErrorTitle>

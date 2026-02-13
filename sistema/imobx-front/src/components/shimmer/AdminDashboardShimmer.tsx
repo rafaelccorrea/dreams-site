@@ -1,5 +1,19 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
+import {
+  PageContainer,
+  PageHeader,
+  StatsGrid,
+  StatCard,
+  WidgetsGrid,
+  ChartsGrid,
+  ChartCard,
+  ChartContent,
+  ActivityCard,
+  ActivityList,
+  ActivityItem,
+  QuickActions,
+} from '../../styles/pages/DashboardPageStyles';
 
 // Animação de shimmer
 const shimmer = keyframes`
@@ -11,35 +25,21 @@ const shimmer = keyframes`
   }
 `;
 
-// Container principal
-const ShimmerContainer = styled.div`
-  padding: 16px 24px;
-  width: 100%;
-  min-height: calc(100vh - 100px);
-  background: ${props => props.theme.colors.background};
-
-  @media (max-width: 768px) {
-    padding: 12px 16px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 12px;
-  }
-`;
-
-// Header
-const ShimmerHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+// Barra de informação (espelha InfoConfiguracao no loading)
+const ShimmerInfoBar = styled.div`
+  height: 160px;
   margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    ${props => props.theme.colors.backgroundSecondary} 25%,
+    ${props => props.theme.colors.hover} 50%,
+    ${props => props.theme.colors.backgroundSecondary} 75%
+  );
+  background-size: 200px 100%;
+  animation: ${shimmer} 1.5s infinite;
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 20px;
     margin-bottom: 20px;
   }
 `;
@@ -97,17 +97,6 @@ const ShimmerSubtitle = styled.div`
   }
 `;
 
-const ShimmerHeaderRight = styled.div`
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-`;
-
 const ShimmerButton = styled.div`
   height: 40px;
   width: 120px;
@@ -127,58 +116,7 @@ const ShimmerButton = styled.div`
   }
 `;
 
-// Grid de estatísticas
-const ShimmerStatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-bottom: 32px;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-`;
-
-const ShimmerStatCard = styled.div`
-  background: ${props => props.theme.colors.cardBackground};
-  border-radius: 16px;
-  padding: 24px 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border: 1px solid ${props => props.theme.colors.border};
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  @media (max-width: 768px) {
-    padding: 20px 16px;
-    min-height: 120px;
-  }
-
-  @media (max-width: 600px) {
-    padding: 18px 14px;
-    min-height: 110px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 16px 12px;
-    min-height: 100px;
-  }
-`;
-
+// Blocos de shimmer usados dentro de StatCard do dashboard
 const ShimmerStatHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -496,16 +434,27 @@ const ShimmerDaysLeft = styled.div`
   border-radius: 4px;
 `;
 
-// Widgets
+// Widgets (grid igual ao WidgetsGrid do dashboard: 3 colunas → 2 → 1)
 const ShimmerWidgetsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   margin-bottom: 24px;
 
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 16px;
   }
 `;
 
@@ -556,17 +505,12 @@ const ShimmerWidgetContent = styled.div`
   border-radius: 8px;
 `;
 
-// Performance Grid Moderna
+// Performance Grid (2 colunas: Performance da Equipe + Análise de Negócios, igual ao dashboard)
 const ShimmerModernPerformanceGrid = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 32px;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -874,52 +818,7 @@ const ShimmerBusinessMetricValue = styled.div`
   border-radius: 6px;
 `;
 
-// Gráficos
-const ShimmerChartsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 32px;
-  margin-bottom: 50px;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 24px;
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 20px;
-    margin-bottom: 40px;
-  }
-
-  @media (max-width: 480px) {
-    gap: 16px;
-    margin-bottom: 30px;
-  }
-`;
-
-const ShimmerChartCard = styled.div`
-  background: ${props => props.theme.colors.cardBackground};
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border: 1px solid ${props => props.theme.colors.border};
-  min-height: 400px;
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 768px) {
-    padding: 24px;
-    min-height: 350px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 20px;
-    border-radius: 12px;
-    min-height: 320px;
-  }
-`;
-
+// Placeholders de gráficos (usados dentro de ChartCard/ChartContent do dashboard)
 const ShimmerChartTitle = styled.div`
   height: 24px;
   width: 200px;
@@ -965,24 +864,7 @@ const ShimmerChart = styled.div`
   }
 `;
 
-// Feed de Atividades
-const ShimmerActivityCard = styled.div`
-  background: ${props => props.theme.colors.cardBackground};
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border: 1px solid ${props => props.theme.colors.border};
-
-  @media (max-width: 768px) {
-    padding: 20px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 16px;
-    border-radius: 12px;
-  }
-`;
-
+// Placeholders de atividades (ActivityCard/ActivityList/ActivityItem vêm do dashboard)
 const ShimmerActivityTitle = styled.div`
   height: 24px;
   width: 200px;
@@ -996,33 +878,6 @@ const ShimmerActivityTitle = styled.div`
   animation: ${shimmer} 1.5s infinite;
   border-radius: 6px;
   margin-bottom: 20px;
-`;
-
-const ShimmerActivityList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const ShimmerActivityItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: ${props => props.theme.colors.backgroundSecondary};
-  border-radius: 12px;
-  border: 1px solid ${props => props.theme.colors.borderLight};
-
-  @media (max-width: 768px) {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 10px;
-    gap: 10px;
-    border-radius: 8px;
-  }
 `;
 
 const ShimmerActivityIcon = styled.div`
@@ -1123,41 +978,44 @@ interface AdminDashboardShimmerProps {
 }
 
 const AdminDashboardShimmer: React.FC<AdminDashboardShimmerProps> = ({
-  showCompanyGoal = true,
+  showCompanyGoal = false,
   showWidgets = true,
   showModernPerformance = true,
   showCharts = true,
   showActivities = true,
 }) => {
   return (
-    <ShimmerContainer>
-      {/* Header */}
-      <ShimmerHeader>
+    <PageContainer>
+      {/* Header (igual ao dashboard: título, subtítulo, Filtros + Configurar) */}
+      <PageHeader>
         <ShimmerHeaderLeft>
           <ShimmerTitle />
           <ShimmerSubtitle />
         </ShimmerHeaderLeft>
-        <ShimmerHeaderRight>
+        <QuickActions>
           <ShimmerButton />
           <ShimmerButton />
-        </ShimmerHeaderRight>
-      </ShimmerHeader>
+        </QuickActions>
+      </PageHeader>
 
-      {/* Cards de Estatísticas */}
-      <ShimmerStatsGrid>
-        {Array.from({ length: 7 }).map((_, index) => (
-          <ShimmerStatCard key={index}>
+      {/* Informação sobre Configuração (espelha InfoConfiguracao) */}
+      <ShimmerInfoBar />
+
+      {/* Cards de Estatísticas (10 cards como no dashboard) */}
+      <StatsGrid>
+        {Array.from({ length: 10 }).map((_, index) => (
+          <StatCard key={index}>
             <ShimmerStatHeader>
               <ShimmerStatIcon />
               <ShimmerStatTrend />
             </ShimmerStatHeader>
             <ShimmerStatValue />
             <ShimmerStatLabel />
-          </ShimmerStatCard>
+          </StatCard>
         ))}
-      </ShimmerStatsGrid>
+      </StatsGrid>
 
-      {/* Card da Meta da Empresa */}
+      {/* Card da Meta da Empresa (opcional, para visão proprietário) */}
       {showCompanyGoal && (
         <ShimmerCompanyGoalCard>
           <ShimmerGoalHeader>
@@ -1197,49 +1055,21 @@ const AdminDashboardShimmer: React.FC<AdminDashboardShimmerProps> = ({
         </ShimmerCompanyGoalCard>
       )}
 
-      {/* Widgets */}
+      {/* Widgets (3: Top Performers, Tarefas Urgentes, Leads Recentes) */}
       {showWidgets && (
-        <ShimmerWidgetsGrid>
+        <WidgetsGrid>
           {Array.from({ length: 3 }).map((_, index) => (
             <ShimmerWidgetCard key={index}>
               <ShimmerWidgetTitle />
               <ShimmerWidgetContent />
             </ShimmerWidgetCard>
           ))}
-        </ShimmerWidgetsGrid>
+        </WidgetsGrid>
       )}
 
-      {/* Performance Grid Moderna */}
+      {/* Performance: 2 colunas (Performance da Equipe + Análise de Negócios) */}
       {showModernPerformance && (
         <ShimmerModernPerformanceGrid>
-          {/* Meta Mensal de Vendas */}
-          <ShimmerModernSalesGoalCard>
-            <ShimmerModernCardHeader>
-              <ShimmerModernCardIcon />
-              <ShimmerModernCardTitle />
-              <ShimmerModernCardSubtitle />
-            </ShimmerModernCardHeader>
-
-            <ShimmerModernProgressValue />
-            <ShimmerModernProgressBar>
-              <ShimmerModernProgressFill />
-            </ShimmerModernProgressBar>
-
-            <ShimmerModernStatsRow>
-              <ShimmerModernStatItem>
-                <ShimmerModernStatLabel />
-                <ShimmerModernStatValue />
-              </ShimmerModernStatItem>
-              <ShimmerModernStatItem>
-                <ShimmerModernStatLabel />
-                <ShimmerModernStatValue />
-              </ShimmerModernStatItem>
-            </ShimmerModernStatsRow>
-
-            <ShimmerModernStatusBadge />
-          </ShimmerModernSalesGoalCard>
-
-          {/* Performance da Equipe */}
           <ShimmerModernCard>
             <ShimmerModernCardHeader>
               <ShimmerModernCardIcon />
@@ -1272,7 +1102,6 @@ const AdminDashboardShimmer: React.FC<AdminDashboardShimmerProps> = ({
             </ShimmerTeamStats>
           </ShimmerModernCard>
 
-          {/* Análise de Negócios */}
           <ShimmerModernCard>
             <ShimmerModernCardHeader>
               <ShimmerModernCardIcon />
@@ -1298,37 +1127,39 @@ const AdminDashboardShimmer: React.FC<AdminDashboardShimmerProps> = ({
         </ShimmerModernPerformanceGrid>
       )}
 
-      {/* Gráficos */}
+      {/* Gráficos (4: Vendas, Tipos, Região, Origem) */}
       {showCharts && (
-        <ShimmerChartsGrid>
+        <ChartsGrid>
           {Array.from({ length: 4 }).map((_, index) => (
-            <ShimmerChartCard key={index}>
+            <ChartCard key={index}>
               <ShimmerChartTitle />
-              <ShimmerChart />
-            </ShimmerChartCard>
+              <ChartContent>
+                <ShimmerChart />
+              </ChartContent>
+            </ChartCard>
           ))}
-        </ShimmerChartsGrid>
+        </ChartsGrid>
       )}
 
-      {/* Feed de Atividades */}
+      {/* Feed de Atividades Recentes */}
       {showActivities && (
-        <ShimmerActivityCard>
+        <ActivityCard>
           <ShimmerActivityTitle />
-          <ShimmerActivityList>
+          <ActivityList>
             {Array.from({ length: 4 }).map((_, index) => (
-              <ShimmerActivityItem key={index}>
+              <ActivityItem key={index}>
                 <ShimmerActivityIcon />
                 <ShimmerActivityContent>
                   <ShimmerActivityItemTitle />
                   <ShimmerActivityDescription />
                   <ShimmerActivityTime />
                 </ShimmerActivityContent>
-              </ShimmerActivityItem>
+              </ActivityItem>
             ))}
-          </ShimmerActivityList>
-        </ShimmerActivityCard>
+          </ActivityList>
+        </ActivityCard>
       )}
-    </ShimmerContainer>
+    </PageContainer>
   );
 };
 

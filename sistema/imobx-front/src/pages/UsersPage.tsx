@@ -4,7 +4,7 @@ import { Layout } from '../components/layout/Layout';
 import { useUsers } from '../hooks/useUsers';
 import { DeleteConfirmationModal } from '../components/modals/DeleteConfirmationModal';
 import { translateUserRole, getRoleIcon } from '../utils/roleTranslations';
-import { OptimizedLoading } from '../components/common/OptimizedLoading';
+import { UsersListShimmer } from '../components/shimmer/UsersListShimmer';
 import { useDebounce } from '../hooks/useDebounce';
 import { FilterDrawer } from '../components/common/FilterDrawer';
 import DataScopeFilter from '../components/common/DataScopeFilter';
@@ -68,10 +68,18 @@ import {
   PaginationButton,
 } from '../styles/pages/UsersPageStyles';
 import { settingsApi } from '../services/settingsApi';
+import { usersApi } from '../services/usersApi';
 
 const UsersPage: React.FC = () => {
   const navigate = useNavigate();
   const { users, isLoading, error, deleteUser, getUsers } = useUsers();
+
+  const [canCreateUser, setCanCreateUser] = useState<{
+    allowed: boolean;
+    current: number;
+    limit: number;
+    message?: string;
+  } | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showFiltersModal, setShowFiltersModal] = useState(false);
@@ -128,7 +136,29 @@ const UsersPage: React.FC = () => {
     getUsers({ page: 1, limit: 10000 });
   }, [getUsers]);
 
+  useEffect(() => {
+    let cancelled = false;
+    usersApi
+      .getCanCreateUser()
+      .then(data => {
+        if (!cancelled) setCanCreateUser(data);
+      })
+      .catch(() => {
+        if (!cancelled) setCanCreateUser({ allowed: true, current: 0, limit: 0 });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleCreateUser = () => {
+    if (canCreateUser && !canCreateUser.allowed) {
+      toast.error(
+        canCreateUser.message ||
+          'Limite de usuários atingido. Atualize seu plano para adicionar mais usuários.'
+      );
+      return;
+    }
     navigate('/users/create');
   };
 
@@ -204,9 +234,7 @@ const UsersPage: React.FC = () => {
   if (isLoading) {
     return (
       <Layout>
-        <PageContainer>
-          <OptimizedLoading type='card' />
-        </PageContainer>
+        <UsersListShimmer />
       </Layout>
     );
   }
@@ -247,6 +275,13 @@ const UsersPage: React.FC = () => {
                 variant='primary'
                 size='medium'
                 onClick={handleCreateUser}
+                disabled={canCreateUser !== null && !canCreateUser.allowed}
+                tooltip={
+                  canCreateUser && !canCreateUser.allowed
+                    ? canCreateUser.message ||
+                      'Limite de usuários atingido. Atualize seu plano.'
+                    : undefined
+                }
               >
                 <MdAdd size={20} />
                 Novo Usuário
@@ -333,9 +368,19 @@ const UsersPage: React.FC = () => {
                 <EmptyStateDescription>
                   {searchTerm
                     ? 'Não foram encontrados usuários que correspondam à sua busca.'
-                    : 'Ainda não há usuários cadastrados no sistema.'}
+                    : canCreateUser && !canCreateUser.allowed
+                      ? canCreateUser.message ||
+                        'Limite de usuários atingido. Atualize seu plano para adicionar mais usuários.'
+                      : 'Ainda não há usuários cadastrados no sistema.'}
                 </EmptyStateDescription>
-                <EmptyStateAction onClick={handleCreateUser}>
+                <EmptyStateAction
+                  onClick={handleCreateUser}
+                  style={{
+                    opacity: canCreateUser && !canCreateUser.allowed ? 0.6 : 1,
+                    pointerEvents:
+                      canCreateUser && !canCreateUser.allowed ? 'none' : 'auto',
+                  }}
+                >
                   <MdAdd size={20} />
                   Criar Primeiro Usuário
                 </EmptyStateAction>
@@ -360,8 +405,8 @@ const UsersPage: React.FC = () => {
                         <UserInfo>
                           <UserAvatar>{getInitials(user.name)}</UserAvatar>
                           <UserDetails>
-                            <UserName>{user.name}</UserName>
-                            <UserEmail>{user.email}</UserEmail>
+                            <UserName title={user.name}>{user.name}</UserName>
+                            <UserEmail title={user.email}>{user.email}</UserEmail>
                           </UserDetails>
                         </UserInfo>
                       </TableCell>

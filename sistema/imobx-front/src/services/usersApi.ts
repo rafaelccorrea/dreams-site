@@ -109,6 +109,40 @@ class UsersApiService {
     return response.data;
   }
 
+  /**
+   * Valida se o email está disponível (não está em uso).
+   * Use na criação/edição de usuários para feedback em tempo real.
+   * @param excludeUserId - Ao editar, informar o ID do usuário atual
+   */
+  async validateEmail(
+    email: string,
+    excludeUserId?: string
+  ): Promise<{ available: boolean }> {
+    const params = new URLSearchParams({ email: email.trim() });
+    if (excludeUserId) params.append('excludeUserId', excludeUserId);
+    const response = await api.get(
+      `${this.baseUrl}/validate/email?${params.toString()}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Valida se o CPF/CNPJ está disponível (não está em uso).
+   * Use na criação/edição de usuários para feedback em tempo real.
+   * @param excludeUserId - Ao editar, informar o ID do usuário atual
+   */
+  async validateDocument(
+    document: string,
+    excludeUserId?: string
+  ): Promise<{ available: boolean }> {
+    const params = new URLSearchParams({ document: document.trim() });
+    if (excludeUserId) params.append('excludeUserId', excludeUserId);
+    const response = await api.get(
+      `${this.baseUrl}/validate/document?${params.toString()}`
+    );
+    return response.data;
+  }
+
   async createUser(userData: CreateUserData): Promise<User> {
     const response = await api.post(this.baseUrl, userData);
     return response.data;
@@ -141,6 +175,21 @@ class UsersApiService {
     usersByRole: Record<string, number>;
   }> {
     const response = await api.get(`${this.baseUrl}/stats`);
+    return response.data;
+  }
+
+  /**
+   * Verifica se a empresa pode criar mais usuários (limite do plano).
+   * Usa X-Company-ID do header (enviado pelo interceptor).
+   */
+  async getCanCreateUser(): Promise<{
+    allowed: boolean;
+    current: number;
+    limit: number;
+    remaining: number;
+    message?: string;
+  }> {
+    const response = await api.get(`${this.baseUrl}/can-create`);
     return response.data;
   }
 

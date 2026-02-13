@@ -569,7 +569,13 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                 placeholder='Digite o nome da tag'
                 value={newTagName}
                 onChange={e => setNewTagName(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && handleCreateTag()}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (newTagName.trim()) handleCreateTag();
+                  }
+                }}
               />
             </div>
 
@@ -601,10 +607,14 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
           </CreateTagForm>
 
           <CreateTagActions>
-            <CreateTagButtonAction onClick={handleCloseCreateModal}>
+            <CreateTagButtonAction
+              type='button'
+              onClick={handleCloseCreateModal}
+            >
               Cancelar
             </CreateTagButtonAction>
             <CreateTagButtonAction
+              type='button'
               $variant='primary'
               onClick={handleCreateTag}
               disabled={!newTagName.trim() || isCreating}

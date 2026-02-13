@@ -255,7 +255,11 @@ interface InspectionFormProps {
   ) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
-  properties?: Array<{ id: string; title: string }>;
+  properties?: Array<{ id: string; title: string; code?: string }>;
+  /** Chamado quando o usuário abre/foca o select de propriedade (para carregar propriedades sob demanda) */
+  onPropertySelectOpen?: () => void;
+  /** Exibir indicador de carregamento nas opções de propriedade */
+  propertiesLoading?: boolean;
   inspectors?: Array<{ id: string; name: string }>;
   currentUser?: { id: string; name: string };
   isEdit?: boolean;
@@ -267,12 +271,19 @@ export const InspectionForm: React.FC<InspectionFormProps> = ({
   onCancel,
   loading = false,
   properties = [],
+  onPropertySelectOpen,
+  propertiesLoading = false,
   inspectors = [],
   currentUser,
   isEdit = false,
 }) => {
   const [status, setStatus] = useState<string | undefined>(inspection?.status);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [propertySearch, setPropertySearch] = useState('');
+
+  const handlePropertyFieldFocus = () => {
+    onPropertySelectOpen?.();
+  };
 
   const [formData, setFormData] = useState<InspectionFormData>({
     title: inspection?.title || '',
@@ -478,17 +489,46 @@ export const InspectionForm: React.FC<InspectionFormProps> = ({
                 Propriedade
                 <Required>*</Required>
               </Label>
+              <Input
+                type='text'
+                placeholder='Buscar por código ou nome...'
+                value={propertySearch}
+                onChange={e => setPropertySearch(e.target.value)}
+                onFocus={handlePropertyFieldFocus}
+                style={{ marginBottom: 8 }}
+              />
               <Select
                 value={formData.propertyId}
                 onChange={e => updateField('propertyId', e.target.value)}
+                onFocus={handlePropertyFieldFocus}
+                onClick={handlePropertyFieldFocus}
                 $hasError={!!errors.propertyId}
               >
                 <option value=''>Selecione uma propriedade</option>
-                {properties.map(property => (
-                  <option key={property.id} value={property.id}>
-                    {property.title}
+                {propertiesLoading && (
+                  <option value='' disabled>
+                    Carregando propriedades...
                   </option>
-                ))}
+                )}
+                {properties
+                  .filter(
+                    p =>
+                      !propertySearch.trim() ||
+                      (p.title &&
+                        p.title
+                          .toLowerCase()
+                          .includes(propertySearch.trim().toLowerCase())) ||
+                      (p.code &&
+                        p.code
+                          .toLowerCase()
+                          .includes(propertySearch.trim().toLowerCase()))
+                  )
+                  .map(property => (
+                    <option key={property.id} value={property.id}>
+                      {property.title}
+                      {property.code ? ` (${property.code})` : ''}
+                    </option>
+                  ))}
               </Select>
               {errors.propertyId && (
                 <ErrorMessage>{errors.propertyId}</ErrorMessage>

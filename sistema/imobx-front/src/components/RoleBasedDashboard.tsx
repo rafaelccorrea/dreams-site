@@ -4,9 +4,7 @@ import { ensureChartRegistration } from './charts/chartConfig';
 import { useAuth } from '../hooks/useAuth';
 import DashboardPage from '../pages/DashboardPage';
 import UserDashboardPage from '../pages/UserDashboardPage';
-import { OptimizedLoading } from '../components/common/OptimizedLoading';
 import { LottieLoading } from './common/LottieLoading';
-import { PageLightBg } from '../styles/components/PageStyles';
 
 const RoleBasedDashboard: React.FC = () => {
   // Garantir que Chart.js está registrado quando o componente montar
@@ -33,32 +31,14 @@ const RoleBasedDashboard: React.FC = () => {
   }, []);
 
   // SEMPRE renderizar algo - nunca retornar null ou undefined
-  // Mostrar loading com Lottie como overlay sobre o conteúdo
+  // Apenas Lottie (sem shimmer/card branco atrás)
   if (!hasCheckedUser || isInitializing) {
-    return (
-      <PageLightBg>
-        <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            minHeight: '100vh',
-          }}
-        >
-          <OptimizedLoading type='card' />
-          <LottieLoading asOverlay={true} />
-        </div>
-      </PageLightBg>
-    );
+    return <LottieLoading asOverlay={true} />;
   }
 
-  // Se não tem usuário carregado ainda, mostrar loading
+  // Se não tem usuário carregado ainda, mostrar apenas Lottie
   if (!currentUser) {
-    return (
-      <PageLightBg>
-        <OptimizedLoading type='card' />
-      </PageLightBg>
-    );
+    return <LottieLoading asOverlay={true} />;
   }
 
   // console.log('🔐 RoleBasedDashboard: Usuário atual:', {

@@ -13,7 +13,7 @@ import { ensureChartRegistration } from '../components/charts/chartConfig';
 ensureChartRegistration();
 import { ConnectionError } from '../components';
 import { OptimizedLoading } from '../components/common/OptimizedLoading';
-import { LottieLoading } from '../components/common/LottieLoading';
+import AdminDashboardShimmer from '../components/shimmer/AdminDashboardShimmer';
 import { useDashboard } from '../hooks/useDashboard';
 import { useAutoReloadOnCompanyChange } from '../hooks/useCompanyMonitor';
 import { useCompanyLoader } from '../hooks/useCompanyLoader';
@@ -666,9 +666,13 @@ const DashboardPage: React.FC = () => {
   const shouldShowLoading = loading || (!dashboardData && !error);
   const isInitialLoading = isInitialLoad || !hasRenderedOnce;
 
-  // Renderizar apenas o Lottie durante o carregamento
+  // Shimmer fiel ao layout do dashboard durante o carregamento
   if (shouldShowLoading || isInitialLoading) {
-    return <LottieLoading asOverlay={false} />;
+    return (
+      <PageLightBg>
+        <AdminDashboardShimmer />
+      </PageLightBg>
+    );
   }
 
   if (error) {

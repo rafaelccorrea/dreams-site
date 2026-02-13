@@ -249,8 +249,8 @@ const InfoBox = styled.div`
 export const CreateInspectionPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [hasCheckedProperties, setHasCheckedProperties] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [hasRequestedProperties, setHasRequestedProperties] = useState(false);
+  const [hasLoadedProperties, setHasLoadedProperties] = useState(false);
 
   const { createInspection } = useInspection();
   const {
@@ -269,45 +269,32 @@ export const CreateInspectionPage: React.FC = () => {
     users?.filter(user => user.role === 'inspector' || user.role === 'admin') ||
     [];
 
-  // Verificar permissão para criar vistoria
   const canCreateInspection =
     hasPermission('inspection:create') ||
     currentUser?.role === 'admin' ||
     currentUser?.role === 'master';
 
-  // Carregar propriedades disponíveis
-  useEffect(() => {
-    const loadProperties = async () => {
-      try {
-        // Verificar se pode vincular vistoria a propriedade
-        const canLinkToProperty = canExecuteFunctionality(
-          hasPermission,
-          'inspection:create',
-          'vincular_vistoria_propriedade'
-        );
+  const canLinkToProperty = canExecuteFunctionality(
+    hasPermission,
+    'inspection:create',
+    'vincular_vistoria_propriedade'
+  );
 
-        // Só carregar propriedades se tiver permissão para vincular
-        if (canLinkToProperty) {
-          await getProperties({}, { page: 1, limit: 100 });
-        }
-      } catch (error) {
-        console.error('Erro ao carregar propriedades:', error);
-      } finally {
-        setHasCheckedProperties(true);
-        setIsInitialLoading(false);
-      }
-    };
-
-    loadProperties();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Removida dependência getProperties para evitar loop
+  // Carregar propriedades só quando o usuário abrir o select (não bloqueia abertura da página)
+  const loadPropertiesOnDemand = React.useCallback(() => {
+    if (!canLinkToProperty || hasRequestedProperties) return;
+    setHasRequestedProperties(true);
+    getProperties({}, { page: 1, limit: 100 })
+      .then(() => setHasLoadedProperties(true))
+      .catch(() => setHasLoadedProperties(true));
+  }, [canLinkToProperty, hasRequestedProperties, getProperties]);
 
   // Redirecionar se não tiver permissão
   useEffect(() => {
-    if (hasCheckedProperties && !canCreateInspection) {
+    if (!canCreateInspection) {
       navigate('/inspection', { replace: true });
     }
-  }, [canCreateInspection, navigate, hasCheckedProperties]);
+  }, [canCreateInspection, navigate]);
 
   const handleSubmit = async (data: CreateInspectionRequest) => {
     try {
@@ -354,42 +341,8 @@ export const CreateInspectionPage: React.FC = () => {
     navigate('/properties/create');
   };
 
-  // Se ainda está carregando as propriedades
-  if (isInitialLoading || propertiesLoading || !hasCheckedProperties) {
-    return (
-      <PageContainer>
-        <PageContent>
-          <PageHeader>
-            <PageTitleContainer>
-              <PageTitle>Nova Vistoria</PageTitle>
-              <PageSubtitle>Carregando suas propriedades...</PageSubtitle>
-            </PageTitleContainer>
-            <BackButton onClick={handleCancel}>
-              <MdArrowBack size={20} />
-              Voltar
-            </BackButton>
-          </PageHeader>
-
-          <ContentContainer>
-            <LoadingContainer>
-              <LoadingSpinner />
-              <LoadingText>
-                Verificando suas propriedades disponíveis...
-              </LoadingText>
-            </LoadingContainer>
-          </ContentContainer>
-        </PageContent>
-      </PageContainer>
-    );
-  }
-
-  // Se não tem propriedades cadastradas (apenas após verificação completa e não estar carregando)
-  if (
-    hasCheckedProperties &&
-    !isInitialLoading &&
-    !propertiesLoading &&
-    (!properties || properties.length === 0)
-  ) {
+  // Só exibir tela "nenhuma propriedade" após o usuário abrir o select e a lista vir vazia
+  if (hasLoadedProperties && (!properties || properties.length === 0)) {
     return (
       <PageContainer>
         <PageContent>
@@ -448,16 +401,20 @@ export const CreateInspectionPage: React.FC = () => {
         </PageHeader>
 
         <ContentContainer>
-          <InfoBox>
-            <MdInfo size={20} />
-            Você tem {properties?.length || 0} propriedade(s) disponível(is)
-            para vistoria
-          </InfoBox>
+          {hasLoadedProperties && (properties?.length ?? 0) > 0 && (
+            <InfoBox>
+              <MdInfo size={20} />
+              Você tem {properties?.length || 0} propriedade(s) disponível(is)
+              para vistoria
+            </InfoBox>
+          )}
 
           <InspectionForm
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             properties={properties || []}
+            onPropertySelectOpen={loadPropertiesOnDemand}
+            propertiesLoading={propertiesLoading}
             inspectors={inspectors}
             currentUser={
               currentUser

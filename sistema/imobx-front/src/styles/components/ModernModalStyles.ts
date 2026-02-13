@@ -427,6 +427,93 @@ export const ModernInfoText = styled.p`
   font-weight: 400;
 `;
 
+// Resumo / Summary para modal de confirmação
+export const ModernSummaryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+export const ModernSummaryCard = styled.div`
+  background: ${props => props.theme.colors.backgroundSecondary};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 16px;
+  padding: 20px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    border-color: ${props => props.theme.colors.primary}40;
+    box-shadow: 0 4px 20px ${props => props.theme.colors.primary}15;
+  }
+`;
+
+export const ModernSummaryCardTitle = styled.h4`
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: ${props => props.theme.colors.primary};
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid ${props => props.theme.colors.border};
+`;
+
+export const ModernSummaryRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+export const ModernSummaryLabel = styled.span`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.textSecondary};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+export const ModernSummaryValue = styled.span`
+  font-size: 0.9375rem;
+  color: ${props => props.theme.colors.text};
+  font-weight: 500;
+  word-break: break-word;
+`;
+
+export const ModernConfirmWarning = styled.div`
+  background: linear-gradient(
+    135deg,
+    ${props => props.theme.colors.primary}12 0%,
+    ${props => props.theme.colors.primary}06 100%
+  );
+  border: 1px solid ${props => props.theme.colors.primary}40;
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+`;
+
+export const ModernConfirmWarningText = styled.p`
+  margin: 0;
+  font-size: 0.95rem;
+  color: ${props => props.theme.colors.text};
+  line-height: 1.55;
+  font-weight: 500;
+`;
+
 // Footer do modal moderno - sem posição fixa
 export const ModernModalFooter = styled.div`
   padding: 24px 40px 32px 40px;

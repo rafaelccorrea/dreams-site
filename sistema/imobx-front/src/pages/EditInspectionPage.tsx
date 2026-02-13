@@ -37,6 +37,7 @@ export const EditInspectionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(false);
   const [hasLoadedData, setHasLoadedData] = useState(false);
+  const [hasRequestedProperties, setHasRequestedProperties] = useState(false);
   const { updateInspection } = useInspection();
   const {
     inspection,
@@ -61,40 +62,30 @@ export const EditInspectionPage: React.FC = () => {
         user.role === 'master'
     ) || [];
 
-  // Verificar permissão para editar vistoria
   const canEditInspection =
     hasPermission('inspection:update') ||
     getCurrentUser()?.role === 'admin' ||
     getCurrentUser()?.role === 'master';
 
-  // Carregar propriedades e usuários quando a página carregar
+  const canChangeProperty = canExecuteFunctionality(
+    hasPermission,
+    'inspection:update',
+    'alterar_propriedade_vistoria'
+  );
+
+  // Carregar só usuários no mount; propriedades ao abrir o select (não bloqueia abertura)
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Verificar se pode alterar propriedade da vistoria
-        const canChangeProperty = canExecuteFunctionality(
-          hasPermission,
-          'inspection:update',
-          'alterar_propriedade_vistoria'
-        );
-
-        const promises = [];
-        if (canChangeProperty) {
-          promises.push(getProperties({}, { page: 1, limit: 100 }));
-        }
-        promises.push(getUsers({ page: 1, limit: 100 }));
-
-        await Promise.all(promises);
-        setHasLoadedData(true);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        setHasLoadedData(true); // Mesmo com erro, permitir renderizar
-      }
-    };
-
-    loadData();
+    getUsers({ page: 1, limit: 100 })
+      .then(() => setHasLoadedData(true))
+      .catch(() => setHasLoadedData(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Removidas dependências para evitar loop
+  }, []);
+
+  const loadPropertiesOnDemand = React.useCallback(() => {
+    if (!canChangeProperty || hasRequestedProperties) return;
+    setHasRequestedProperties(true);
+    getProperties({}, { page: 1, limit: 100 });
+  }, [canChangeProperty, hasRequestedProperties, getProperties]);
 
   // Redirecionar se não tiver permissão
   useEffect(() => {
@@ -121,13 +112,8 @@ export const EditInspectionPage: React.FC = () => {
     navigate('/inspection');
   };
 
-  // Mostrar loading enquanto carrega inspeção ou dados
-  if (
-    loadingInspection ||
-    !hasLoadedData ||
-    propertiesLoading ||
-    usersLoading
-  ) {
+  // Mostrar loading só enquanto carrega inspeção e usuários (propriedades carregam no select)
+  if (loadingInspection || !hasLoadedData || usersLoading) {
     return (
       <PageContainer>
         <LoadingContainer>
@@ -179,6 +165,8 @@ export const EditInspectionPage: React.FC = () => {
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           properties={properties || []}
+          onPropertySelectOpen={loadPropertiesOnDemand}
+          propertiesLoading={propertiesLoading}
           inspectors={inspectors}
           loading={loading}
           isEdit={true}

@@ -2148,7 +2148,9 @@ const TaskDetailsPage: React.FC = () => {
     'history' | 'comments' | 'files' | 'metrics' | 'transfers'
   >('history');
   const [history, setHistory] = useState<TaskHistoryEntry[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const historyLoadedRef = useRef(false);
+  const commentsLoadedRef = useRef(false);
 
   // Redirecionar da tab de métricas se o usuário não tiver permissão
   useEffect(() => {
@@ -2165,7 +2167,7 @@ const TaskDetailsPage: React.FC = () => {
   } = useKanbanValidationHistory(taskId || '');
 
   const [comments, setComments] = useState<KanbanTaskComment[]>([]);
-  const [loadingComments, setLoadingComments] = useState(true);
+  const [loadingComments, setLoadingComments] = useState(false);
   const [commentMessage, setCommentMessage] = useState('');
   const [commentSelectedFiles, setCommentSelectedFiles] = useState<
     CommentSelectedFile[]
@@ -2227,65 +2229,16 @@ const TaskDetailsPage: React.FC = () => {
   const [currentDueDate, setCurrentDueDate] = useState<string>('');
   const [currentTotalValue, setCurrentTotalValue] = useState<string>('');
 
-  // Carregar task: por board (com teamId) ou direto por taskId (quem tem o link não precisa estar no funil)
+  // Carregar task sempre por getTaskById (1 request leve) em vez de getBoard (quadro inteiro).
+  // Enriquecer client/property em paralelo quando necessário.
   useEffect(() => {
     const isKanbanValidationNavigation =
       sessionStorage.getItem('_kanban_validation_navigation') === 'true';
     if (!taskId) return;
-
-    // Abertura só com taskId (ex.: link da análise de leads) — não exige funil
-    if (!teamId && !isKanbanValidationNavigation) {
-      const loadByTaskId = async () => {
-        try {
-          setLoading(true);
-          const foundTask = await kanbanApi.getTaskById(taskId);
-          if (
-            foundTask.clientId &&
-            !foundTask.client &&
-            isValidProjectId(foundTask.projectId ?? undefined)
-          ) {
-            try {
-              const clients = await kanbanApi.getProjectClients(
-                foundTask.projectId!
-              );
-              const clientData = clients.find(
-                (c: any) => c.id === foundTask.clientId
-              );
-              if (clientData) foundTask.client = clientData;
-            } catch (_) {}
-          }
-          if (
-            foundTask.propertyId &&
-            !foundTask.property &&
-            isValidProjectId(foundTask.projectId ?? undefined)
-          ) {
-            try {
-              const properties = await kanbanApi.getProjectProperties(
-                foundTask.projectId!
-              );
-              const propertyData = properties.find(
-                (p: any) => p.id === foundTask.propertyId
-              );
-              if (propertyData) foundTask.property = propertyData;
-            } catch (_) {}
-          }
-          if (foundTask.clientId) lastClientIdRef.current = foundTask.clientId;
-          if (foundTask.propertyId)
-            lastPropertyIdRef.current = foundTask.propertyId;
-          setTask(foundTask);
-        } catch (error: any) {
-          showError(error?.message || 'Negociação não encontrada');
-          navigate(-1);
-        } finally {
-          setLoading(false);
-        }
-      };
-      loadByTaskId();
-      return;
-    }
-
     if (isKanbanValidationNavigation && !teamId) return;
-    if (!teamId) {
+    if (!teamId && !isKanbanValidationNavigation) {
+      // Link direto sem teamId: só exige taskId
+    } else if (!teamId) {
       showError('ID da equipe é necessário');
       navigate(-1);
       return;
@@ -2294,49 +2247,48 @@ const TaskDetailsPage: React.FC = () => {
     const loadTask = async () => {
       try {
         setLoading(true);
-        const boardData = await kanbanApi.getBoard(teamId, {
-          projectId: projectId || undefined,
-        });
-        const foundTask = boardData.tasks.find(t => t.id === taskId);
-        if (foundTask) {
-          if (
+        const foundTask = await kanbanApi.getTaskById(taskId);
+        const projId = foundTask.projectId || projectId || undefined;
+        const needClient =
+          !!(
             foundTask.clientId &&
             !foundTask.client &&
-            isValidProjectId(foundTask.projectId || projectId)
-          ) {
-            try {
-              const clients = await kanbanApi.getProjectClients(
-                foundTask.projectId || projectId!
-              );
-              const clientData = clients.find(c => c.id === foundTask.clientId);
-              if (clientData) foundTask.client = clientData;
-            } catch (_) {}
-          }
-          if (
+            isValidProjectId(projId)
+          );
+        const needProperty =
+          !!(
             foundTask.propertyId &&
             !foundTask.property &&
-            isValidProjectId(foundTask.projectId || projectId)
-          ) {
-            try {
-              const properties = await kanbanApi.getProjectProperties(
-                foundTask.projectId || projectId!
-              );
-              const propertyData = properties.find(
-                p => p.id === foundTask.propertyId
-              );
-              if (propertyData) foundTask.property = propertyData;
-            } catch (_) {}
+            isValidProjectId(projId)
+          );
+        if (needClient || needProperty) {
+          const [clientsRes, propertiesRes] = await Promise.all([
+            needClient && projId
+              ? kanbanApi.getProjectClients(projId)
+              : Promise.resolve([]),
+            needProperty && projId
+              ? kanbanApi.getProjectProperties(projId)
+              : Promise.resolve([]),
+          ]);
+          if (needClient && Array.isArray(clientsRes)) {
+            const clientData = clientsRes.find(
+              (c: any) => c.id === foundTask.clientId
+            );
+            if (clientData) foundTask.client = clientData;
           }
-          if (foundTask.clientId) lastClientIdRef.current = foundTask.clientId;
-          if (foundTask.propertyId)
-            lastPropertyIdRef.current = foundTask.propertyId;
-          setTask(foundTask);
-        } else {
-          showError('Negociação não encontrada');
-          navigate(-1);
+          if (needProperty && Array.isArray(propertiesRes)) {
+            const propertyData = propertiesRes.find(
+              (p: any) => p.id === foundTask.propertyId
+            );
+            if (propertyData) foundTask.property = propertyData;
+          }
         }
+        if (foundTask.clientId) lastClientIdRef.current = foundTask.clientId;
+        if (foundTask.propertyId)
+          lastPropertyIdRef.current = foundTask.propertyId;
+        setTask(foundTask);
       } catch (error: any) {
-        showError(error?.message || 'Erro ao carregar detalhes da negociação');
+        showError(error?.message || 'Negociação não encontrada');
         navigate(-1);
       } finally {
         setLoading(false);
@@ -2351,10 +2303,6 @@ const TaskDetailsPage: React.FC = () => {
   // Inicializar estados quando task for carregada (apenas uma vez por task.id)
   useEffect(() => {
     if (task && task.id && initializedRef.current !== task.id) {
-      console.log(
-        '🔄 [TaskDetailsPage] Inicializando estados para task:',
-        task.id
-      );
       initializedRef.current = task.id;
       setTags(task.tags || []);
       setCurrentAssignee(task.assignedTo || undefined);
@@ -2409,20 +2357,30 @@ const TaskDetailsPage: React.FC = () => {
     }
   }, [taskId]);
 
+  // Reset refs ao trocar de tarefa
   useEffect(() => {
-    if (taskId) {
+    historyLoadedRef.current = false;
+    commentsLoadedRef.current = false;
+  }, [taskId]);
+
+  // Carregar histórico e comentários só ao abrir a aba (lazy) para abrir a página mais rápido
+  useEffect(() => {
+    if (!taskId) return;
+    if (activeTab === 'history' && !historyLoadedRef.current) {
+      historyLoadedRef.current = true;
       loadTaskHistory();
+      loadValidationHistory();
+    }
+    if (activeTab === 'comments' && !commentsLoadedRef.current) {
+      commentsLoadedRef.current = true;
       loadTaskComments();
-      if (activeTab === 'history') {
-        loadValidationHistory();
-      }
     }
   }, [
     taskId,
+    activeTab,
     loadTaskHistory,
     loadTaskComments,
     loadValidationHistory,
-    activeTab,
   ]);
 
   // Carregar tags disponíveis

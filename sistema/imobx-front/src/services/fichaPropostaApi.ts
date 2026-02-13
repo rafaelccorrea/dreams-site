@@ -160,6 +160,10 @@ export interface PropostaListItem {
     cpf: string;
     email?: string;
   };
+  /** CPF do proprietário (para agrupamento por etapa/documento). */
+  proprietario?: {
+    cpf?: string;
+  };
   imovel?: {
     endereco: string;
     cidade: string;

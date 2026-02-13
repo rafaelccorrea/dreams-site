@@ -25,6 +25,9 @@ import {
   MdAdd,
   MdDelete,
   MdEmail,
+  MdPhone,
+  MdBusiness,
+  MdPeople,
 } from 'react-icons/md';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
@@ -80,14 +83,6 @@ import {
   ModalTitle,
   ModalCloseButton,
   ModalBody,
-  ModalSummary,
-  SummarySection,
-  SummaryTitle,
-  SummaryItem,
-  SummaryLabel,
-  SummaryValue,
-  ModalWarning,
-  ModalWarningText,
   ModalFooter,
   ModalButton,
   PageContentWrap,
@@ -177,6 +172,14 @@ import {
   ModernFormSelect,
   ModernModalFooter,
   ModernButton,
+  ModernSummaryGrid,
+  ModernSummaryCard,
+  ModernSummaryCardTitle,
+  ModernSummaryRow,
+  ModernSummaryLabel,
+  ModernSummaryValue,
+  ModernConfirmWarning,
+  ModernConfirmWarningText,
 } from '../styles/components/ModernModalStyles';
 
 // Registrar componentes do Chart.js
@@ -461,6 +464,7 @@ const FichaPropostaPage: React.FC = () => {
     []
   );
   const [showPropostasAnteriores, setShowPropostasAnteriores] = useState(false);
+  const [showPropostasPorEtapa, setShowPropostasPorEtapa] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingPayload, setPendingPayload] =
     useState<CreatePurchaseProposalDto | null>(null);
@@ -549,7 +553,9 @@ const FichaPropostaPage: React.FC = () => {
     try {
       const s = localStorage.getItem('ficha_proposta_etapa');
       if (s === '1' || s === '2' || s === '3') return Number(s) as 1 | 2 | 3;
-    } catch (_) {}
+    } catch {
+      // ignorar falha de localStorage
+    }
     return 1;
   });
   /** Máxima etapa liberada pelas assinaturas (vinda do backend). Só é > 1 quando comprador/proprietário assinam. Impede avançar sem assinar. */
@@ -557,7 +563,9 @@ const FichaPropostaPage: React.FC = () => {
   useEffect(() => {
     try {
       localStorage.setItem('ficha_proposta_etapa', String(etapaAtual));
-    } catch (_) {}
+    } catch {
+      // ignorar falha de localStorage
+    }
   }, [etapaAtual]);
 
   /** Busca de imóvel por código (API pública de propriedades) */
@@ -853,6 +861,7 @@ const FichaPropostaPage: React.FC = () => {
     handleSubmit,
     watch,
     setValue,
+    getValues,
     reset,
     trigger,
     formState: { errors },
@@ -1217,7 +1226,7 @@ const FichaPropostaPage: React.FC = () => {
       setPropostaAssinaturasModal({ id: propostaIdFromUrl, numero });
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [propostaIdFromUrl, location.state, location.pathname, navigate]);
+  }, [propostaIdFromUrl, location.state, location.pathname, navigate, propostasEnviadas]);
 
   // Salvar automaticamente quando houver mudanças
   useEffect(() => {
@@ -2025,20 +2034,25 @@ const FichaPropostaPage: React.FC = () => {
       showWarning('Faça login (CPF do corretor ou gestor) para salvar o rascunho no servidor.');
       return;
     }
+    setSavingDraftServer(true);
+    showInfo('Salvando rascunho no servidor...', { autoClose: 2000 });
     const data = getValues();
     let payload: CreatePurchaseProposalDto;
     try {
       payload = preparePayload(data);
     } catch (e) {
+      setSavingDraftServer(false);
+      const detail = e instanceof Error ? e.message : '';
       showError(
-        'Preencha os campos obrigatórios da proposta, proponente e imóvel para salvar o rascunho.',
+        detail
+          ? `Não foi possível montar o rascunho: ${detail}. Preencha proposta, proponente (nome, CPF, email) e imóvel (endereço) para salvar.`
+          : 'Preencha os campos obrigatórios da proposta, proponente e imóvel para salvar o rascunho.',
         { autoClose: 6000 }
       );
       return;
     }
     payload.status = 'rascunho';
 
-    setSavingDraftServer(true);
     try {
       if (!propostaIdFromUrl || propostaIdFromUrl.trim() === '') {
         const response = await criarFichaProposta(payload as CreatePurchaseProposalDto);
@@ -2062,7 +2076,8 @@ const FichaPropostaPage: React.FC = () => {
         carregarPropostas();
       }
     } catch (err: any) {
-      const msg = err?.message || err?.errors?.[0]?.message || 'Erro ao salvar rascunho no servidor.';
+      const apiMsg = err?.response?.data?.message ?? err?.message ?? err?.errors?.[0]?.message;
+      const msg = apiMsg || 'Erro ao salvar rascunho no servidor. Tente novamente.';
       showError(msg, { autoClose: 6000 });
     } finally {
       setSavingDraftServer(false);
@@ -2835,14 +2850,15 @@ const FichaPropostaPage: React.FC = () => {
     };
   }, [propostasEnviadas, themeColors]);
 
-  // Listas derivadas: finalizadas (etapa 3) e por etapa (para seção "Propostas por etapa")
+  // Propostas finalizadas: conforme purchase_proposals (status = disponivel)
   const propostasFinalizadas = useMemo(
     () =>
       propostasEnviadas.filter(
-        p => (p as PropostaListItem).etapa === 3
+        p => (p as PropostaListItem).status === 'disponivel'
       ) as PropostaListItem[],
     [propostasEnviadas]
   );
+  // Propostas por etapa: agrupamento conforme proposal_stage_history (etapa 1, 2 ou 3 vinda do backend)
   const propostasPorEtapa = useMemo(
     () => ({
       etapa1: propostasEnviadas.filter(
@@ -4447,9 +4463,9 @@ const FichaPropostaPage: React.FC = () => {
                                       'Deseja carregar esta proposta no formulário? Os dados atuais serão substituídos.'
                                     )
                                   ) {
-                                    // Carregar dados da proposta
-                                    if (proposta.dados) {
-                                      const dados = proposta.dados;
+                                    // Carregar dados da proposta (dados completos quando disponível)
+                                    const dados = (proposta as PropostaListItem & { dados?: CreatePurchaseProposalDto }).dados;
+                                    if (dados) {
 
                                       // Carregar proposta
                                       if (dados.proposta) {
@@ -4474,7 +4490,7 @@ const FichaPropostaPage: React.FC = () => {
                                         setValue(
                                           'proposta.valorSinal',
                                           formatCurrencyValue(
-                                            dados.proposta.valorSinal
+                                            dados.proposta.valorSinal ?? 0
                                           )
                                         );
                                         setValue(
@@ -4829,7 +4845,7 @@ const FichaPropostaPage: React.FC = () => {
                                           >
                                             <MdDraw size={18} /> Assinaturas (Comprador)
                                           </Button>
-                                          {(proposta as PropostaListItem).etapa >= 2 && (
+                                          {((proposta as PropostaListItem).etapa ?? 1) >= 2 && (
                                             <Button
                                               type='button'
                                               $variant='secondary'
@@ -4973,43 +4989,76 @@ const FichaPropostaPage: React.FC = () => {
               }}
             >
               <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setShowPropostasPorEtapa(prev => !prev)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setShowPropostasPorEtapa(prev => !prev);
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'space-between',
                   gap: '12px',
-                  marginBottom: '24px',
-                  paddingBottom: '20px',
-                  borderBottom: '2px solid var(--color-border)',
+                  marginBottom: showPropostasPorEtapa ? '24px' : 0,
+                  paddingBottom: showPropostasPorEtapa ? '20px' : 0,
+                  borderBottom: showPropostasPorEtapa
+                    ? '2px solid var(--color-border)'
+                    : 'none',
+                  cursor: 'pointer',
+                  userSelect: 'none',
                 }}
               >
                 <div
                   style={{
-                    width: isMobilePropostas ? '40px' : '48px',
-                    height: isMobilePropostas ? '40px' : '48px',
-                    borderRadius: '12px',
-                    background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    boxShadow: `0 4px 12px ${themeColors.primary}4D`,
-                    flexShrink: 0,
+                    gap: '12px',
                   }}
                 >
-                  <MdBarChart size={isMobilePropostas ? 20 : 24} />
+                  <div
+                    style={{
+                      width: isMobilePropostas ? '40px' : '48px',
+                      height: isMobilePropostas ? '40px' : '48px',
+                      borderRadius: '12px',
+                      background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      boxShadow: `0 4px 12px ${themeColors.primary}4D`,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <MdBarChart size={isMobilePropostas ? 20 : 24} />
+                  </div>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: isMobilePropostas ? '1.25rem' : '1.5rem',
+                      fontWeight: 700,
+                      color: 'var(--color-text)',
+                    }}
+                  >
+                    Propostas por etapa
+                  </h3>
                 </div>
-                <h3
+                <div
                   style={{
-                    margin: 0,
-                    fontSize: isMobilePropostas ? '1.25rem' : '1.5rem',
-                    fontWeight: 700,
-                    color: 'var(--color-text)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: 'var(--color-text-secondary)',
+                    transition: 'transform 0.2s ease',
+                    transform: showPropostasPorEtapa ? 'rotate(0deg)' : 'rotate(-90deg)',
                   }}
                 >
-                  Propostas por etapa
-                </h3>
+                  <MdExpandMore size={28} />
+                </div>
               </div>
-              {[
+              {showPropostasPorEtapa && [
                 {
                   etapa: 1,
                   titulo: 'Etapa 1 – Comprador',
@@ -5151,7 +5200,6 @@ const FichaPropostaPage: React.FC = () => {
                             <Button
                               type='button'
                               $variant='primary'
-                              size='sm'
                               onClick={e => {
                                 e.stopPropagation();
                                 navigate(`/ficha-proposta/${proposta.id}`, {
@@ -5882,12 +5930,13 @@ const FichaPropostaPage: React.FC = () => {
                       max={new Date().toISOString().split('T')[0]}
                       $hasError={!!errors.proponente?.dataNascimento}
                     />
-                    {errors.proponente?.dataNascimento && (
+                    {errors.proponente?.dataNascimento ? (
                       <ErrorMessage>
                         {errors.proponente.dataNascimento.message}
                       </ErrorMessage>
+                    ) : (
+                      <HelperText>Idade mínima: 18 anos</HelperText>
                     )}
-                    <HelperText>Idade mínima: 18 anos</HelperText>
                   </FormGroup>
 
                   <FormGroup>
@@ -7075,12 +7124,13 @@ const FichaPropostaPage: React.FC = () => {
                       max={new Date().toISOString().split('T')[0]}
                       $hasError={!!errors.proprietario?.dataNascimento}
                     />
-                    {errors.proprietario?.dataNascimento && (
+                    {errors.proprietario?.dataNascimento ? (
                       <ErrorMessage>
                         {errors.proprietario.dataNascimento.message}
                       </ErrorMessage>
+                    ) : (
+                      <HelperText>Idade mínima: 18 anos</HelperText>
                     )}
-                    <HelperText>Idade mínima: 18 anos</HelperText>
                   </FormGroup>
 
                   <FormGroup>
@@ -8001,8 +8051,7 @@ const FichaPropostaPage: React.FC = () => {
                                 step={0.5}
                                 placeholder='0-100'
                                 value={
-                                  captador?.porcentagem != null &&
-                                  captador.porcentagem !== ''
+                                  captador?.porcentagem != null
                                     ? String(captador.porcentagem)
                                     : ''
                                 }
@@ -8134,9 +8183,9 @@ const FichaPropostaPage: React.FC = () => {
                     enviar a proposta.
                   </InfoBoxText>
                 )}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'flex-end' }}>
-                  {userCpf && userTipo && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    {userCpf && userTipo && (
                       <Button
                         type='button'
                         $variant='secondary'
@@ -8147,198 +8196,541 @@ const FichaPropostaPage: React.FC = () => {
                           padding: '14px 24px',
                           fontWeight: 600,
                           fontSize: '0.9375rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
                         }}
                         title="Guarda o preenchimento no servidor para continuar depois ou não perder dados"
                       >
                         {savingDraftServer ? (
-                          <>Salvando...</>
+                          <>
+                            <span
+                              style={{
+                                width: '16px',
+                                height: '16px',
+                                border: '2px solid currentColor',
+                                borderTopColor: 'transparent',
+                                borderRadius: '50%',
+                                animation: 'spin 0.8s linear infinite',
+                                flexShrink: 0,
+                              }}
+                            />
+                            Salvando...
+                          </>
                         ) : (
                           <><MdSave /> Salvar rascunho no servidor</>
                         )}
                       </Button>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', maxWidth: '280px', textAlign: 'right' }}>
-                        Guarda o preenchimento para continuar depois ou não perder dados.
-                      </span>
-                    </div>
+                    )}
+                    <Button
+                      type='submit'
+                      $variant='primary'
+                      disabled={isSubmitting}
+                      style={{
+                        borderRadius: '12px',
+                        padding: '14px 32px',
+                        fontWeight: 700,
+                        fontSize: '1.0625rem',
+                        boxShadow: isSubmitting
+                          ? 'none'
+                          : `0 4px 16px ${themeColors.primary}40`,
+                        transition: 'all 0.2s ease',
+                        transform: isSubmitting ? 'scale(0.98)' : 'scale(1)',
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              border: '2px solid white',
+                              borderTop: '2px solid transparent',
+                              borderRadius: '50%',
+                              animation: 'spin 0.8s linear infinite',
+                            }}
+                          />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <MdCheckCircle /> Enviar Proposta
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {userCpf && userTipo && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', maxWidth: '320px', textAlign: 'right' }}>
+                      Guarda o preenchimento para continuar depois ou não perder dados.
+                    </span>
                   )}
-                  <Button
-                    type='submit'
-                    $variant='primary'
-                    disabled={isSubmitting}
-                  style={{
-                    borderRadius: '12px',
-                    padding: '14px 32px',
-                    fontWeight: 700,
-                    fontSize: '1.0625rem',
-                    boxShadow: isSubmitting
-                      ? 'none'
-                      : `0 4px 16px ${themeColors.primary}40`,
-                    transition: 'all 0.2s ease',
-                    transform: isSubmitting ? 'scale(0.98)' : 'scale(1)',
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div
-                        style={{
-                          width: '16px',
-                          height: '16px',
-                          border: '2px solid white',
-                          borderTop: '2px solid transparent',
-                          borderRadius: '50%',
-                          animation: 'spin 0.8s linear infinite',
-                        }}
-                      />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <MdCheckCircle /> Enviar Proposta
-                    </>
-                  )}
-                </Button>
                 </div>
               </FooterRight>
             </FormFooter>
           </form>
         </PageContentWrap>
 
-        {/* Modal de Confirmação */}
-        <ModalOverlay $isOpen={showConfirmModal} onClick={handleCancelSubmit}>
-          <ModalContainer onClick={e => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>
-                <MdWarning /> Confirmar Envio da Proposta
-              </ModalTitle>
-              <ModalCloseButton onClick={handleCancelSubmit}>
-                <MdClose />
-              </ModalCloseButton>
-            </ModalHeader>
-            <ModalBody>
-              <ModalWarning>
-                <ModalWarningText>
-                  Por favor, revise os dados antes de enviar. Após o envio, um
-                  PDF será gerado e enviado por email automaticamente.
-                </ModalWarningText>
-              </ModalWarning>
+        {/* Modal de Confirmação - Estilo moderno */}
+        <ModernModalOverlay
+          $isOpen={showConfirmModal}
+          onClick={handleCancelSubmit}
+        >
+          <ModernModalContainer
+            $isOpen={showConfirmModal}
+            onClick={e => e.stopPropagation()}
+          >
+            <ModernModalHeader>
+              <ModernModalHeaderContent>
+                <div>
+                  <ModernModalTitle>
+                    <MdWarning size={28} style={{ flexShrink: 0 }} /> Confirmar
+                    Envio da Proposta
+                  </ModernModalTitle>
+                  <ModernModalSubtitle>
+                    Revise os dados da Etapa {etapaAtual} abaixo. Após confirmar, um
+                    PDF será gerado e enviado por e-mail automaticamente.
+                  </ModernModalSubtitle>
+                </div>
+                <ModernModalCloseButton
+                  type='button'
+                  onClick={handleCancelSubmit}
+                  disabled={isSubmitting}
+                  aria-label='Fechar'
+                >
+                  <MdClose size={22} />
+                </ModernModalCloseButton>
+              </ModernModalHeaderContent>
+            </ModernModalHeader>
+            <ModernModalContent>
+              <ModernConfirmWarning>
+                <MdWarning
+                  size={24}
+                  style={{ color: 'var(--color-primary)', flexShrink: 0 }}
+                />
+                <ModernConfirmWarningText>
+                  Por favor, confira todas as informações antes de enviar. Após
+                  o envio, a proposta ficará disponível e o PDF será enviado por
+                  e-mail aos envolvidos.
+                </ModernConfirmWarningText>
+              </ModernConfirmWarning>
 
               {pendingPayload && (
-                <ModalSummary>
-                  <SummarySection>
-                    <SummaryTitle>
-                      <MdCalendarToday /> Dados da Proposta
-                    </SummaryTitle>
-                    <SummaryItem>
-                      <SummaryLabel>Data da Proposta</SummaryLabel>
-                      <SummaryValue>
+                <ModernSummaryGrid>
+                  {/* Etapa 1: Dados da Proposta + Proponente (+ Cônjuge) */}
+                  {etapaAtual === 1 && (
+                    <>
+                  <ModernSummaryCard>
+                    <ModernSummaryCardTitle>
+                      <MdCalendarToday size={20} /> Dados da Proposta
+                    </ModernSummaryCardTitle>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>Data da Proposta</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {new Date(
                           pendingPayload.proposta.dataProposta
                         ).toLocaleDateString('pt-BR')}
-                      </SummaryValue>
-                    </SummaryItem>
-                    <SummaryItem>
-                      <SummaryLabel>Preço Proposto</SummaryLabel>
-                      <SummaryValue>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>Preço Proposto</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {formatCurrencyValue(
                           pendingPayload.proposta.precoProposto
                         )}
-                      </SummaryValue>
-                    </SummaryItem>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
                     {pendingPayload.proposta.valorSinal !== undefined &&
                       pendingPayload.proposta.valorSinal !== null && (
-                        <SummaryItem>
-                          <SummaryLabel>Valor do Sinal</SummaryLabel>
-                          <SummaryValue>
+                        <ModernSummaryRow>
+                          <ModernSummaryLabel>Valor do Sinal</ModernSummaryLabel>
+                          <ModernSummaryValue>
                             {formatCurrencyValue(
                               pendingPayload.proposta.valorSinal
                             )}
-                          </SummaryValue>
-                        </SummaryItem>
+                          </ModernSummaryValue>
+                        </ModernSummaryRow>
                       )}
-                    <SummaryItem>
-                      <SummaryLabel>Unidade de Venda</SummaryLabel>
-                      <SummaryValue>
+                    {pendingPayload.proposta.prazoPagamentoSinal != null && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>
+                          Prazo pag. sinal (dias)
+                        </ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proposta.prazoPagamentoSinal}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.proposta.prazoValidade != null && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Prazo validade (dias)</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proposta.prazoValidade}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.proposta.condicoesPagamento && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Condições de pagamento</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proposta.condicoesPagamento}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {(pendingPayload.proposta.porcentagemComissao ?? 0) > 0 && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Comissão (%)</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proposta.porcentagemComissao}%
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {(pendingPayload.proposta.prazoEntrega ?? 0) > 0 && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Prazo entrega (dias)</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proposta.prazoEntrega}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {(pendingPayload.proposta.multaMensal ?? 0) > 0 && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Multa mensal</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {formatCurrencyValue(
+                            pendingPayload.proposta.multaMensal!
+                          )}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>Unidade de Venda</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {pendingPayload.proposta.unidadeVenda}
-                      </SummaryValue>
-                    </SummaryItem>
-                    <SummaryItem>
-                      <SummaryLabel>Unidade de Captação</SummaryLabel>
-                      <SummaryValue>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>Unidade de Captação</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {pendingPayload.proposta.unidadeCaptacao}
-                      </SummaryValue>
-                    </SummaryItem>
-                  </SummarySection>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                  </ModernSummaryCard>
 
-                  <SummarySection>
-                    <SummaryTitle>
-                      <MdPerson /> Proponente
-                    </SummaryTitle>
-                    <SummaryItem>
-                      <SummaryLabel>Nome</SummaryLabel>
-                      <SummaryValue>
+                  <ModernSummaryCard>
+                    <ModernSummaryCardTitle>
+                      <MdPerson size={20} /> Proponente
+                    </ModernSummaryCardTitle>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>Nome</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {pendingPayload.proponente.nome}
-                      </SummaryValue>
-                    </SummaryItem>
-                    <SummaryItem>
-                      <SummaryLabel>CPF</SummaryLabel>
-                      <SummaryValue>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>CPF</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {maskCPF(pendingPayload.proponente.cpf)}
-                      </SummaryValue>
-                    </SummaryItem>
-                  </SummarySection>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                    {pendingPayload.proponente.email && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>E-mail</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          <MdEmail size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          {pendingPayload.proponente.email}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.proponente.telefone && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Telefone</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          <MdPhone size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          {maskPhoneAuto(pendingPayload.proponente.telefone)}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.proponente.dataNascimento && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Data de nascimento</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {new Date(
+                            pendingPayload.proponente.dataNascimento
+                          ).toLocaleDateString('pt-BR')}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.proponente.profissao && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Profissão</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proponente.profissao}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.proponente.residenciaAtual && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Residência atual</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proponente.residenciaAtual}
+                          {pendingPayload.proponente.bairro &&
+                            `, ${pendingPayload.proponente.bairro}`}
+                          {pendingPayload.proponente.cidade &&
+                            ` — ${pendingPayload.proponente.cidade}/${pendingPayload.proponente.estado}`}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                  </ModernSummaryCard>
 
-                  <SummarySection>
-                    <SummaryTitle>
-                      <MdHome /> Imóvel
-                    </SummaryTitle>
-                    <SummaryItem>
-                      <SummaryLabel>Endereço</SummaryLabel>
-                      <SummaryValue>
+                  {pendingPayload.proponenteConjuge && (
+                    <ModernSummaryCard>
+                      <ModernSummaryCardTitle>
+                        <MdPeople size={20} /> Cônjuge do Proponente
+                      </ModernSummaryCardTitle>
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Nome</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proponenteConjuge.nome}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>CPF</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {maskCPF(pendingPayload.proponenteConjuge.cpf)}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                      {pendingPayload.proponenteConjuge.email && (
+                        <ModernSummaryRow>
+                          <ModernSummaryLabel>E-mail</ModernSummaryLabel>
+                          <ModernSummaryValue>
+                            {pendingPayload.proponenteConjuge.email}
+                          </ModernSummaryValue>
+                        </ModernSummaryRow>
+                      )}
+                      {pendingPayload.proponenteConjuge.telefone && (
+                        <ModernSummaryRow>
+                          <ModernSummaryLabel>Telefone</ModernSummaryLabel>
+                          <ModernSummaryValue>
+                            {maskPhoneAuto(
+                              pendingPayload.proponenteConjuge.telefone
+                            )}
+                          </ModernSummaryValue>
+                        </ModernSummaryRow>
+                      )}
+                    </ModernSummaryCard>
+                  )}
+                    </>
+                  )}
+
+                  {/* Etapa 2: Imóvel + Proprietário (+ Cônjuge) */}
+                  {etapaAtual === 2 && (
+                    <>
+                  <ModernSummaryCard>
+                    <ModernSummaryCardTitle>
+                      <MdHome size={20} /> Imóvel
+                    </ModernSummaryCardTitle>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>Endereço</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {pendingPayload.imovel.endereco}
-                      </SummaryValue>
-                    </SummaryItem>
-                    <SummaryItem>
-                      <SummaryLabel>Matrícula</SummaryLabel>
-                      <SummaryValue>
-                        {pendingPayload.imovel.matricula}
-                      </SummaryValue>
-                    </SummaryItem>
-                  </SummarySection>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                    {(pendingPayload.imovel.bairro ||
+                      pendingPayload.imovel.cidade) && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Bairro / Cidade / UF</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {[
+                            pendingPayload.imovel.bairro,
+                            pendingPayload.imovel.cidade,
+                            pendingPayload.imovel.estado,
+                          ]
+                            .filter(Boolean)
+                            .join(' — ')}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.imovel.matricula && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Matrícula</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.imovel.matricula}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.imovel.cartorio && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Cartório</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.imovel.cartorio}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.imovel.cadastroPrefeitura && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Cadastro prefeitura</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.imovel.cadastroPrefeitura}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                  </ModernSummaryCard>
 
-                  <SummarySection>
-                    <SummaryTitle>
-                      <MdPerson /> Proprietário
-                    </SummaryTitle>
-                    <SummaryItem>
-                      <SummaryLabel>Nome</SummaryLabel>
-                      <SummaryValue>
+                  <ModernSummaryCard>
+                    <ModernSummaryCardTitle>
+                      <MdPerson size={20} /> Proprietário
+                    </ModernSummaryCardTitle>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>Nome</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {pendingPayload.proprietario.nome}
-                      </SummaryValue>
-                    </SummaryItem>
-                    <SummaryItem>
-                      <SummaryLabel>CPF</SummaryLabel>
-                      <SummaryValue>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                    <ModernSummaryRow>
+                      <ModernSummaryLabel>CPF</ModernSummaryLabel>
+                      <ModernSummaryValue>
                         {maskCPF(pendingPayload.proprietario.cpf)}
-                      </SummaryValue>
-                    </SummaryItem>
-                  </SummarySection>
-                </ModalSummary>
+                      </ModernSummaryValue>
+                    </ModernSummaryRow>
+                    {pendingPayload.proprietario.email && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>E-mail</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proprietario.email}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                    {pendingPayload.proprietario.telefone && (
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Telefone</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {maskPhoneAuto(
+                            pendingPayload.proprietario.telefone
+                          )}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                    )}
+                  </ModernSummaryCard>
+
+                  {pendingPayload.proprietarioConjuge && (
+                    <ModernSummaryCard>
+                      <ModernSummaryCardTitle>
+                        <MdPeople size={20} /> Cônjuge do Proprietário
+                      </ModernSummaryCardTitle>
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>Nome</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {pendingPayload.proprietarioConjuge.nome}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                      <ModernSummaryRow>
+                        <ModernSummaryLabel>CPF</ModernSummaryLabel>
+                        <ModernSummaryValue>
+                          {maskCPF(pendingPayload.proprietarioConjuge.cpf)}
+                        </ModernSummaryValue>
+                      </ModernSummaryRow>
+                      {pendingPayload.proprietarioConjuge.email && (
+                        <ModernSummaryRow>
+                          <ModernSummaryLabel>E-mail</ModernSummaryLabel>
+                          <ModernSummaryValue>
+                            {pendingPayload.proprietarioConjuge.email}
+                          </ModernSummaryValue>
+                        </ModernSummaryRow>
+                      )}
+                      {pendingPayload.proprietarioConjuge.telefone && (
+                        <ModernSummaryRow>
+                          <ModernSummaryLabel>Telefone</ModernSummaryLabel>
+                          <ModernSummaryValue>
+                            {maskPhoneAuto(
+                              pendingPayload.proprietarioConjuge.telefone
+                            )}
+                          </ModernSummaryValue>
+                        </ModernSummaryRow>
+                      )}
+                    </ModernSummaryCard>
+                  )}
+                    </>
+                  )}
+
+                  {/* Etapa 3: Corretores + Captadores */}
+                  {etapaAtual === 3 && (
+                    <>
+                  {pendingPayload.corretores &&
+                    pendingPayload.corretores.length > 0 && (
+                      <ModernSummaryCard>
+                        <ModernSummaryCardTitle>
+                          <MdBusiness size={20} /> Corretores
+                        </ModernSummaryCardTitle>
+                        {pendingPayload.corretores.map((c, i) => (
+                          <ModernSummaryRow key={i}>
+                            <ModernSummaryLabel>
+                              {pendingPayload.corretores!.length > 1
+                                ? `Corretor ${i + 1}`
+                                : 'Corretor'}
+                            </ModernSummaryLabel>
+                            <ModernSummaryValue>
+                              {c.nome}
+                              {c.email ? ` — ${c.email}` : ''}
+                            </ModernSummaryValue>
+                          </ModernSummaryRow>
+                        ))}
+                      </ModernSummaryCard>
+                    )}
+
+                  {pendingPayload.captadores &&
+                    pendingPayload.captadores.length > 0 && (
+                      <ModernSummaryCard>
+                        <ModernSummaryCardTitle>
+                          <MdPeople size={20} /> Captadores
+                        </ModernSummaryCardTitle>
+                        {pendingPayload.captadores.map((cap, i) => (
+                          <ModernSummaryRow key={i}>
+                            <ModernSummaryLabel>
+                              {pendingPayload.captadores!.length > 1
+                                ? `Captador ${i + 1}`
+                                : 'Captador'}
+                            </ModernSummaryLabel>
+                            <ModernSummaryValue>
+                              {cap.nome}
+                              {cap.porcentagem != null
+                                ? ` — ${cap.porcentagem}%`
+                                : ''}
+                            </ModernSummaryValue>
+                          </ModernSummaryRow>
+                        ))}
+                      </ModernSummaryCard>
+                    )}
+                    </>
+                  )}
+                </ModernSummaryGrid>
               )}
-            </ModalBody>
-            <ModalFooter>
-              <ModalButton $variant='secondary' onClick={handleCancelSubmit}>
+            </ModernModalContent>
+            <ModernModalFooter>
+              <ModernButton
+                $variant='secondary'
+                type='button'
+                onClick={handleCancelSubmit}
+                disabled={isSubmitting}
+              >
                 Cancelar
-              </ModalButton>
-              <ModalButton
+              </ModernButton>
+              <ModernButton
                 $variant='primary'
+                type='button'
                 onClick={handleConfirmSubmit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Enviando...' : 'Confirmar e Enviar'}
-              </ModalButton>
-            </ModalFooter>
-          </ModalContainer>
-        </ModalOverlay>
+                {isSubmitting ? (
+                  <>Enviando...</>
+                ) : (
+                  <>
+                    <MdCheckCircle size={20} /> Confirmar e Enviar
+                  </>
+                )}
+              </ModernButton>
+            </ModernModalFooter>
+          </ModernModalContainer>
+        </ModernModalOverlay>
 
         {/* Modal de Compartilhamento */}
         <ModalOverlay
