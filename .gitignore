@@ -52,6 +52,8 @@ coverage/
 *.tmp
 *.temp
 
-# Git repositories (submodules)
+# Git repositories (submodules) — não commitar conteúdo do front no repo pai
 imobx-front/.git
 imobx/.git
+# Front tem seu próprio repo: https://github.com/rafaelccorrea/imobx-front.git — commitar só de dentro de sistema/imobx-front
+sistema/imobx-front/
