@@ -58,6 +58,14 @@ const FormSubtitle = styled.p`
   font-family: 'Poppins', sans-serif;
 `;
 
+const PasswordHint = styled.p<{ $hasError?: boolean }>`
+  margin-top: 4px;
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+  font-family: 'Poppins', sans-serif;
+  color: ${({ $hasError }) => ($hasError ? '#f97373' : '#94a3b8')};
+`;
+
 // FormSection com scroll para a página de cadastro
 const ScrollableFormSection = styled(FormSection)`
   overflow-y: auto;
@@ -161,11 +169,16 @@ const RegisterForm: React.FC = () => {
               <PasswordField
                 id='password'
                 label='Senha'
-                placeholder='Mínimo 6 caracteres'
+                placeholder='Digite a senha'
                 error={errors.password}
                 register={registerField}
                 required
               />
+
+              <PasswordHint $hasError={!!errors.password}>
+                Sua senha deve ter pelo menos 8 caracteres, incluindo letra
+                maiúscula, letra minúscula, número e caractere especial.
+              </PasswordHint>
 
               <PasswordField
                 id='confirmPassword'

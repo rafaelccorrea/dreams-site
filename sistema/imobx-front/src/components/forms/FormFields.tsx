@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { FieldError } from 'react-hook-form';
 import { SimpleInput } from './SimpleInput';
+import { MailIcon, LockIcon } from './InputIcons';
 
 interface FormFieldProps {
   id: string;
@@ -10,7 +11,7 @@ interface FormFieldProps {
   error?: FieldError;
   register: any;
   required?: boolean;
-  icon?: string;
+  icon?: React.ReactNode;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -71,9 +72,9 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
       error={error}
       register={register}
       required={required}
-      icon={showIcon ? '🔐' : undefined}
+      icon={showIcon ? <LockIcon /> : undefined}
       actionButton={{
-        icon: showPassword ? '🙈' : '👁️',
+        icon: showPassword ? 'Ocultar' : 'Mostrar',
         onClick: togglePasswordVisibility,
         title: showPassword ? 'Ocultar senha' : 'Mostrar senha',
       }}
@@ -109,7 +110,7 @@ export const EmailField: React.FC<EmailFieldProps> = ({
       error={error}
       register={register}
       required={required}
-      icon={showIcon ? '✉️' : undefined}
+      icon={showIcon ? <MailIcon /> : undefined}
     />
   );
 };

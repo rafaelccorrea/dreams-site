@@ -1,6 +1,7 @@
 import React from 'react';
 import type { FieldError } from 'react-hook-form';
 import { SimpleInput } from './SimpleInput';
+import { UserIcon } from './InputIcons';
 
 interface NameFieldProps {
   id: string;
@@ -32,7 +33,7 @@ export const NameField: React.FC<NameFieldProps> = ({
       error={error}
       register={register}
       required={required}
-      icon='👤'
+      icon={<UserIcon />}
       onChange={handleChange}
     />
   );

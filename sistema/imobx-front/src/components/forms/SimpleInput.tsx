@@ -18,13 +18,14 @@ interface SimpleInputProps {
   error?: FieldError;
   register: any;
   required?: boolean;
-  icon?: string;
+  icon?: React.ReactNode;
   actionButton?: {
-    icon: string;
+    icon: React.ReactNode;
     onClick: () => void;
     title?: string;
   };
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  maxLength?: number;
 }
 
 export const SimpleInput: React.FC<SimpleInputProps> = ({
@@ -38,6 +39,7 @@ export const SimpleInput: React.FC<SimpleInputProps> = ({
   icon,
   actionButton,
   onChange,
+  maxLength,
 }) => {
   const registerProps = register(id);
 
@@ -66,6 +68,7 @@ export const SimpleInput: React.FC<SimpleInputProps> = ({
           placeholder={placeholder}
           {...registerProps}
           onChange={handleChange}
+          maxLength={maxLength}
           className={`${error ? 'error' : ''} ${actionButton ? 'with-action' : ''} ${icon ? 'with-icon' : ''}`}
         />
         {actionButton && (

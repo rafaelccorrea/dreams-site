@@ -2,6 +2,7 @@ import React from 'react';
 import type { FieldError } from 'react-hook-form';
 import { SimpleInput } from './SimpleInput';
 import { formatCPF, formatCNPJ } from '../../utils/masks';
+import { DocumentIcon } from './InputIcons';
 
 interface DocumentFieldProps {
   id: string;
@@ -55,7 +56,7 @@ export const DocumentField: React.FC<DocumentFieldProps> = ({
       error={error}
       register={register}
       required={required}
-      icon='📄'
+      icon={<DocumentIcon />}
       onChange={handleChange}
       maxLength={18}
     />

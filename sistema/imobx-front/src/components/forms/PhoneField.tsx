@@ -1,6 +1,7 @@
 import React from 'react';
 import type { FieldError } from 'react-hook-form';
 import { SimpleInput } from './SimpleInput';
+import { PhoneIcon } from './InputIcons';
 
 interface PhoneFieldProps {
   id: string;
@@ -49,7 +50,7 @@ export const PhoneField: React.FC<PhoneFieldProps> = ({
       error={error}
       register={register}
       required={required}
-      icon='📞'
+      icon={<PhoneIcon />}
       onChange={handleChange}
     />
   );

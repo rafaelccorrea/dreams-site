@@ -36,7 +36,7 @@ export const IconWrapper = styled.div`
   position: absolute;
   left: 16px;
   z-index: 2;
-  color: #6b7280;
+  color: ${props => props.theme.colors.primary};
   font-size: 1.2rem;
   pointer-events: none;
 
