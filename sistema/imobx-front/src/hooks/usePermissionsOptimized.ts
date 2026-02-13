@@ -32,6 +32,13 @@ interface UsePermissionsOptimizedReturn {
   };
 }
 
+function roleToString(role: unknown): string {
+  if (role == null) return '';
+  if (typeof role === 'string') return role;
+  if (typeof role === 'object' && role !== null && 'name' in role) return String((role as { name?: unknown }).name ?? '');
+  return String(role);
+}
+
 export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
   const [userPermissions, setUserPermissions] =
     useState<UserPermissions | null>(null);
@@ -83,16 +90,17 @@ export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
           return null;
         }
 
+        const roleStr = roleToString(user.role);
         const newPermissions: UserPermissions = {
           permissionNames: response.permissionNames,
-          role: user.role,
+          role: roleStr,
           companyId,
         };
 
         // Atualizar cache e detectar mudanças
         permissionsCache.updateCache(
           response.permissionNames,
-          user.role,
+          roleStr,
           companyId,
           user.id
         );
@@ -149,7 +157,7 @@ export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
           if (user) {
             setUserPermissions({
               permissionNames: cached.permissions,
-              role: cached.role,
+              role: roleToString(cached.role),
               companyId: cached.companyId,
             });
 
@@ -196,7 +204,7 @@ export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
           // Definir permissões vazias para evitar loops
           setUserPermissions({
             permissionNames: [],
-            role: authStorage.getUserData()?.role || '',
+            role: roleToString(authStorage.getUserData()?.role),
             companyId:
               localStorage.getItem('dream_keys_selected_company_id') || '',
           });
@@ -210,7 +218,7 @@ export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
           // console.log('⚠️ usePermissionsOptimized: Usando cache expirado devido ao erro');
           setUserPermissions({
             permissionNames: cached.permissions,
-            role: cached.role,
+            role: roleToString(cached.role),
             companyId: cached.companyId,
           });
         } else {
@@ -313,7 +321,7 @@ export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
       // Definir permissões vazias para evitar loops
       setUserPermissions({
         permissionNames: [],
-        role: user.role || '',
+        role: roleToString(user.role),
         companyId: '',
       });
       return;
@@ -348,7 +356,7 @@ export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
       // console.log('✅ usePermissionsOptimized: Cache válido encontrado na inicialização');
       setUserPermissions({
         permissionNames: cached.permissions,
-        role: cached.role,
+        role: roleToString(cached.role),
         companyId: cached.companyId,
       });
 
@@ -432,7 +440,7 @@ export const usePermissionsOptimized = (): UsePermissionsOptimizedReturn => {
       if (user) {
         setUserPermissions({
           permissionNames: newPermissions,
-          role: user.role,
+          role: roleToString(user.role),
           companyId,
         });
       }

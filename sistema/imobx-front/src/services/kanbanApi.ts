@@ -6,7 +6,8 @@ import type {
   KanbanTask,
   KanbanTaskClient,
   KanbanTaskProperty,
-  // KanbanPermissions,
+  BoardPermissionPayload,
+  BoardPermissionItem,
   CreateColumnDto,
   UpdateColumnDto,
   CreateTaskDto,
@@ -19,8 +20,6 @@ import type {
   TransferTaskDto,
   TaskTransferResponse,
   TaskTransferHistory,
-  // KanbanFilters,
-  // KanbanFilterOptions,
 } from '../types/kanban';
 
 class KanbanApiService {
@@ -278,8 +277,25 @@ class KanbanApiService {
         }
       }
 
+      // Preservar totalTaskCount e totalValue por coluna (evita contador e valor aumentarem ao "Carregar mais")
+      const columnsWithTotal = (apiData.columns || []).map((col: any) => ({
+        ...col,
+        totalTaskCount:
+          typeof col.totalTaskCount === 'number'
+            ? col.totalTaskCount
+            : typeof (col as any).total_task_count === 'number'
+              ? (col as any).total_task_count
+              : undefined,
+        totalValue:
+          typeof col.totalValue === 'number'
+            ? col.totalValue
+            : typeof (col as any).total_value === 'number'
+              ? (col as any).total_value
+              : undefined,
+      }));
+
       const mappedBoard = {
-        columns: apiData.columns || [],
+        columns: columnsWithTotal,
         tasks: tasksWithInvolvedUsers,
         permissions: apiData.permissions || {
           canCreateTasks: false,
@@ -308,6 +324,81 @@ class KanbanApiService {
       console.error('❌ Erro ao buscar quadro Kanban:', error);
       throw this.handleError(error);
     }
+  }
+
+  /**
+   * Lista funis (boards) que o usuário pode acessar na empresa, com permissões resolvidas (paginado).
+   * Permissões específicas por funil sobrepõem as globais.
+   */
+  async getMyBoards(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: Array<{
+      teamId: string;
+      team: { id: string; name: string; color: string };
+      permissions: {
+        canCreateColumns: boolean;
+        canEditColumns: boolean;
+        canDeleteColumns: boolean;
+        canCreateTasks: boolean;
+        canEditTasks: boolean;
+        canDeleteTasks: boolean;
+        canMoveTasks: boolean;
+        canManageUsers?: boolean;
+      };
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const response = await api.get(`${this.baseUrl}/my-boards`, {
+      params: { page: params?.page, limit: params?.limit },
+    });
+    return (
+      response.data ?? {
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+      }
+    );
+  }
+
+  /**
+   * Lista permissões por funil (por usuário) para um board.
+   * Usado na tela de configuração de permissões do Kanban.
+   */
+  async getBoardPermissionsByTeam(teamId: string): Promise<BoardPermissionItem[]> {
+    const response = await api.get(
+      `${this.baseUrl}/board-permissions/team/${teamId}`
+    );
+    return response.data ?? [];
+  }
+
+  /**
+   * Define permissão de um usuário em um funil específico.
+   * Só visualizar = canView true e demais false.
+   */
+  async setBoardPermission(
+    teamId: string,
+    userId: string,
+    payload: BoardPermissionPayload
+  ): Promise<unknown> {
+    const response = await api.put(
+      `${this.baseUrl}/board-permissions/team/${teamId}/user/${userId}`,
+      payload
+    );
+    return response.data;
+  }
+
+  /**
+   * Remove permissão específica do funil (usuário volta a usar permissões globais).
+   */
+  async deleteBoardPermission(permissionId: string): Promise<void> {
+    await api.delete(`${this.baseUrl}/board-permissions/${permissionId}`);
   }
 
   /**

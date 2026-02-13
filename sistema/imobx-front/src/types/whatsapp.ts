@@ -203,6 +203,11 @@ export interface WhatsAppConfig {
   autoCreateClient?: boolean; // Se deve criar cliente automaticamente ao receber mensagem
   autoCreateTask?: boolean; // Se deve criar tarefa Kanban automaticamente ao receber mensagem
   enableAIPreAttend?: boolean; // Se a IA deve fazer pré-atendimento (coletar dados e fornecer follow-up)
+  aiPreAttendScheduleEnabled?: boolean; // Restringir horário e dias (false = 24/7)
+  aiPreAttendStartTime?: string | null; // HH:mm
+  aiPreAttendEndTime?: string | null; // HH:mm
+  aiPreAttendDays?: number[] | null; // 0=domingo, 1=segunda, ..., 6=sábado
+  aiPreAttendTimezone?: string | null; // ex: America/Sao_Paulo
   chatbotEnabled?: boolean; // Chatbot padrão (mensagens configuráveis)
   chatbotMessages?: Array<{ text: string }>; // Mensagens do chatbot (ordem de envio)
   createdAt: Date;
@@ -221,6 +226,11 @@ export interface CreateWhatsAppConfigRequest {
   autoCreateClient?: boolean; // Se deve criar cliente automaticamente ao receber mensagem
   autoCreateTask?: boolean; // Se deve criar tarefa Kanban automaticamente ao receber mensagem
   enableAIPreAttend?: boolean; // Se a IA deve fazer pré-atendimento (coletar dados e fornecer follow-up)
+  aiPreAttendScheduleEnabled?: boolean;
+  aiPreAttendStartTime?: string | null;
+  aiPreAttendEndTime?: string | null;
+  aiPreAttendDays?: number[] | null;
+  aiPreAttendTimezone?: string | null;
   chatbotEnabled?: boolean;
   chatbotMessages?: Array<{ text: string }>;
 }
@@ -237,6 +247,11 @@ export interface UpdateWhatsAppConfigRequest {
   autoCreateClient?: boolean; // Se deve criar cliente automaticamente ao receber mensagem
   autoCreateTask?: boolean; // Se deve criar tarefa Kanban automaticamente ao receber mensagem
   enableAIPreAttend?: boolean; // Se a IA deve fazer pré-atendimento (coletar dados e fornecer follow-up)
+  aiPreAttendScheduleEnabled?: boolean;
+  aiPreAttendStartTime?: string | null;
+  aiPreAttendEndTime?: string | null;
+  aiPreAttendDays?: number[] | null;
+  aiPreAttendTimezone?: string | null;
   chatbotEnabled?: boolean;
   chatbotMessages?: Array<{ text: string }>;
 }

@@ -40,7 +40,7 @@ import type { KanbanProject } from '../types/kanban';
 const PageContainer = styled.div`
   padding: 24px;
   min-height: 100vh;
-  background: ${props => props.theme.colors.background};
+  background: #ffffff;
   width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
@@ -57,7 +57,7 @@ const PageContainer = styled.div`
 const PageHeader = styled.div`
   margin-bottom: 32px;
   padding-bottom: 20px;
-  border-bottom: 1px solid ${props => props.theme.colors.border};
+  border-bottom: 1px solid #e5e7eb;
   @media (max-width: 480px) {
     margin-bottom: 24px;
     padding-bottom: 16px;
@@ -78,13 +78,13 @@ const HeaderTop = styled.div`
 `;
 
 const BackButton = styled.button`
-  background: ${props => props.theme.colors.background};
-  border: 1px solid ${props => props.theme.colors.border};
-  color: ${props => props.theme.colors.text};
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #111827;
   cursor: pointer;
   padding: 10px 16px;
   min-height: 44px;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +114,7 @@ const TitleSection = styled.div`
 const Title = styled.h1`
   font-size: 2rem;
   font-weight: 700;
-  color: ${props => props.theme.colors.text};
+  color: #111827;
   margin: 0;
   line-height: 1.2;
   display: flex;
@@ -134,7 +134,7 @@ const Title = styled.h1`
 
 const Subtitle = styled.p`
   font-size: 1rem;
-  color: ${props => props.theme.colors.textSecondary};
+  color: #6b7280;
   margin: 0;
   line-height: 1.5;
 
@@ -155,8 +155,14 @@ const PageBody = styled.div`
 
 const Section = styled.div`
   margin-bottom: 32px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   @media (max-width: 480px) {
     margin-bottom: 24px;
+    padding: 16px;
   }
   &:last-child {
     margin-bottom: 0;
@@ -167,12 +173,12 @@ const SectionHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   margin-top: 0;
   padding-bottom: 16px;
-  border-bottom: 1px solid ${props => props.theme.colors.border};
+  border-bottom: 1px solid #e5e7eb;
   @media (max-width: 480px) {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     padding-bottom: 12px;
   }
 `;
@@ -193,7 +199,7 @@ const SectionIcon = styled.div`
 const SectionTitle = styled.h3`
   font-size: 1.125rem;
   font-weight: 600;
-  color: ${props => props.theme.colors.text};
+  color: #111827;
   margin: 0;
 `;
 
@@ -212,7 +218,7 @@ const FormGroup = styled.div`
 const Label = styled.label`
   font-size: 0.9375rem;
   font-weight: 600;
-  color: ${props => props.theme.colors.text};
+  color: #111827;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -221,11 +227,11 @@ const Label = styled.label`
 const Input = styled.input`
   padding: 12px 16px;
   min-height: 44px;
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   font-size: 0.9375rem;
-  background: ${props => props.theme.colors.cardBackground};
-  color: ${props => props.theme.colors.text};
+  background: #f9fafb;
+  color: #111827;
   width: 100%;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -236,6 +242,7 @@ const Input = styled.input`
     outline: none;
     border-color: ${props => props.theme.colors.primary};
     box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}15;
+    background: #ffffff;
   }
   &:disabled {
     opacity: 0.6;
@@ -246,11 +253,11 @@ const Input = styled.input`
 const Select = styled.select`
   padding: 12px 16px;
   min-height: 44px;
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   font-size: 0.9375rem;
-  background: ${props => props.theme.colors.cardBackground};
-  color: ${props => props.theme.colors.text};
+  background: #f9fafb;
+  color: #111827;
   width: 100%;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -262,6 +269,7 @@ const Select = styled.select`
     outline: none;
     border-color: ${props => props.theme.colors.primary};
     box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}15;
+    background: #ffffff;
   }
   &:disabled {
     opacity: 0.6;
@@ -280,7 +288,7 @@ const PasswordToggle = styled.button`
   right: 12px;
   background: none;
   border: none;
-  color: ${props => props.theme.colors.textSecondary};
+  color: #6b7280;
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -290,8 +298,8 @@ const PasswordToggle = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    color: ${props => props.theme.colors.text};
-    background: ${props => props.theme.colors.backgroundSecondary};
+    color: #111827;
+    background: #f3f4f6;
   }
 
   &:disabled {
@@ -302,7 +310,7 @@ const PasswordToggle = styled.button`
 
 const HelpText = styled.div`
   font-size: 0.8125rem;
-  color: ${props => props.theme.colors.textSecondary};
+  color: #6b7280;
   margin-top: 4px;
   display: flex;
   align-items: flex-start;
@@ -338,9 +346,9 @@ const InfoBox = styled.div<{ $variant?: 'info' | 'success' | 'warning' }>`
       `;
     }
     return `
-      background: ${props.theme.colors.infoBackground};
-      border: 1px solid ${props.theme.colors.infoBorder};
-      color: ${props.theme.colors.textSecondary};
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #6b7280;
     `;
   }}
 `;
@@ -348,12 +356,12 @@ const InfoBox = styled.div<{ $variant?: 'info' | 'success' | 'warning' }>`
 const FormLabelText = styled.div`
   font-weight: 500;
   margin-bottom: 4px;
-  color: ${p => p.theme.colors.text};
+  color: #111827;
 `;
 
 const FormHintText = styled.div`
   font-size: 0.875rem;
-  color: ${p => p.theme.colors.textSecondary};
+  color: #6b7280;
   line-height: 1.5;
 `;
 
@@ -367,9 +375,9 @@ const ChatbotSection = styled.div`
   margin-bottom: 24px;
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid ${p => p.theme.colors.border};
-  background: ${p => p.theme.colors.cardBackground};
-  color: ${p => p.theme.colors.text};
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
 `;
 
 const ChatbotMessageRow = styled.div`
@@ -382,14 +390,14 @@ const ChatbotMessageRow = styled.div`
 const ChatbotMessageInput = styled.input`
   flex: 1;
   padding: 10px 12px;
-  border: 1px solid ${p => p.theme.colors.border};
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.875rem;
-  background: ${p => p.theme.colors.inputBackground};
-  color: ${p => p.theme.colors.text};
+  background: #f9fafb;
+  color: #111827;
 
   &::placeholder {
-    color: ${p => p.theme.colors.textLight};
+    color: #9ca3af;
   }
 `;
 
@@ -399,15 +407,15 @@ const ChatbotAddBtn = styled.button`
   gap: 6px;
   padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid ${p => p.theme.colors.border};
-  background: ${p => p.theme.colors.cardBackground};
-  color: ${p => p.theme.colors.text};
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
   font-size: 0.875rem;
   cursor: pointer;
   margin-top: 4px;
 
   &:hover {
-    background: ${p => p.theme.colors.backgroundSecondary};
+    background: #f3f4f6;
   }
 `;
 
@@ -433,9 +441,9 @@ const PredefinedMessageItem = styled.button<{ $selected?: boolean }>`
   padding: 10px 12px;
   margin-bottom: 8px;
   border-radius: 8px;
-  border: 1px solid ${p => (p.$selected ? p.theme.colors.primary : p.theme.colors.border)};
-  background: ${p => (p.$selected ? p.theme.colors.primary + '12' : p.theme.colors.cardBackground)};
-  color: ${p => p.theme.colors.text};
+  border: 1px solid ${p => (p.$selected ? p.theme.colors.primary : '#e5e7eb')};
+  background: ${p => (p.$selected ? p.theme.colors.primary + '12' : '#ffffff')};
+  color: #111827;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -462,9 +470,9 @@ const ChatbotTemplateCard = styled.button<{ $selected?: boolean }>`
   text-align: left;
   padding: 14px 16px;
   border-radius: 12px;
-  border: 2px solid ${p => (p.$selected ? p.theme.colors.primary : p.theme.colors.border)};
-  background: ${p => (p.$selected ? p.theme.colors.primary + '12' : p.theme.colors.cardBackground)};
-  color: ${p => p.theme.colors.text};
+  border: 2px solid ${p => (p.$selected ? p.theme.colors.primary : '#e5e7eb')};
+  background: ${p => (p.$selected ? p.theme.colors.primary + '12' : '#ffffff')};
+  color: #111827;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -480,7 +488,7 @@ const ChatbotTemplateCardSub = styled.span`
   display: block;
   font-weight: normal;
   font-size: 0.8rem;
-  color: ${p => p.theme.colors.textSecondary};
+  color: #6b7280;
   margin-top: 4px;
 `;
 
@@ -491,22 +499,22 @@ const ChatbotSlotRow = styled.div`
   margin-bottom: 12px;
   padding: 12px;
   border-radius: 10px;
-  background: ${p => p.theme.colors.background};
-  border: 1px solid ${p => p.theme.colors.border};
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
 `;
 
 const ChatbotSlotLabel = styled.span`
   flex-shrink: 0;
   font-weight: 600;
   font-size: 0.8rem;
-  color: ${p => p.theme.colors.textSecondary};
+  color: #6b7280;
   min-width: 36px;
 `;
 
 const ChatbotSlotText = styled.div`
   flex: 1;
   font-size: 0.875rem;
-  color: ${p => p.theme.colors.text};
+  color: #111827;
   line-height: 1.4;
 `;
 
@@ -537,8 +545,8 @@ const ChatbotReplaceDropdown = styled.div`
   margin-top: 8px;
   padding: 12px;
   border-radius: 10px;
-  background: ${p => p.theme.colors.surface};
-  border: 1px solid ${p => p.theme.colors.border};
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   max-height: 220px;
   overflow-y: auto;
 `;
@@ -552,7 +560,7 @@ const ChatbotReplaceOption = styled.button`
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
-  color: ${p => p.theme.colors.text};
+  color: #111827;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -563,7 +571,7 @@ const ChatbotReplaceOption = styled.button`
 
   &:hover {
     background: ${p => p.theme.colors.primary + '15'};
-    border-color: ${p => p.theme.colors.border};
+    border-color: #e5e7eb;
   }
 `;
 
@@ -571,9 +579,116 @@ const PreAttendOptionCard = styled.div`
   margin-bottom: 20px;
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid ${p => p.theme.colors.border};
-  background: ${p => p.theme.colors.cardBackground};
-  color: ${p => p.theme.colors.text};
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+`;
+
+const AIPreAttendScheduleCard = styled.div`
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+`;
+
+const ScheduleSectionLabel = styled.div`
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+`;
+
+const ScheduleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+`;
+
+const ScheduleTimeInput = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  background: #ffffff;
+  color: #111827;
+  transition: all 0.2s;
+  &:focus {
+    outline: none;
+    border-color: ${p => p.theme.colors.primary};
+    box-shadow: 0 0 0 2px ${p => p.theme.colors.primary}18;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ScheduleSelect = styled.select`
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  background: #ffffff;
+  color: #111827;
+  min-width: 180px;
+  transition: all 0.2s;
+  cursor: pointer;
+  &:focus {
+    outline: none;
+    border-color: ${p => p.theme.colors.primary};
+    box-shadow: 0 0 0 2px ${p => p.theme.colors.primary}18;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const DayChip = styled.label<{ $selected: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+  border: 1px solid ${p => (p.$selected ? p.theme.colors.primary : '#e5e7eb')};
+  background: ${p => (p.$selected ? p.theme.colors.primary + '12' : '#ffffff')};
+  color: ${p => (p.$selected ? p.theme.colors.primary : '#6b7280')};
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  &:hover {
+    border-color: ${p => p.theme.colors.primary};
+    background: ${p => (p.$selected ? p.theme.colors.primary + '18' : p.theme.colors.primary + '08')};
+  }
+`;
+
+const DayChipsWrap = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+`;
+
+const ScheduleHint = styled.p`
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
 `;
 
 const SupportChatBtn = styled.button`
@@ -670,19 +785,19 @@ const AutoActionsSection = styled.div`
   margin-bottom: 24px;
   padding: 20px;
   border-radius: 12px;
-  background: ${p => p.theme.colors.infoBackground};
-  border: 1px solid ${p => p.theme.colors.infoBorder};
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
 `;
 
 const AutoActionsTitle = styled.h3`
   margin: 0 0 16px 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: ${p => p.theme.colors.info};
+  color: #111827;
 `;
 
 const OptionalLabel = styled.span`
-  color: ${p => p.theme.colors.textSecondary};
+  color: #6b7280;
   font-weight: normal;
 `;
 
@@ -690,10 +805,10 @@ const ValidationWarningBox = styled.div`
   margin-top: 12px;
   padding: 8px;
   border-radius: 8px;
-  background: ${p => p.theme.colors.warningBackground};
-  border: 1px solid ${p => p.theme.colors.warningBorder};
-  strong { color: ${p => p.theme.colors.warning}; font-size: 0.875rem; }
-  ul { margin: 4px 0 0 0; padding-left: 20px; font-size: 0.875rem; color: ${p => p.theme.colors.textSecondary}; }
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  strong { color: #d97706; font-size: 0.875rem; }
+  ul { margin: 4px 0 0 0; padding-left: 20px; font-size: 0.875rem; color: #6b7280; }
   li { margin-bottom: 4px; }
 `;
 
@@ -725,7 +840,7 @@ const ValidationResult = styled.div<{ $isValid: boolean }>`
   background: ${props => (props.$isValid ? props.theme.colors.success + '15' : props.theme.colors.error + '15')};
   margin-bottom: 20px;
   font-size: 0.875rem;
-  color: ${p => p.theme.colors.text};
+  color: #111827;
 `;
 
 const DangerZone = styled.div`
@@ -743,7 +858,7 @@ const DangerZoneTitle = styled.h3`
 
 const DangerZoneDescription = styled.p`
   font-size: 0.875rem;
-  color: ${props => props.theme.colors.textSecondary};
+  color: #6b7280;
   margin: 0 0 20px 0;
   line-height: 1.6;
 `;
@@ -755,7 +870,7 @@ const FooterActions = styled.div`
   gap: 12px;
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid ${props => props.theme.colors.border};
+  border-top: 1px solid #e5e7eb;
 
   @media (max-width: 768px) {
     flex-direction: column-reverse;
@@ -801,12 +916,12 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'danger' }>`
       `;
     } else if (props.$variant === 'secondary') {
       return `
-        background: ${props.theme.colors.backgroundSecondary};
-        color: ${props.theme.colors.text};
-        border: 1px solid ${props.theme.colors.border};
+        background: #f3f4f6;
+        color: #111827;
+        border: 1px solid #e5e7eb;
         
         &:hover:not(:disabled) {
-          background: ${props.theme.colors.border};
+          background: #e5e7eb;
           transform: translateY(-1px);
         }
       `;
@@ -852,9 +967,9 @@ const ErrorMessage = styled.div`
   font-size: 0.875rem;
   color: ${props => props.theme.colors.error};
   padding: 12px;
-  background: ${props => props.theme.colors.error}15;
+  background: #fef2f2;
   border-radius: 8px;
-  border: 1px solid ${props => props.theme.colors.error}30;
+  border: 1px solid #fecaca;
   margin-bottom: 20px;
 `;
 
@@ -863,8 +978,8 @@ const UrlCard = styled.div`
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: ${props => props.theme.colors.backgroundSecondary};
-  border: 1px solid ${props => props.theme.colors.border};
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   margin-top: 8px;
 `;
@@ -872,7 +987,7 @@ const UrlText = styled.code`
   flex: 1;
   font-size: 0.8125rem;
   word-break: break-all;
-  color: ${props => props.theme.colors.text};
+  color: #111827;
 `;
 const CopyButton = styled.button`
   display: inline-flex;
@@ -882,18 +997,18 @@ const CopyButton = styled.button`
   font-size: 0.8125rem;
   border-radius: 6px;
   cursor: pointer;
-  border: 1px solid ${props => props.theme.colors.border};
-  background: ${props => props.theme.colors.cardBackground};
-  color: ${props => props.theme.colors.text};
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
   white-space: nowrap;
   &:hover {
-    background: ${props => props.theme.colors.backgroundSecondary};
+    background: #f3f4f6;
   }
 `;
 const UrlHowItWorks = styled.p`
   margin: 10px 0 0;
   font-size: 0.875rem;
-  color: ${props => props.theme.colors.textSecondary};
+  color: #6b7280;
   line-height: 1.45;
 `;
 
@@ -911,7 +1026,7 @@ const PermissionDeniedIcon = styled.div`
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: ${props => props.theme.colors.error}20;
+  background: #fef2f2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -921,13 +1036,13 @@ const PermissionDeniedIcon = styled.div`
 const PermissionDeniedTitle = styled.h2`
   font-size: 1.75rem;
   font-weight: 700;
-  color: ${props => props.theme.colors.text};
+  color: #111827;
   margin: 0 0 12px 0;
 `;
 
 const PermissionDeniedText = styled.p`
   font-size: 1rem;
-  color: ${props => props.theme.colors.textSecondary};
+  color: #6b7280;
   margin: 0;
   max-width: 600px;
   line-height: 1.6;
@@ -999,6 +1114,11 @@ const WhatsAppConfigPage: React.FC = () => {
         autoCreateClient: data.autoCreateClient ?? false,
         autoCreateTask: data.autoCreateTask ?? false,
         enableAIPreAttend: data.enableAIPreAttend ?? false,
+        aiPreAttendScheduleEnabled: data.aiPreAttendScheduleEnabled ?? false,
+        aiPreAttendStartTime: data.aiPreAttendStartTime ?? null,
+        aiPreAttendEndTime: data.aiPreAttendEndTime ?? null,
+        aiPreAttendDays: data.aiPreAttendDays ?? null,
+        aiPreAttendTimezone: data.aiPreAttendTimezone ?? null,
         chatbotEnabled: data.chatbotEnabled !== false,
         chatbotMessages: Array.isArray(data.chatbotMessages) ? data.chatbotMessages : [],
       });
@@ -1018,6 +1138,11 @@ const WhatsAppConfigPage: React.FC = () => {
           autoCreateClient: false,
           autoCreateTask: false,
           enableAIPreAttend: false,
+          aiPreAttendScheduleEnabled: false,
+          aiPreAttendStartTime: null,
+          aiPreAttendEndTime: null,
+          aiPreAttendDays: null,
+          aiPreAttendTimezone: null,
           chatbotEnabled: true,
           chatbotMessages: [],
         }));
@@ -1873,7 +1998,7 @@ const WhatsAppConfigPage: React.FC = () => {
                 <AutoActionsSection>
                   <AutoActionsTitle>Pré-atendimento</AutoActionsTitle>
 
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px', padding: '16px', borderRadius: '12px', background: (config.chatbotEnabled || config.enableAIPreAttend) ? 'var(--color-primary)08' : 'var(--color-background-secondary)', border: '1px solid var(--color-border)' }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px', padding: '16px', borderRadius: '12px', background: (config.chatbotEnabled || config.enableAIPreAttend) ? 'rgba(37, 211, 102, 0.08)' : '#f9fafb', border: '1px solid #e5e7eb' }}>
                     <input
                       type='checkbox'
                       checked={config.chatbotEnabled === true || config.enableAIPreAttend === true}
@@ -2001,9 +2126,101 @@ const WhatsAppConfigPage: React.FC = () => {
                       A IA qualifica o lead, responde 24/7 no WhatsApp e pode enviar sugestões de imóveis (Ver imóveis) com botões para falar com atendente. Menos leads perdidos e primeiro contato sempre humanizado. Se a IA estiver ativa, o Chatbot fica desativado.
                     </FormHintText>
                     {config.enableAIPreAttend ? (
-                      <FormHintText style={{ color: 'var(--color-success)', fontWeight: 500 }}>
-                        Pré-atendimento com IA está ativo para sua empresa.
-                      </FormHintText>
+                      <>
+                        <FormHintText style={{ color: '#059669', fontWeight: 500, marginBottom: '16px' }}>
+                          Pré-atendimento com IA está ativo para sua empresa.
+                        </FormHintText>
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', marginBottom: '16px' }}>
+                          <input
+                            type='checkbox'
+                            checked={config.aiPreAttendScheduleEnabled === true}
+                            onChange={e => setConfig({
+                              ...config,
+                              aiPreAttendScheduleEnabled: e.target.checked,
+                              ...(e.target.checked && {
+                                aiPreAttendStartTime: config.aiPreAttendStartTime || '09:00',
+                                aiPreAttendEndTime: config.aiPreAttendEndTime || '18:00',
+                                aiPreAttendDays: (config.aiPreAttendDays?.length ? config.aiPreAttendDays : [1, 2, 3, 4, 5]),
+                                aiPreAttendTimezone: config.aiPreAttendTimezone || 'America/Sao_Paulo',
+                              }),
+                            })}
+                            disabled={saving || deleting}
+                            style={{ marginTop: '2px' }}
+                          />
+                          <span style={{ fontWeight: 500 }}>Restringir horário e dias de atendimento da IA</span>
+                        </label>
+                        {config.aiPreAttendScheduleEnabled && (
+                          <AIPreAttendScheduleCard>
+                            <ScheduleSectionLabel>Horário de atendimento (sua região)</ScheduleSectionLabel>
+                            <ScheduleRow>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#374151' }}>
+                                <span>Das</span>
+                                <ScheduleTimeInput
+                                  type='time'
+                                  value={config.aiPreAttendStartTime || '09:00'}
+                                  onChange={e => setConfig({ ...config, aiPreAttendStartTime: e.target.value || null })}
+                                  disabled={saving || deleting}
+                                />
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#374151' }}>
+                                <span>às</span>
+                                <ScheduleTimeInput
+                                  type='time'
+                                  value={config.aiPreAttendEndTime || '18:00'}
+                                  onChange={e => setConfig({ ...config, aiPreAttendEndTime: e.target.value || null })}
+                                  disabled={saving || deleting}
+                                />
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#374151' }}>
+                                <span>Fuso</span>
+                                <ScheduleSelect
+                                  value={config.aiPreAttendTimezone || 'America/Sao_Paulo'}
+                                  onChange={e => setConfig({ ...config, aiPreAttendTimezone: e.target.value || null })}
+                                  disabled={saving || deleting}
+                                >
+                                  <option value='America/Sao_Paulo'>São Paulo (BR)</option>
+                                  <option value='America/Manaus'>Manaus (BR)</option>
+                                  <option value='America/Fortaleza'>Fortaleza (BR)</option>
+                                  <option value='America/Recife'>Recife (BR)</option>
+                                  <option value='America/Noronha'>Fernando de Noronha (BR)</option>
+                                </ScheduleSelect>
+                              </label>
+                            </ScheduleRow>
+                            <ScheduleSectionLabel>Dias em que a IA atende</ScheduleSectionLabel>
+                            <DayChipsWrap>
+                              {[
+                                { value: 0, label: 'Dom' },
+                                { value: 1, label: 'Seg' },
+                                { value: 2, label: 'Ter' },
+                                { value: 3, label: 'Qua' },
+                                { value: 4, label: 'Qui' },
+                                { value: 5, label: 'Sex' },
+                                { value: 6, label: 'Sáb' },
+                              ].map(({ value, label }) => {
+                                const days = config.aiPreAttendDays ?? [];
+                                const selected = days.includes(value);
+                                return (
+                                  <DayChip key={value} $selected={selected}>
+                                    <input
+                                      type='checkbox'
+                                      checked={selected}
+                                      onChange={() => {
+                                        const next = selected ? days.filter(d => d !== value) : [...days, value].sort((a, b) => a - b);
+                                        setConfig({ ...config, aiPreAttendDays: next.length ? next : null });
+                                      }}
+                                      disabled={saving || deleting}
+                                    />
+                                    {label}
+                                  </DayChip>
+                                );
+                              })}
+                            </DayChipsWrap>
+                            <ScheduleHint>
+                              Fora do horário e dos dias selecionados, a IA não responderá; o chatbot ou o atendimento humano podem atender.
+                            </ScheduleHint>
+                          </AIPreAttendScheduleCard>
+                        )}
+                      </>
                     ) : (
                       <>
                         <FormHintText>
@@ -2140,7 +2357,6 @@ const WhatsAppConfigPage: React.FC = () => {
                 </DangerZone>
               )}
 
-              <Section>
                 <FooterActions>
                   <Button
                     type='button'
@@ -2202,7 +2418,6 @@ const WhatsAppConfigPage: React.FC = () => {
                     </Button>
                   )}
                 </FooterActions>
-              </Section>
             </form>
           )}
         </PageBody>

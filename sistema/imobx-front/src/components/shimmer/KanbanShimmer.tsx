@@ -11,10 +11,10 @@ const shimmer = keyframes`
   }
 `;
 
-// Container principal (branco para combinar com a tela do Kanban)
+// Container principal (usa tema para modo claro/escuro)
 const KanbanShimmerContainer = styled.div`
   padding: 24px;
-  background: #fff;
+  background: ${props => props.theme.colors.background};
   min-height: 100vh;
 `;
 

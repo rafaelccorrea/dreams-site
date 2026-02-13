@@ -811,7 +811,11 @@ export const Column: React.FC<ColumnProps> = ({
             </ColumnTitleLeft>
             {viewSettings?.showTaskCount !== false && (
               <TaskCount data-show-task-count='true'>
-                ({columnTasks.length})
+                (
+                {typeof column.totalTaskCount === 'number'
+                  ? column.totalTaskCount
+                  : columnTasks.length}
+                )
               </TaskCount>
             )}
           </ColumnTitleRow>
@@ -822,7 +826,11 @@ export const Column: React.FC<ColumnProps> = ({
                   columnValue?.stuckValue && columnValue.stuckValue > 0
                 )}
               >
-                {formatCurrency(columnValue?.totalValue || 0)}
+                {formatCurrency(
+                  typeof column.totalValue === 'number'
+                    ? column.totalValue
+                    : (columnValue?.totalValue ?? 0)
+                )}
                 {columnValue?.stuckValue && columnValue.stuckValue > 0 && (
                   <StuckIndicator
                     title={`${formatCurrency(columnValue.stuckValue)} parado há mais de 7 dias`}

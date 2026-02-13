@@ -12,8 +12,8 @@
  * 1. Variável de ambiente VITE_API_URL (se definida)
  * 2. URL padrão de produção: https://api.dreamkeys.com.br
  */
-// export const API_BASE_URL = 'http://localhost:3000';
-export const API_BASE_URL = 'https://api.dreamkeys.com.br';
+export const API_BASE_URL = 'http://localhost:3000';
+// export const API_BASE_URL = 'https://api.dreamkeys.com.br';
 
 /**
  * Função helper para obter a URL completa de um endpoint

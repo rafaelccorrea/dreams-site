@@ -933,7 +933,7 @@ const RemoveAssigneeButton = styled.button`
   }
 `;
 
-const PriorityBadge = styled.span<{ priority: string }>`
+const PriorityBadge = styled.span<{ $priority: string }>`
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -948,7 +948,7 @@ const PriorityBadge = styled.span<{ priority: string }>`
     gap: 6px;
   }
   background: ${props => {
-    switch (props.priority) {
+    switch (props.$priority) {
       case 'urgent':
         return 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.25))';
       case 'high':
@@ -962,7 +962,7 @@ const PriorityBadge = styled.span<{ priority: string }>`
     }
   }};
   color: ${props => {
-    switch (props.priority) {
+    switch (props.$priority) {
       case 'urgent':
         return '#EF4444';
       case 'high':
@@ -977,7 +977,7 @@ const PriorityBadge = styled.span<{ priority: string }>`
   }};
   border: 1px solid
     ${props => {
-      switch (props.priority) {
+      switch (props.$priority) {
         case 'urgent':
           return 'rgba(239, 68, 68, 0.3)';
         case 'high':
@@ -1234,7 +1234,7 @@ const PriorityDropdown = styled.div<{ isOpen: boolean }>`
   display: ${props => (props.isOpen ? 'block' : 'none')};
 `;
 
-const PriorityOption = styled.div<{ priority: string }>`
+const PriorityOption = styled.div<{ $priority: string }>`
   padding: 12px 16px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1252,7 +1252,7 @@ const PriorityOption = styled.div<{ priority: string }>`
     height: 12px;
     border-radius: 50%;
     background: ${props => {
-      switch (props.priority) {
+      switch (props.$priority) {
         case 'urgent':
           return '#EF4444';
         case 'high':
@@ -1417,19 +1417,19 @@ const TabsContainer = styled.div`
   }
 `;
 
-const Tab = styled.button<{ active: boolean }>`
+const Tab = styled.button<{ $active: boolean }>`
   padding: 16px 24px;
   background: transparent;
   border: none;
   color: ${props =>
-    props.active
+    props.$active
       ? props.theme.colors.primary
       : props.theme.colors.textSecondary};
   font-size: 0.938rem;
   font-weight: 600;
   cursor: pointer;
   border-bottom: 3px solid
-    ${props => (props.active ? props.theme.colors.primary : 'transparent')};
+    ${props => (props.$active ? props.theme.colors.primary : 'transparent')};
   margin-bottom: -2px;
   transition: all 0.2s ease;
   display: flex;
@@ -1456,8 +1456,8 @@ const Tab = styled.button<{ active: boolean }>`
   }
 `;
 
-const TabContent = styled.div<{ active: boolean }>`
-  display: ${props => (props.active ? 'flex' : 'none')};
+const TabContent = styled.div<{ $active: boolean }>`
+  display: ${props => (props.$active ? 'flex' : 'none')};
   flex-direction: column;
   padding: 20px 28px 28px;
   flex: 1;
@@ -4236,7 +4236,7 @@ const TaskDetailsPage: React.FC = () => {
               </HeaderTitleRow>
               <TagsContainer>
                 {currentPriority && (
-                  <PriorityBadge priority={currentPriority}>
+                  <PriorityBadge $$priority={currentPriority}>
                     <MdFlag size={14} />
                     {getPriorityLabel(currentPriority)}
                   </PriorityBadge>
@@ -4494,7 +4494,7 @@ const TaskDetailsPage: React.FC = () => {
               ) : (
                 <PrioritySelector>
                   <PriorityBadge
-                    priority={currentPriority}
+                    $priority={currentPriority}
                     onClick={() =>
                       setIsPriorityDropdownOpen(!isPriorityDropdownOpen)
                     }
@@ -4508,25 +4508,25 @@ const TaskDetailsPage: React.FC = () => {
                   {isPriorityDropdownOpen && (
                     <PriorityDropdown isOpen={true}>
                       <PriorityOption
-                        priority='low'
+                        $priority='low'
                         onClick={() => handleChangePriority('low')}
                       >
                         Baixa
                       </PriorityOption>
                       <PriorityOption
-                        priority='medium'
+                        $priority='medium'
                         onClick={() => handleChangePriority('medium')}
                       >
                         Média
                       </PriorityOption>
                       <PriorityOption
-                        priority='high'
+                        $priority='high'
                         onClick={() => handleChangePriority('high')}
                       >
                         Alta
                       </PriorityOption>
                       <PriorityOption
-                        priority='urgent'
+                        $priority='urgent'
                         onClick={() => handleChangePriority('urgent')}
                       >
                         Urgente
@@ -5180,26 +5180,26 @@ const TaskDetailsPage: React.FC = () => {
             )}
             <TabsContainer>
               <Tab
-                active={activeTab === 'history'}
+                $active={activeTab === 'history'}
                 onClick={() => setActiveTab('history')}
               >
                 Histórico
               </Tab>
               <Tab
-                active={activeTab === 'comments'}
+                $active={activeTab === 'comments'}
                 onClick={() => setActiveTab('comments')}
               >
                 Comentários
               </Tab>
               <Tab
-                active={activeTab === 'files'}
+                $active={activeTab === 'files'}
                 onClick={() => setActiveTab('files')}
               >
                 Arquivos
               </Tab>
               {task?.id && (
                 <Tab
-                  active={activeTab === 'transfers'}
+                  $active={activeTab === 'transfers'}
                   onClick={() => setActiveTab('transfers')}
                 >
                   Transferências
@@ -5207,7 +5207,7 @@ const TaskDetailsPage: React.FC = () => {
               )}
               {task?.id && canViewMetrics() && (
                 <Tab
-                  active={activeTab === 'metrics'}
+                  $active={activeTab === 'metrics'}
                   onClick={() => setActiveTab('metrics')}
                 >
                   Métricas
@@ -5216,7 +5216,7 @@ const TaskDetailsPage: React.FC = () => {
             </TabsContainer>
 
             <TabContent
-              active={
+              $active={
                 activeTab === 'history' ||
                 activeTab === 'comments' ||
                 activeTab === 'files' ||

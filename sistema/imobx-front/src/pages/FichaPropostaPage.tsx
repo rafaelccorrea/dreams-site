@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import {
   MdExpandMore,
   MdExpandLess,
@@ -131,12 +131,14 @@ import {
 import type { Property } from '../types/property';
 import {
   criarFichaProposta,
+  atualizarProposta,
   extrairDadosDaImagem,
   listarPropostas,
   buscarPropostaPorId,
   getUrlPdfProposta,
   reenviarEmailProposta,
   type CreatePurchaseProposalDto,
+  type UpdatePurchaseProposalDto,
   type PropostaListItem,
   type PropostaStatus,
 } from '../services/fichaPropostaApi';
@@ -416,14 +418,17 @@ type PropostaEnviada = PropostaListItem & {
 
 const FichaPropostaPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { id: propostaIdFromUrl } = useParams<{ id?: string }>();
+  /** Status da proposta atual (quando aberta por ID). Assinaturas só aparecem quando 'disponivel'. */
+  const [statusPropostaAtual, setStatusPropostaAtual] = useState<'rascunho' | 'disponivel' | ''>('');
 
   // Estado para controlar largura da tela
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1024
   );
-  const isMobilePropostas = windowWidth < 768;
+  const isMobilePropostas = windowWidth < 992;
   const [hasLoadedSharedData, setHasLoadedSharedData] = useState(false);
   /** 403 ao carregar proposta por ID: usuário não está vinculado à proposta */
   const [propostaAccessDenied, setPropostaAccessDenied] = useState(false);
@@ -450,6 +455,7 @@ const FichaPropostaPage: React.FC = () => {
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savingDraftServer, setSavingDraftServer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [propostasEnviadas, setPropostasEnviadas] = useState<PropostaEnviada[]>(
     []
@@ -512,8 +518,11 @@ const FichaPropostaPage: React.FC = () => {
   const [reenviarEmailModal, setReenviarEmailModal] = useState<{
     propostaId: string;
     numero: string;
+    /** Etapa máxima liberada na proposta (1–3); define quais opções de etapa ficam habilitadas no reenvio */
+    etapaProposta?: 1 | 2 | 3;
   } | null>(null);
   const [reenviarEmailText, setReenviarEmailText] = useState('');
+  const [reenviarEmailEtapaSelecionada, setReenviarEmailEtapaSelecionada] = useState<1 | 2 | 3>(1);
   const [isReenviandoEmail, setIsReenviandoEmail] = useState(false);
   const [contraPropostaForm, setContraPropostaForm] = useState<{
     sellerName: string;
@@ -534,6 +543,22 @@ const FichaPropostaPage: React.FC = () => {
     createdByType: 'corretor',
     recipientEmail: '',
   });
+
+  /** Etapa do fluxo: 1 = Comprador, 2 = Proprietário, 3 = Corretor e Captadores. Dados da proposta e imóvel sempre visíveis. */
+  const [etapaAtual, setEtapaAtual] = useState<1 | 2 | 3>(() => {
+    try {
+      const s = localStorage.getItem('ficha_proposta_etapa');
+      if (s === '1' || s === '2' || s === '3') return Number(s) as 1 | 2 | 3;
+    } catch (_) {}
+    return 1;
+  });
+  /** Máxima etapa liberada pelas assinaturas (vinda do backend). Só é > 1 quando comprador/proprietário assinam. Impede avançar sem assinar. */
+  const [maxEtapaLiberada, setMaxEtapaLiberada] = useState<1 | 2 | 3>(1);
+  useEffect(() => {
+    try {
+      localStorage.setItem('ficha_proposta_etapa', String(etapaAtual));
+    } catch (_) {}
+  }, [etapaAtual]);
 
   /** Busca de imóvel por código (API pública de propriedades) */
   const [buscaCodigoImovelProposta, setBuscaCodigoImovelProposta] =
@@ -564,6 +589,13 @@ const FichaPropostaPage: React.FC = () => {
   const userCpf = session?.cpf ?? null;
   const userTipo = session?.tipo ?? null;
   const userData = session?.user ?? null;
+
+  /** Após assinatura, só gestor pode editar etapa anterior; corretor não pode. */
+  const podeEditarEtapa = useCallback(
+    (etapa: 1 | 2 | 3) => userTipo === 'gestor' || maxEtapaLiberada <= etapa,
+    [userTipo, maxEtapaLiberada]
+  );
+
   const [loginCpf, setLoginCpf] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
@@ -910,6 +942,10 @@ const FichaPropostaPage: React.FC = () => {
 
     reset(emptyValues);
 
+    // Voltar para etapa 1 ao limpar e travar novamente (nova proposta)
+    setEtapaAtual(1);
+    setMaxEtapaLiberada(1);
+
     // Resetar seções expandidas
     setExpandedSections({
       proposta: true,
@@ -999,6 +1035,7 @@ const FichaPropostaPage: React.FC = () => {
 
       // Limpar dados existentes
       localStorage.removeItem('ficha_proposta_draft');
+      localStorage.removeItem('ficha_proposta_etapa');
       resetForm();
 
       // Aguardar um pouco para garantir que o reset foi aplicado
@@ -1084,6 +1121,7 @@ const FichaPropostaPage: React.FC = () => {
     const id = (propostaIdFromUrl ?? '').toString().trim();
     if (!id || id === 'undefined' || id === 'null') {
       setPropostaAccessDenied(false);
+      setStatusPropostaAtual('');
       return;
     }
     if (!userCpf || !userTipo) {
@@ -1149,6 +1187,12 @@ const FichaPropostaPage: React.FC = () => {
         if (d.corretores?.length) setValue('corretores', d.corretores);
         const captadores = d.captadores?.length ? d.captadores : d.captadoresData?.length ? d.captadoresData : [];
         if (captadores.length) setValue('captadores', captadores);
+        // Etapa vinda do backend (definida pelas assinaturas): só libera etapas 2/3 após assinaturas
+        if (d.etapa === 1 || d.etapa === 2 || d.etapa === 3) {
+          setMaxEtapaLiberada(d.etapa);
+          setEtapaAtual(d.etapa);
+        }
+        setStatusPropostaAtual(d.status === 'disponivel' ? 'disponivel' : d.status === 'rascunho' ? 'rascunho' : '');
         showSuccess('Proposta carregada. Você pode continuar o preenchimento.');
       })
       .catch((err: any) => {
@@ -1163,7 +1207,17 @@ const FichaPropostaPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [propostaIdFromUrl, userCpf, userTipo, setValue]);
+  }, [propostaIdFromUrl, userCpf, userTipo, setValue, setEtapaAtual]);
+
+  // Abrir modal de assinaturas automaticamente após envio com sucesso (navegação com state)
+  useEffect(() => {
+    const state = location.state as { openAssinaturas?: boolean; proposalNumero?: string } | undefined;
+    if (propostaIdFromUrl && state?.openAssinaturas) {
+      const numero = state.proposalNumero ?? propostasEnviadas.find(p => p.id === propostaIdFromUrl)?.numero ?? 'Proposta';
+      setPropostaAssinaturasModal({ id: propostaIdFromUrl, numero });
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [propostaIdFromUrl, location.state, location.pathname, navigate]);
 
   // Salvar automaticamente quando houver mudanças
   useEffect(() => {
@@ -1580,18 +1634,22 @@ const FichaPropostaPage: React.FC = () => {
       showError('Digite ao menos um email válido (separados por vírgula ou um por linha).');
       return;
     }
+    const maxEtapa = reenviarEmailModal.etapaProposta ?? 1;
+    const etapaToSend = reenviarEmailEtapaSelecionada <= maxEtapa ? reenviarEmailEtapaSelecionada : 1;
     setIsReenviandoEmail(true);
     try {
       const result = await reenviarEmailProposta(
         reenviarEmailModal.propostaId,
         userTipo === 'gestor' ? userCpf : undefined,
         userTipo === 'corretor' ? userCpf : undefined,
-        validEmails
+        validEmails,
+        etapaToSend
       );
       if (result.success) {
         showSuccess(result.message ?? 'Email reenviado com sucesso.');
         setReenviarEmailModal(null);
         setReenviarEmailText('');
+        setReenviarEmailEtapaSelecionada(1);
       } else {
         showError(result.message ?? 'Falha ao reenviar email.');
       }
@@ -1829,25 +1887,20 @@ const FichaPropostaPage: React.FC = () => {
       // Recarregar propostas da API após envio bem-sucedido
       carregarPropostas();
 
-      // Limpar rascunho após sucesso
+      // Limpar rascunho e formulário após finalizar etapa 1 (envio da proposta)
       localStorage.removeItem('ficha_proposta_draft');
+      localStorage.removeItem('ficha_proposta_etapa');
+      resetForm();
 
       // Fechar modal
       setShowConfirmModal(false);
       setPendingPayload(null);
 
-      showSuccess(`✅ ${response.message}`, { autoClose: 5000 });
+      showSuccess('Proposta enviada. Formulário limpo para nova proposta. Use "Ver Propostas" para abrir assinaturas da proposta enviada.', { autoClose: 6000 });
 
-      // Redirecionar para /ficha-proposta/:id somente quando tivermos o id (obrigatório para a API)
-      if (propostaId && propostaId !== 'undefined') {
-        const baseUrl =
-          window.location.origin +
-          (window.location.pathname.split('/ficha-proposta')[0] || '');
-        setShareLink(`${baseUrl}/ficha-proposta/${propostaId}`);
-        navigate(`/ficha-proposta/${propostaId}`, { replace: true });
-        setTimeout(() => setShowShareModal(true), 800);
-      }
-      // Se não tiver id, permanece na página e a lista será atualizada por carregarPropostas()
+      // Redirecionar para /ficha-proposta (sem id) com formulário limpo; abrir lista para acessar a proposta enviada
+      navigate('/ficha-proposta', { replace: true });
+      setShowPropostasAnteriores(true);
     } catch (error: any) {
       console.error('Erro ao enviar proposta de compra:', error);
 
@@ -1963,6 +2016,57 @@ const FichaPropostaPage: React.FC = () => {
   const handleCancelSubmit = () => {
     setShowConfirmModal(false);
     setPendingPayload(null);
+  };
+
+  // Salvar rascunho no servidor (POST se sem ID, PATCH se com ID). Exige corretor/gestor logado.
+  // Serve para: não perder o preenchimento; continuar depois em outro dispositivo; aparecer na lista como rascunho.
+  const salvarRascunhoNoServidor = async () => {
+    if (!userCpf || !userTipo) {
+      showWarning('Faça login (CPF do corretor ou gestor) para salvar o rascunho no servidor.');
+      return;
+    }
+    const data = getValues();
+    let payload: CreatePurchaseProposalDto;
+    try {
+      payload = preparePayload(data);
+    } catch (e) {
+      showError(
+        'Preencha os campos obrigatórios da proposta, proponente e imóvel para salvar o rascunho.',
+        { autoClose: 6000 }
+      );
+      return;
+    }
+    payload.status = 'rascunho';
+
+    setSavingDraftServer(true);
+    try {
+      if (!propostaIdFromUrl || propostaIdFromUrl.trim() === '') {
+        const response = await criarFichaProposta(payload as CreatePurchaseProposalDto);
+        const newId = (response.data?.id ?? '').toString().trim();
+        if (newId && newId !== 'undefined') {
+          setMaxEtapaLiberada(1);
+          setEtapaAtual(1);
+          localStorage.removeItem('ficha_proposta_draft');
+          localStorage.removeItem('ficha_proposta_etapa');
+          showSuccess('Rascunho salvo no servidor. Você pode continuar o preenchimento ou ver o rascunho na lista.', { autoClose: 5000 });
+          navigate(`/ficha-proposta/${newId}`, { replace: true });
+          if (userCpf && userTipo) carregarPropostas();
+        } else {
+          showSuccess('Rascunho salvo.', { autoClose: 4000 });
+          carregarPropostas();
+        }
+      } else {
+        const cpfParam = userTipo === 'gestor' ? { gestorCpf: userCpf } : { corretorCpf: userCpf };
+        await atualizarProposta(propostaIdFromUrl.trim(), payload as UpdatePurchaseProposalDto, cpfParam);
+        showSuccess('Rascunho atualizado no servidor. Seus dados foram guardados.', { autoClose: 5000 });
+        carregarPropostas();
+      }
+    } catch (err: any) {
+      const msg = err?.message || err?.errors?.[0]?.message || 'Erro ao salvar rascunho no servidor.';
+      showError(msg, { autoClose: 6000 });
+    } finally {
+      setSavingDraftServer(false);
+    }
   };
 
   // Preencher dados de exemplo
@@ -2272,7 +2376,10 @@ const FichaPropostaPage: React.FC = () => {
         captadores: true,
       });
 
-      showSuccess('Formulário preenchido com dados de exemplo!');
+      // Manter etapas "incompletas": só etapa 1 desbloqueada; não alterar maxEtapaLiberada
+      setEtapaAtual(1);
+
+      showSuccess('Formulário preenchido com dados de exemplo (apenas etapa 1 liberada).');
     }
   };
 
@@ -2284,6 +2391,7 @@ const FichaPropostaPage: React.FC = () => {
       )
     ) {
       localStorage.removeItem('ficha_proposta_draft');
+      localStorage.removeItem('ficha_proposta_etapa');
       resetForm();
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete('shared');
@@ -2727,6 +2835,29 @@ const FichaPropostaPage: React.FC = () => {
     };
   }, [propostasEnviadas, themeColors]);
 
+  // Listas derivadas: finalizadas (etapa 3) e por etapa (para seção "Propostas por etapa")
+  const propostasFinalizadas = useMemo(
+    () =>
+      propostasEnviadas.filter(
+        p => (p as PropostaListItem).etapa === 3
+      ) as PropostaListItem[],
+    [propostasEnviadas]
+  );
+  const propostasPorEtapa = useMemo(
+    () => ({
+      etapa1: propostasEnviadas.filter(
+        p => (p as PropostaListItem).etapa === 1
+      ) as PropostaListItem[],
+      etapa2: propostasEnviadas.filter(
+        p => (p as PropostaListItem).etapa === 2
+      ) as PropostaListItem[],
+      etapa3: propostasEnviadas.filter(
+        p => (p as PropostaListItem).etapa === 3
+      ) as PropostaListItem[],
+    }),
+    [propostasEnviadas]
+  );
+
   // Opções dos gráficos
   const lineChartOptions = {
     responsive: true,
@@ -3010,6 +3141,7 @@ const FichaPropostaPage: React.FC = () => {
             if (!isReenviandoEmail) {
               setReenviarEmailModal(null);
               setReenviarEmailText('');
+              setReenviarEmailEtapaSelecionada(1);
             }
           }}
         >
@@ -3027,6 +3159,7 @@ const FichaPropostaPage: React.FC = () => {
                   if (!isReenviandoEmail) {
                     setReenviarEmailModal(null);
                     setReenviarEmailText('');
+                    setReenviarEmailEtapaSelecionada(1);
                   }
                 }}
               >
@@ -3042,9 +3175,36 @@ const FichaPropostaPage: React.FC = () => {
                   lineHeight: '1.5',
                 }}
               >
-                O PDF da proposta será enviado para os emails informados. Digite
-                um ou mais emails (separados por vírgula ou um por linha).
+                O PDF da proposta será enviado para os emails informados. Escolha
+                a etapa do PDF e digite um ou mais emails (separados por vírgula ou um por linha).
               </p>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '6px', color: 'var(--color-text)' }}>
+                  PDF da etapa
+                </label>
+                <select
+                  value={Math.min(reenviarEmailEtapaSelecionada, reenviarEmailModal?.etapaProposta ?? 1)}
+                  onChange={e => setReenviarEmailEtapaSelecionada(Number(e.target.value) as 1 | 2 | 3)}
+                  disabled={isReenviandoEmail}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    fontSize: '0.95rem',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '8px',
+                    background: 'var(--color-background)',
+                    color: 'var(--color-text)',
+                  }}
+                >
+                  <option value={1}>Etapa 1 – Comprador / Imóvel / Proposta</option>
+                  <option value={2} disabled={(reenviarEmailModal?.etapaProposta ?? 1) < 2}>
+                    Etapa 2 – Proprietário
+                  </option>
+                  <option value={3} disabled={(reenviarEmailModal?.etapaProposta ?? 1) < 3}>
+                    Etapa 3 – Corretor e Captadores
+                  </option>
+                </select>
+              </div>
               <textarea
                 value={reenviarEmailText}
                 onChange={e => setReenviarEmailText(e.target.value)}
@@ -3069,6 +3229,7 @@ const FichaPropostaPage: React.FC = () => {
                   if (!isReenviandoEmail) {
                     setReenviarEmailModal(null);
                     setReenviarEmailText('');
+                    setReenviarEmailEtapaSelecionada(1);
                   }
                 }}
                 disabled={isReenviandoEmail}
@@ -3698,7 +3859,7 @@ const FichaPropostaPage: React.FC = () => {
               style={{
                 background: 'var(--color-card-background)',
                 borderRadius: isMobilePropostas ? '16px' : '24px',
-                padding: isMobilePropostas ? '20px 16px' : '40px',
+                padding: isMobilePropostas ? '24px 20px' : '40px',
                 marginBottom: isMobilePropostas ? '24px' : '40px',
                 border: '1px solid var(--color-border)',
                 boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)',
@@ -3712,7 +3873,7 @@ const FichaPropostaPage: React.FC = () => {
                   flexDirection: isMobilePropostas ? 'column' : 'row',
                   justifyContent: 'space-between',
                   alignItems: isMobilePropostas ? 'stretch' : 'center',
-                  gap: isMobilePropostas ? '16px' : 0,
+                  gap: isMobilePropostas ? '24px' : '24px',
                   marginBottom: '24px',
                   paddingBottom: '20px',
                   borderBottom: '2px solid var(--color-border)',
@@ -3724,6 +3885,7 @@ const FichaPropostaPage: React.FC = () => {
                     alignItems: 'center',
                     gap: '12px',
                     flexWrap: 'wrap',
+                    minWidth: 0,
                   }}
                 >
                   <div
@@ -3751,7 +3913,7 @@ const FichaPropostaPage: React.FC = () => {
                         color: 'var(--color-text)',
                       }}
                     >
-                      Propostas Anteriores ({propostasEnviadas.length})
+                      Propostas Finalizadas ({propostasFinalizadas.length})
                     </h3>
                     {userData && (
                       <div
@@ -3771,10 +3933,12 @@ const FichaPropostaPage: React.FC = () => {
                 <div
                   style={{
                     display: 'flex',
-                    gap: '12px',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
+                    flexDirection: isMobilePropostas ? 'column' : 'row',
+                    gap: isMobilePropostas ? '14px' : '12px',
+                    alignItems: isMobilePropostas ? 'stretch' : 'center',
+                    flexWrap: isMobilePropostas ? 'nowrap' : 'wrap',
                     width: isMobilePropostas ? '100%' : undefined,
+                    minWidth: 0,
                   }}
                 >
                   {showPropostasAnteriores && (
@@ -3787,14 +3951,15 @@ const FichaPropostaPage: React.FC = () => {
                           carregarPropostas(v, 1);
                         }}
                         style={{
-                          padding: '10px 14px',
+                          padding: '12px 14px',
                           borderRadius: '10px',
                           border: '1px solid var(--color-border)',
                           fontSize: '0.9375rem',
                           fontWeight: 500,
                           background: 'var(--color-background)',
                           color: 'var(--color-text)',
-                          minWidth: isMobilePropostas ? '100%' : '140px',
+                          minWidth: isMobilePropostas ? undefined : '140px',
+                          width: isMobilePropostas ? '100%' : undefined,
                         }}
                       >
                         <option value=''>Todos</option>
@@ -3809,11 +3974,12 @@ const FichaPropostaPage: React.FC = () => {
                         }
                         placeholder='Data início'
                         style={{
-                          padding: '10px 12px',
+                          padding: '12px 14px',
                           borderRadius: '10px',
                           border: '1px solid var(--color-border)',
                           fontSize: '0.9375rem',
-                          minWidth: isMobilePropostas ? '100%' : '130px',
+                          minWidth: isMobilePropostas ? undefined : '130px',
+                          width: isMobilePropostas ? '100%' : undefined,
                         }}
                       />
                       <input
@@ -3822,11 +3988,12 @@ const FichaPropostaPage: React.FC = () => {
                         onChange={e => setFiltroDataFimProposta(e.target.value)}
                         placeholder='Data fim'
                         style={{
-                          padding: '10px 12px',
+                          padding: '12px 14px',
                           borderRadius: '10px',
                           border: '1px solid var(--color-border)',
                           fontSize: '0.9375rem',
-                          minWidth: isMobilePropostas ? '100%' : '130px',
+                          minWidth: isMobilePropostas ? undefined : '130px',
+                          width: isMobilePropostas ? '100%' : undefined,
                         }}
                       />
                       <input
@@ -3838,49 +4005,63 @@ const FichaPropostaPage: React.FC = () => {
                           e.key === 'Enter' && carregarPropostas(undefined, 1)
                         }
                         style={{
-                          padding: '10px 12px',
+                          padding: '12px 14px',
                           borderRadius: '10px',
                           border: '1px solid var(--color-border)',
                           fontSize: '0.9375rem',
-                          minWidth: isMobilePropostas ? '100%' : '160px',
+                          minWidth: isMobilePropostas ? undefined : '160px',
+                          width: isMobilePropostas ? '100%' : undefined,
                         }}
                       />
-                      <Button
-                        type='button'
-                        $variant='secondary'
-                        onClick={() => carregarPropostas(undefined, 1)}
-                        disabled={loadingPropostas}
+                      <div
                         style={{
-                          padding: '10px 16px',
-                          borderRadius: '10px',
-                          fontWeight: 600,
+                          display: 'flex',
+                          gap: '10px',
+                          flexWrap: 'wrap',
+                          flexDirection: isMobilePropostas ? 'row' : 'row',
                         }}
                       >
-                        Filtrar
-                      </Button>
-                      <Button
-                        type='button'
-                        $variant='secondary'
-                        onClick={() => {
-                          setFiltroDataInicioProposta('');
-                          setFiltroDataFimProposta('');
-                          setFiltroSearchProposta('');
-                          carregarPropostas(
-                            filtroStatusProposta || undefined,
-                            1
-                          );
-                        }}
-                        style={{
-                          padding: '10px 16px',
-                          borderRadius: '10px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Limpar
-                      </Button>
+                        <Button
+                          type='button'
+                          $variant='secondary'
+                          onClick={() => carregarPropostas(undefined, 1)}
+                          disabled={loadingPropostas}
+                          style={{
+                            padding: '12px 16px',
+                            borderRadius: '10px',
+                            fontWeight: 600,
+                            flex: isMobilePropostas ? 1 : undefined,
+                            minWidth: isMobilePropostas ? 0 : undefined,
+                          }}
+                        >
+                          Filtrar
+                        </Button>
+                        <Button
+                          type='button'
+                          $variant='secondary'
+                          onClick={() => {
+                            setFiltroDataInicioProposta('');
+                            setFiltroDataFimProposta('');
+                            setFiltroSearchProposta('');
+                            carregarPropostas(
+                              filtroStatusProposta || undefined,
+                              1
+                            );
+                          }}
+                          style={{
+                            padding: '12px 16px',
+                            borderRadius: '10px',
+                            fontWeight: 600,
+                            flex: isMobilePropostas ? 1 : undefined,
+                            minWidth: isMobilePropostas ? 0 : undefined,
+                          }}
+                        >
+                          Limpar
+                        </Button>
+                      </div>
                     </>
                   )}
-                  {userTipo === 'corretor' && (
+                  {userTipo !== 'corretor' && (
                     <Button
                       type='button'
                       $variant='secondary'
@@ -3943,7 +4124,7 @@ const FichaPropostaPage: React.FC = () => {
                         Carregando propostas...
                       </div>
                     </div>
-                  ) : propostasEnviadas.length === 0 ? (
+                  ) : propostasFinalizadas.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px' }}>
                       <div
                         style={{
@@ -3951,7 +4132,7 @@ const FichaPropostaPage: React.FC = () => {
                           color: 'var(--color-text-secondary)',
                         }}
                       >
-                        Nenhuma proposta encontrada.
+                        Nenhuma proposta finalizada.
                       </div>
                     </div>
                   ) : (
@@ -3963,8 +4144,8 @@ const FichaPropostaPage: React.FC = () => {
                           gridTemplateColumns: isMobilePropostas
                             ? 'repeat(2, 1fr)'
                             : 'repeat(auto-fit, minmax(200px, 1fr))',
-                          gap: isMobilePropostas ? '12px' : '20px',
-                          marginBottom: '32px',
+                          gap: isMobilePropostas ? '16px' : '20px',
+                          marginBottom: isMobilePropostas ? '24px' : '32px',
                         }}
                       >
                         <div
@@ -4089,8 +4270,8 @@ const FichaPropostaPage: React.FC = () => {
                           gridTemplateColumns: isMobilePropostas
                             ? '1fr'
                             : 'repeat(auto-fit, minmax(400px, 1fr))',
-                          gap: isMobilePropostas ? '16px' : '24px',
-                          marginBottom: '32px',
+                          gap: isMobilePropostas ? '20px' : '24px',
+                          marginBottom: isMobilePropostas ? '24px' : '32px',
                         }}
                       >
                         {/* Gráfico de Linha - Evolução Temporal */}
@@ -4239,13 +4420,13 @@ const FichaPropostaPage: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Lista de Propostas */}
-                      {propostasEnviadas.length > 0 ? (
+                      {/* Lista de Propostas Finalizadas */}
+                      {propostasFinalizadas.length > 0 ? (
                         <div
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '16px',
+                            gap: isMobilePropostas ? '20px' : '16px',
                           }}
                         >
                           <div
@@ -4254,10 +4435,10 @@ const FichaPropostaPage: React.FC = () => {
                               gridTemplateColumns: isMobilePropostas
                                 ? '1fr'
                                 : 'repeat(auto-fill, minmax(300px, 1fr))',
-                              gap: isMobilePropostas ? '16px' : '20px',
+                              gap: isMobilePropostas ? '20px' : '20px',
                             }}
                           >
-                            {propostasEnviadas.map(proposta => (
+                            {propostasFinalizadas.map(proposta => (
                               <div
                                 key={proposta.id}
                                 onClick={() => {
@@ -4352,7 +4533,7 @@ const FichaPropostaPage: React.FC = () => {
                                     'var(--color-background-secondary)',
                                   border: '2px solid var(--color-border)',
                                   borderRadius: '16px',
-                                  padding: isMobilePropostas ? '16px' : '24px',
+                                  padding: isMobilePropostas ? '20px' : '24px',
                                   cursor: 'pointer',
                                   transition: 'all 0.3s ease',
                                   position: 'relative',
@@ -4453,6 +4634,59 @@ const FichaPropostaPage: React.FC = () => {
                                       {formatarDataHora(proposta.createdAt)}
                                     </div>
                                   </div>
+                                  {/* 3 steps com status por etapa */}
+                                  {(() => {
+                                    const p = proposta as PropostaListItem;
+                                    const etapa = p.etapa ?? 1;
+                                    const step1Label = p.status === 'rascunho' ? 'Rascunho' : 'Enviado';
+                                    const step2Label = etapa >= 2 ? 'Comprador assinou' : 'Pendente';
+                                    const step3Label = etapa >= 3 ? 'Concluído' : 'Pendente';
+                                    return (
+                                      <div
+                                        style={{
+                                          display: 'flex',
+                                          flexWrap: 'wrap',
+                                          gap: '8px',
+                                          marginBottom: '12px',
+                                          fontSize: '0.75rem',
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            background: 'rgba(0,0,0,0.06)',
+                                            fontWeight: 600,
+                                            color: 'var(--color-text)',
+                                          }}
+                                        >
+                                          Etapa 1: {step1Label}
+                                        </span>
+                                        <span
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            background: etapa >= 2 ? 'rgba(40, 167, 69, 0.15)' : 'rgba(108, 117, 125, 0.15)',
+                                            fontWeight: 600,
+                                            color: etapa >= 2 ? '#1e7e34' : '#495057',
+                                          }}
+                                        >
+                                          Etapa 2: {step2Label}
+                                        </span>
+                                        <span
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            background: etapa >= 3 ? 'rgba(40, 167, 69, 0.15)' : 'rgba(108, 117, 125, 0.15)',
+                                            fontWeight: 600,
+                                            color: etapa >= 3 ? '#1e7e34' : '#495057',
+                                          }}
+                                        >
+                                          Etapa 3: {step3Label}
+                                        </span>
+                                      </div>
+                                    );
+                                  })()}
                                   <div
                                     style={{
                                       fontSize: isMobilePropostas
@@ -4508,40 +4742,50 @@ const FichaPropostaPage: React.FC = () => {
                                         <MdSearch size={18} /> Ver detalhes da
                                         proposta
                                       </Button>
+                                      {/* Baixar PDF: uma opção por etapa; etapas 2 e 3 só habilitadas conforme progresso */}
+                                      {[1, 2, 3].map(etapaNum => {
+                                        const p = proposta as PropostaListItem;
+                                        const etapaAtual = p.etapa ?? 1;
+                                        const habilitado = etapaAtual >= etapaNum;
+                                        return (
+                                          <Button
+                                            key={etapaNum}
+                                            type='button'
+                                            $variant='secondary'
+                                            disabled={!habilitado}
+                                            onClick={e => {
+                                              e.stopPropagation();
+                                              if (!habilitado) return;
+                                              window.open(
+                                                getUrlPdfProposta(proposta.id, userCpf, userTipo, etapaNum as 1 | 2 | 3),
+                                                '_blank'
+                                              );
+                                            }}
+                                            title={habilitado ? `Baixar PDF da Etapa ${etapaNum}` : `Conclua a etapa ${etapaNum - 1} para liberar`}
+                                            style={{
+                                              width: '100%',
+                                              padding: isMobilePropostas ? '10px 12px' : '8px 12px',
+                                              fontSize: '0.875rem',
+                                              minHeight: '44px',
+                                              opacity: habilitado ? 1 : 0.6,
+                                            }}
+                                          >
+                                            PDF Etapa {etapaNum}
+                                          </Button>
+                                        );
+                                      })}
                                       <Button
                                         type='button'
                                         $variant='secondary'
                                         onClick={e => {
                                           e.stopPropagation();
-                                          window.open(
-                                            getUrlPdfProposta(
-                                              proposta.id,
-                                              userCpf,
-                                              userTipo
-                                            ),
-                                            '_blank'
-                                          );
-                                        }}
-                                        style={{
-                                          width: '100%',
-                                          padding: isMobilePropostas
-                                            ? '10px 12px'
-                                            : '8px 12px',
-                                          fontSize: '0.875rem',
-                                          minHeight: '44px',
-                                        }}
-                                      >
-                                        Baixar PDF
-                                      </Button>
-                                      <Button
-                                        type='button'
-                                        $variant='secondary'
-                                        onClick={e => {
-                                          e.stopPropagation();
+                                          const p = proposta as PropostaListItem;
                                           setReenviarEmailModal({
                                             propostaId: proposta.id,
                                             numero: proposta.numero,
+                                            etapaProposta: p.etapa ?? 1,
                                           });
+                                          setReenviarEmailEtapaSelecionada(1);
                                           setReenviarEmailText('');
                                         }}
                                         style={{
@@ -4559,31 +4803,59 @@ const FichaPropostaPage: React.FC = () => {
                                       >
                                         <MdEmail size={18} /> Reenviar email
                                       </Button>
-                                      <Button
-                                        type='button'
-                                        $variant='secondary'
-                                        onClick={e => {
-                                          e.stopPropagation();
-                                          setPropostaAssinaturasModal({
-                                            id: proposta.id,
-                                            numero: proposta.numero,
-                                          });
-                                        }}
-                                        style={{
-                                          width: '100%',
-                                          padding: isMobilePropostas
-                                            ? '10px 12px'
-                                            : '8px 12px',
-                                          fontSize: '0.875rem',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          gap: '6px',
-                                          minHeight: '44px',
-                                        }}
-                                      >
-                                        <MdDraw size={18} /> Assinaturas
-                                      </Button>
+                                      {/* Assinaturas: Etapa 1 (Comprador) sempre; Etapa 2 (Proprietário) só se etapa >= 2 */}
+                                      {(proposta as PropostaListItem).status === 'disponivel' && (
+                                        <>
+                                          <Button
+                                            type='button'
+                                            $variant='secondary'
+                                            onClick={e => {
+                                              e.stopPropagation();
+                                              setPropostaAssinaturasModal({
+                                                id: proposta.id,
+                                                numero: proposta.numero,
+                                              });
+                                            }}
+                                            style={{
+                                              width: '100%',
+                                              padding: isMobilePropostas ? '10px 12px' : '8px 12px',
+                                              fontSize: '0.875rem',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              gap: '6px',
+                                              minHeight: '44px',
+                                            }}
+                                          >
+                                            <MdDraw size={18} /> Assinaturas (Comprador)
+                                          </Button>
+                                          {(proposta as PropostaListItem).etapa >= 2 && (
+                                            <Button
+                                              type='button'
+                                              $variant='secondary'
+                                              onClick={e => {
+                                                e.stopPropagation();
+                                                setPropostaAssinaturasModal({
+                                                  id: proposta.id,
+                                                  numero: proposta.numero,
+                                                });
+                                              }}
+                                              style={{
+                                                width: '100%',
+                                                padding: isMobilePropostas ? '10px 12px' : '8px 12px',
+                                                fontSize: '0.875rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '6px',
+                                                minHeight: '44px',
+                                              }}
+                                            >
+                                              <MdDraw size={18} /> Assinaturas (Proprietário)
+                                            </Button>
+                                          )}
+                                        </>
+                                      )}
                                       <Button
                                         type='button'
                                         $variant='primary'
@@ -4686,6 +4958,225 @@ const FichaPropostaPage: React.FC = () => {
             </div>
           )}
 
+          {/* Propostas por etapa */}
+          {(propostasEnviadas.length > 0 || loadingPropostas) && (
+            <div
+              style={{
+                background: 'var(--color-card-background)',
+                borderRadius: isMobilePropostas ? '16px' : '24px',
+                padding: isMobilePropostas ? '24px 20px' : '40px',
+                marginBottom: isMobilePropostas ? '24px' : '40px',
+                border: '1px solid var(--color-border)',
+                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '24px',
+                  paddingBottom: '20px',
+                  borderBottom: '2px solid var(--color-border)',
+                }}
+              >
+                <div
+                  style={{
+                    width: isMobilePropostas ? '40px' : '48px',
+                    height: isMobilePropostas ? '40px' : '48px',
+                    borderRadius: '12px',
+                    background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${themeColors.primary}4D`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <MdBarChart size={isMobilePropostas ? 20 : 24} />
+                </div>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: isMobilePropostas ? '1.25rem' : '1.5rem',
+                    fontWeight: 700,
+                    color: 'var(--color-text)',
+                  }}
+                >
+                  Propostas por etapa
+                </h3>
+              </div>
+              {[
+                {
+                  etapa: 1,
+                  titulo: 'Etapa 1 – Comprador',
+                  list: propostasPorEtapa.etapa1,
+                },
+                {
+                  etapa: 2,
+                  titulo: 'Etapa 2 – Proprietário',
+                  list: propostasPorEtapa.etapa2,
+                },
+                {
+                  etapa: 3,
+                  titulo: 'Etapa 3 – Corretor e Captadores',
+                  list: propostasPorEtapa.etapa3,
+                },
+              ].map(({ etapa, titulo, list }) => (
+                <div
+                  key={etapa}
+                  style={{
+                    marginBottom: etapa < 3 ? (isMobilePropostas ? '28px' : '32px') : 0,
+                  }}
+                >
+                  <h4
+                    style={{
+                      fontSize: '1.125rem',
+                      fontWeight: 600,
+                      color: 'var(--color-text)',
+                      marginBottom: '16px',
+                      marginTop: 0,
+                    }}
+                  >
+                    {titulo} ({list.length})
+                  </h4>
+                  {list.length === 0 ? (
+                    <div
+                      style={{
+                        padding: '20px',
+                        background: 'var(--color-background-secondary)',
+                        borderRadius: '12px',
+                        color: 'var(--color-text-secondary)',
+                        fontSize: '0.9375rem',
+                      }}
+                    >
+                      Nenhuma proposta nesta etapa.
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: isMobilePropostas
+                          ? '1fr'
+                          : 'repeat(auto-fill, minmax(300px, 1fr))',
+                        gap: isMobilePropostas ? '16px' : '20px',
+                      }}
+                    >
+                      {list.map(proposta => (
+                        <div
+                          key={proposta.id}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                'Deseja carregar esta proposta no formulário? Os dados atuais serão substituídos.'
+                              )
+                            ) {
+                              const dados = (proposta as any).dados;
+                              if (dados?.proposta) {
+                                setValue(
+                                  'proposta.dataProposta',
+                                  dados.proposta.dataProposta
+                                );
+                                setValue(
+                                  'proposta.precoProposto',
+                                  formatCurrencyValue(
+                                    dados.proposta.precoProposto
+                                  )
+                                );
+                                setValue(
+                                  'proposta.condicoesPagamento',
+                                  dados.proposta.condicoesPagamento || ''
+                                );
+                                if (dados.proponente) {
+                                  Object.keys(dados.proponente).forEach(
+                                    (key: string) => {
+                                      const value = (dados.proponente as any)[
+                                        key
+                                      ];
+                                      if (value !== undefined && key === 'cpf') {
+                                        setValue(
+                                          `proponente.${key}` as any,
+                                          maskCPF(String(value))
+                                        );
+                                      } else if (value !== undefined) {
+                                        setValue(
+                                          `proponente.${key}` as any,
+                                          value
+                                        );
+                                      }
+                                    }
+                                  );
+                                }
+                                showInfo(
+                                  'Proposta carregada. Revise os dados antes de enviar.'
+                                );
+                              }
+                            }
+                          }}
+                          style={{
+                            background: 'var(--color-background-secondary)',
+                            border: '2px solid var(--color-border)',
+                            borderRadius: '16px',
+                            padding: isMobilePropostas ? '16px' : '20px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '1rem',
+                              fontWeight: 700,
+                              color: themeColors.primary,
+                              marginBottom: '8px',
+                            }}
+                          >
+                            {proposta.numero}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '0.875rem',
+                              color: 'var(--color-text-secondary)',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            {new Date(
+                              proposta.dataProposta
+                            ).toLocaleDateString('pt-BR')}{' '}
+                            · {formatCurrencyValue(proposta.precoProposto)}
+                          </div>
+                          {userCpf && userTipo && (
+                            <Button
+                              type='button'
+                              $variant='primary'
+                              size='sm'
+                              onClick={e => {
+                                e.stopPropagation();
+                                navigate(`/ficha-proposta/${proposta.id}`, {
+                                  replace: false,
+                                });
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                fontSize: '0.8125rem',
+                                minHeight: '40px',
+                              }}
+                            >
+                              <MdSearch size={16} /> Ver detalhes
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Upload de Imagem para OCR - OCULTO TEMPORARIAMENTE */}
           {/* 
         <div style={{
@@ -4726,6 +5217,115 @@ const FichaPropostaPage: React.FC = () => {
               gap: '32px',
             }}
           >
+            {/* Stepper: 3 etapas - Comprador → Proprietário → Corretor e Captadores */}
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginBottom: '8px',
+                padding: '20px 24px',
+                background: 'var(--color-card-background)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '20px',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              {[
+                { num: 1 as const, label: 'Etapa 1 – Comprador', desc: 'Dados do comprador (somente nesta etapa)' },
+                { num: 2 as const, label: 'Etapa 2 – Proprietário', desc: 'Após assinatura do comprador; dados do comprador não são exibidos' },
+                { num: 3 as const, label: 'Etapa 3 – Corretor e Captadores', desc: 'Após assinatura do proprietário; vários gestores podem preencher até o envio final' },
+              ].map(({ num, label, desc }) => {
+                // Só desbloqueia etapa quando o backend liberar (assinaturas). Não dá para avançar sem assinar.
+                const desbloqueada = maxEtapaLiberada >= num;
+                const travada = !desbloqueada;
+                return (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => !travada && setEtapaAtual(num)}
+                  disabled={travada}
+                  title={travada ? 'Esta etapa é liberada apenas após a assinatura da etapa anterior' : undefined}
+                  style={{
+                    flex: '1 1 200px',
+                    minWidth: 0,
+                    padding: '14px 18px',
+                    borderRadius: '12px',
+                    border: etapaAtual === num ? '2px solid var(--color-primary, #A63126)' : '1px solid var(--color-border)',
+                    background: etapaAtual === num ? 'rgba(166, 49, 38, 0.08)' : travada ? 'var(--color-background-secondary)' : 'var(--color-background)',
+                    color: etapaAtual === num ? 'var(--color-primary, #A63126)' : travada ? 'var(--color-text-secondary)' : 'var(--color-text)',
+                    fontWeight: etapaAtual === num ? 700 : 500,
+                    fontSize: '0.9375rem',
+                    textAlign: 'left',
+                    cursor: travada ? 'not-allowed' : 'pointer',
+                    opacity: travada ? 0.75 : 1,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span style={{ display: 'block', marginBottom: '2px' }}>{label}</span>
+                  <span style={{ fontSize: '0.8125rem', opacity: 0.85, fontWeight: 400 }}>{desc}</span>
+                </button>
+                );
+              })}
+            </div>
+
+            {/* Por etapa: texto de assinatura + um único botão Assinaturas (só após envio da proposta) */}
+            {(() => {
+              const textosAssinatura = {
+                1: 'Para liberar a etapa 2, envie a proposta (botão "Enviar Proposta" abaixo) e, após o envio, use Assinaturas para enviar ao comprador.',
+                2: 'Para liberar a etapa 3, envie para assinatura do proprietário.',
+                3: 'Etapa 3 – Corretor e Captadores. Envio final; assinaturas já realizadas nas etapas anteriores.',
+              };
+              const mostrarBotaoAssinaturas = propostaIdFromUrl && userCpf && userTipo && statusPropostaAtual === 'disponivel';
+              return (
+                <div
+                  style={{
+                    marginBottom: '24px',
+                    padding: '20px 24px',
+                    background: 'var(--color-card-background)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '20px',
+                    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
+                  }}
+                >
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                    Assinatura – Etapa {etapaAtual}
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+                    {textosAssinatura[etapaAtual as 1 | 2 | 3]}
+                  </p>
+                  {mostrarBotaoAssinaturas && (
+                    <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      <Button
+                        type='button'
+                        $variant='secondary'
+                        onClick={() => {
+                          const numero = propostasEnviadas.find(p => p.id === propostaIdFromUrl)?.numero ?? 'Proposta atual';
+                          setPropostaAssinaturasModal({ id: propostaIdFromUrl, numero });
+                        }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                      >
+                        <MdDraw size={18} /> Assinaturas (Comprador)
+                      </Button>
+                      {maxEtapaLiberada >= 2 && (
+                        <Button
+                          type='button'
+                          $variant='secondary'
+                          onClick={() => {
+                            const numero = propostasEnviadas.find(p => p.id === propostaIdFromUrl)?.numero ?? 'Proposta atual';
+                            setPropostaAssinaturasModal({ id: propostaIdFromUrl, numero });
+                          }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                        >
+                          <MdDraw size={18} /> Assinaturas (Proprietário)
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Bloco 1 - Proposta */}
             <CollapsibleSection
               $isExpanded={expandedSections.proposta}
@@ -5106,6 +5706,9 @@ const FichaPropostaPage: React.FC = () => {
               </SectionContent>
             </CollapsibleSection>
 
+            {/* Etapa 1: Comprador – somente nesta etapa os dados do comprador são exibidos */}
+            {etapaAtual === 1 && (
+            <>
             {/* Bloco 2 - Proponente */}
             <CollapsibleSection
               $isExpanded={expandedSections.proponente}
@@ -5143,6 +5746,19 @@ const FichaPropostaPage: React.FC = () => {
                 </ExpandIcon>
               </SectionHeader>
               <SectionContent $isExpanded={expandedSections.proponente}>
+                {!podeEditarEtapa(1) && (
+                  <InfoBox $type='info' style={{ marginBottom: '16px' }}>
+                    <InfoBoxText>
+                      Somente gestor pode editar esta etapa após a assinatura do comprador.
+                    </InfoBoxText>
+                  </InfoBox>
+                )}
+                <div
+                  style={{
+                    pointerEvents: podeEditarEtapa(1) ? 'auto' : 'none',
+                    opacity: podeEditarEtapa(1) ? 1 : 0.9,
+                  }}
+                >
                 <FormGrid $columns={2}>
                   <FormGroup>
                     <FormLabel>
@@ -5625,6 +6241,7 @@ const FichaPropostaPage: React.FC = () => {
                     </HelperText>
                   </FormGroup>
                 </FormGrid>
+                </div>
               </SectionContent>
             </CollapsibleSection>
 
@@ -5665,6 +6282,19 @@ const FichaPropostaPage: React.FC = () => {
                 </ExpandIcon>
               </SectionHeader>
               <SectionContent $isExpanded={expandedSections.proponenteConjuge}>
+                {!podeEditarEtapa(1) && (
+                  <InfoBox $type='info' style={{ marginBottom: '16px' }}>
+                    <InfoBoxText>
+                      Somente gestor pode editar esta etapa após a assinatura do comprador.
+                    </InfoBoxText>
+                  </InfoBox>
+                )}
+                <div
+                  style={{
+                    pointerEvents: podeEditarEtapa(1) ? 'auto' : 'none',
+                    opacity: podeEditarEtapa(1) ? 1 : 0.9,
+                  }}
+                >
                 <FormGrid $columns={2}>
                   <FormGroup style={{ gridColumn: '1 / -1' }}>
                     <CheckboxWrapper>
@@ -5900,8 +6530,12 @@ const FichaPropostaPage: React.FC = () => {
                     </>
                   )}
                 </FormGrid>
+                </div>
               </SectionContent>
             </CollapsibleSection>
+
+            </>
+            )}
 
             {/* Bloco 4 - Imóvel */}
             <CollapsibleSection
@@ -6294,6 +6928,9 @@ const FichaPropostaPage: React.FC = () => {
               </SectionContent>
             </CollapsibleSection>
 
+            {/* Etapa 2 e 3: Proprietário – após assinatura do comprador; dados do comprador não são exibidos */}
+            {etapaAtual >= 2 && (
+            <>
             {/* Bloco 5 - Proprietário */}
             <CollapsibleSection $isExpanded={expandedSections.proprietario}>
               <SectionHeader onClick={() => toggleSection('proprietario')}>
@@ -6317,6 +6954,19 @@ const FichaPropostaPage: React.FC = () => {
                 </ExpandIcon>
               </SectionHeader>
               <SectionContent $isExpanded={expandedSections.proprietario}>
+                {!podeEditarEtapa(2) && (
+                  <InfoBox $type='info' style={{ marginBottom: '16px' }}>
+                    <InfoBoxText>
+                      Somente gestor pode editar esta etapa após a assinatura do proprietário.
+                    </InfoBoxText>
+                  </InfoBox>
+                )}
+                <div
+                  style={{
+                    pointerEvents: podeEditarEtapa(2) ? 'auto' : 'none',
+                    opacity: podeEditarEtapa(2) ? 1 : 0.9,
+                  }}
+                >
                 <FormGrid $columns={2}>
                   <FormGroup>
                     <FormLabel>Nome Completo</FormLabel>
@@ -6606,6 +7256,7 @@ const FichaPropostaPage: React.FC = () => {
                   assinatura do comprador; o captador completa os dados do
                   vendedor depois e libera assinatura dos vendedores.
                 </HelperText>
+                </div>
               </SectionContent>
             </CollapsibleSection>
 
@@ -6650,6 +7301,19 @@ const FichaPropostaPage: React.FC = () => {
               <SectionContent
                 $isExpanded={expandedSections.proprietarioConjuge}
               >
+                {!podeEditarEtapa(2) && (
+                  <InfoBox $type='info' style={{ marginBottom: '16px' }}>
+                    <InfoBoxText>
+                      Somente gestor pode editar esta etapa após a assinatura do proprietário.
+                    </InfoBoxText>
+                  </InfoBox>
+                )}
+                <div
+                  style={{
+                    pointerEvents: podeEditarEtapa(2) ? 'auto' : 'none',
+                    opacity: podeEditarEtapa(2) ? 1 : 0.9,
+                  }}
+                >
                 <FormGrid $columns={2}>
                   <FormGroup style={{ gridColumn: '1 / -1' }}>
                     <CheckboxWrapper>
@@ -6842,9 +7506,16 @@ const FichaPropostaPage: React.FC = () => {
                     </>
                   )}
                 </FormGrid>
+                </div>
               </SectionContent>
             </CollapsibleSection>
 
+            </>
+            )}
+
+            {/* Etapa 3: Corretor e Captadores – vários gestores podem preencher até o envio final */}
+            {etapaAtual >= 3 && (
+            <>
             {/* Bloco 7 - Corretores */}
             <CollapsibleSection
               $isExpanded={expandedSections.corretores || false}
@@ -7394,6 +8065,9 @@ const FichaPropostaPage: React.FC = () => {
               </SectionContent>
             </CollapsibleSection>
 
+            </>
+            )}
+
             {/* Footer com botões */}
             <FormFooter
               style={{
@@ -7440,11 +8114,57 @@ const FichaPropostaPage: React.FC = () => {
                   <MdShare /> Compartilhar
                 </Button>
               </FooterLeft>
-              <FooterRight>
-                <Button
-                  type='submit'
-                  $variant='primary'
-                  disabled={isSubmitting}
+              <FooterRight
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  gap: '8px',
+                }}
+              >
+                {etapaAtual < 3 && (
+                  <InfoBoxText
+                    style={{
+                      fontSize: '0.8125rem',
+                      color: 'var(--color-text-secondary)',
+                      margin: 0,
+                    }}
+                  >
+                    Avance até a Etapa 3 para preencher corretor/captadores e
+                    enviar a proposta.
+                  </InfoBoxText>
+                )}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'flex-end' }}>
+                  {userCpf && userTipo && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                      <Button
+                        type='button'
+                        $variant='secondary'
+                        disabled={savingDraftServer || isSubmitting}
+                        onClick={salvarRascunhoNoServidor}
+                        style={{
+                          borderRadius: '12px',
+                          padding: '14px 24px',
+                          fontWeight: 600,
+                          fontSize: '0.9375rem',
+                        }}
+                        title="Guarda o preenchimento no servidor para continuar depois ou não perder dados"
+                      >
+                        {savingDraftServer ? (
+                          <>Salvando...</>
+                        ) : (
+                          <><MdSave /> Salvar rascunho no servidor</>
+                        )}
+                      </Button>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', maxWidth: '280px', textAlign: 'right' }}>
+                        Guarda o preenchimento para continuar depois ou não perder dados.
+                      </span>
+                    </div>
+                  )}
+                  <Button
+                    type='submit'
+                    $variant='primary'
+                    disabled={isSubmitting}
                   style={{
                     borderRadius: '12px',
                     padding: '14px 32px',
@@ -7477,6 +8197,7 @@ const FichaPropostaPage: React.FC = () => {
                     </>
                   )}
                 </Button>
+                </div>
               </FooterRight>
             </FormFooter>
           </form>

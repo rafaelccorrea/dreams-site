@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { authStorage } from '../services/authStorage';
 import { permissionsApi } from '../services/permissionsApi';
 import type {
@@ -6,8 +6,18 @@ import type {
   UserPermissionsResponse,
 } from '../services/permissionsApi';
 
+function safeRole(user: unknown): string {
+  if (user == null || typeof user !== 'object' || !('role' in user)) return '';
+  const r = (user as { role?: unknown }).role;
+  if (r == null) return '';
+  if (typeof r === 'string') return r;
+  if (typeof r === 'number' || typeof r === 'boolean') return String(r);
+  return '';
+}
+
 export const usePermissions = () => {
   const user = authStorage.getUserData();
+  const userRole = useMemo(() => safeRole(user), [user]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [userPermissions, setUserPermissions] =
     useState<UserPermissionsResponse | null>(null);
@@ -62,47 +72,35 @@ export const usePermissions = () => {
   // Check if user has specific permission
   const hasPermission = useCallback(
     (permissionName: string): boolean => {
-      // Apenas Master tem todas as permissões por padrão
-      if (user?.role === 'master') {
-        return true;
-      }
-
+      if (userRole === 'master') return true;
       if (!userPermissions) return false;
       return userPermissions.permissionNames.includes(permissionName);
     },
-    [userPermissions, user?.role]
+    [userPermissions, userRole]
   );
 
   // Check if user has any of the specified permissions
   const hasAnyPermission = useCallback(
     (permissionNames: string[]): boolean => {
-      // Apenas Master tem todas as permissões por padrão
-      if (user?.role === 'master') {
-        return true;
-      }
-
+      if (userRole === 'master') return true;
       if (!userPermissions) return false;
       return permissionNames.some(name =>
         userPermissions.permissionNames.includes(name)
       );
     },
-    [userPermissions, user?.role]
+    [userPermissions, userRole]
   );
 
   // Check if user has all of the specified permissions
   const hasAllPermissions = useCallback(
     (permissionNames: string[]): boolean => {
-      // Apenas Master tem todas as permissões por padrão
-      if (user?.role === 'master') {
-        return true;
-      }
-
+      if (userRole === 'master') return true;
       if (!userPermissions) return false;
       return permissionNames.every(name =>
         userPermissions.permissionNames.includes(name)
       );
     },
-    [userPermissions, user?.role]
+    [userPermissions, userRole]
   );
 
   // Assign permissions to user

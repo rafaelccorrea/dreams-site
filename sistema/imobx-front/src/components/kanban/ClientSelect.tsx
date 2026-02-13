@@ -22,6 +22,13 @@ const SelectContainer = styled.div`
   width: 100%;
 `;
 
+const SelectTriggerWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+`;
+
 const SelectButton = styled.button<{
   $hasValue: boolean;
   $isOpen: boolean;
@@ -29,6 +36,7 @@ const SelectButton = styled.button<{
 }>`
   width: 100%;
   padding: 16px 20px;
+  padding-right: 48px;
   border: 2px solid
     ${props =>
       props.$hasError ? props.theme.colors.error : props.theme.colors.border};
@@ -85,6 +93,10 @@ const SelectButtonText = styled.span<{ $hasValue: boolean }>`
 `;
 
 const ClearButton = styled.button`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,52 +351,54 @@ export const ClientSelect: React.FC<ClientSelectProps> = ({
 
   return (
     <SelectContainer ref={containerRef}>
-      <SelectButton
-        type='button'
-        $hasValue={!!value}
-        $isOpen={isOpen}
-        disabled={disabled}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-      >
-        <SelectButtonContent>
-          {selectedClient ? (
-            <>
-              <MdPerson
-                size={20}
-                color={selectedClient ? undefined : 'currentColor'}
-              />
-              <SelectButtonText $hasValue={true}>
+      <SelectTriggerWrapper>
+        <SelectButton
+          type='button'
+          $hasValue={!!value}
+          $isOpen={isOpen}
+          disabled={disabled}
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+        >
+          <SelectButtonContent>
+            {selectedClient ? (
+              <>
+                <MdPerson
+                  size={20}
+                  color={selectedClient ? undefined : 'currentColor'}
+                />
+                <SelectButtonText $hasValue={true}>
+                  {(() => {
+                    console.log(
+                      '📝 [ClientSelect] Renderizando cliente selecionado:',
+                      {
+                        name: selectedClient.name,
+                        id: selectedClient.id,
+                        isPlaceholder: selectedClient.name === 'Carregando...',
+                      }
+                    );
+                    return selectedClient.name;
+                  })()}
+                  {selectedClient.email && ` - ${selectedClient.email}`}
+                  {selectedClient.phone && ` - ${selectedClient.phone}`}
+                  {selectedClient.city && ` (${selectedClient.city})`}
+                </SelectButtonText>
+              </>
+            ) : (
+              <SelectButtonText $hasValue={false}>
                 {(() => {
-                  console.log(
-                    '📝 [ClientSelect] Renderizando cliente selecionado:',
-                    {
-                      name: selectedClient.name,
-                      id: selectedClient.id,
-                      isPlaceholder: selectedClient.name === 'Carregando...',
-                    }
-                  );
-                  return selectedClient.name;
+                  console.log('📝 [ClientSelect] Renderizando placeholder');
+                  return placeholder;
                 })()}
-                {selectedClient.email && ` - ${selectedClient.email}`}
-                {selectedClient.phone && ` - ${selectedClient.phone}`}
-                {selectedClient.city && ` (${selectedClient.city})`}
               </SelectButtonText>
-            </>
-          ) : (
-            <SelectButtonText $hasValue={false}>
-              {(() => {
-                console.log('📝 [ClientSelect] Renderizando placeholder');
-                return placeholder;
-              })()}
-            </SelectButtonText>
-          )}
-        </SelectButtonContent>
+            )}
+          </SelectButtonContent>
+        </SelectButton>
         {value && !disabled && (
           <ClearButton onClick={handleClear} type='button'>
             <MdClear size={18} />
           </ClearButton>
         )}
-      </SelectButton>
+      </SelectTriggerWrapper>
 
       <Dropdown $isOpen={isOpen}>
         <SearchInput

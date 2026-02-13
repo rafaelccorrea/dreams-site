@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { usePermissionsContextOptional } from '../contexts/PermissionsContext';
 import { useAuth } from '../hooks/useAuth';
 
@@ -8,67 +9,117 @@ interface PermissionRouteProps {
   permissions?: string[];
   requireAll?: boolean;
   fallbackPath?: string;
+  noRoleBypass?: boolean;
 }
 
-export const PermissionRoute: React.FC<PermissionRouteProps> = ({
-  children,
-  permission,
-  permissions = [],
-  requireAll = false,
-}) => {
+function safeString(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+}
+
+class PermissionRouteErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallbackPath?: string },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(): void {
+    this.setState({ hasError: true });
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      const path = this.props.fallbackPath;
+      if (path && typeof path === 'string') {
+        return <Navigate to={path} replace />;
+      }
+      return null;
+    }
+    return this.props.children;
+  }
+}
+
+function PermissionRouteInner(props: PermissionRouteProps): React.ReactNode {
+  const {
+    children,
+    permission,
+    permissions = [],
+    requireAll = false,
+    fallbackPath,
+    noRoleBypass = false,
+  } = props;
+
   const permissionsContext = usePermissionsContextOptional();
-  const { getCurrentUser } = useAuth();
-  const currentUser = getCurrentUser();
-  const userRole = currentUser?.role?.toLowerCase();
+  const auth = useAuth();
+  const getCurrentUser = auth?.getCurrentUser;
+  const currentUser =
+    typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+
+  const userRole = safeString(
+    currentUser && typeof currentUser === 'object' && 'role' in currentUser
+      ? (currentUser as { role?: unknown }).role
+      : ''
+  ).toLowerCase();
   const hasRoleBypass = userRole
     ? ['master', 'admin', 'manager'].includes(userRole)
     : false;
 
-  // Se o contexto não está disponível, aguardar (não renderizar nada ainda)
-  if (!permissionsContext) {
-    if (import.meta.env.DEV) {
-      // console.log('⏳ PermissionRoute: Contexto não disponível, aguardando...');
-    }
+  const permissionStr = safeString(permission);
+  const permissionsList = Array.isArray(permissions)
+    ? permissions.map(p => safeString(p)).filter(Boolean)
+    : [];
+
+  let hasAccess = false;
+  if (permissionsContext === undefined || permissionsContext === null) {
+    if (fallbackPath) return <Navigate to={fallbackPath} replace />;
     return null;
   }
 
-  const hasPermission = permissionsContext.hasPermission;
-  const hasAnyPermission = permissionsContext.hasAnyPermission;
-  const hasAllPermissions = permissionsContext.hasAllPermissions;
+  try {
+    const hasPermission = permissionsContext.hasPermission;
+    const hasAnyPermission = permissionsContext.hasAnyPermission;
+    const hasAllPermissions = permissionsContext.hasAllPermissions;
 
-  let hasAccess = false;
-
-  // Check single permission
-  if (permission) {
-    hasAccess = hasPermission(permission);
-    if (import.meta.env.DEV) {
-      // console.log(`🔍 Checking permission "${permission}":`, hasAccess);
-    }
-  }
-  // Check multiple permissions
-  else if (permissions.length > 0) {
-    if (requireAll) {
-      hasAccess = hasAllPermissions(permissions);
+    if (permissionStr) {
+      hasAccess =
+        typeof hasPermission === 'function' && hasPermission(permissionStr);
+    } else if (permissionsList.length > 0) {
+      if (requireAll) {
+        hasAccess =
+          typeof hasAllPermissions === 'function' &&
+          hasAllPermissions(permissionsList);
+      } else {
+        hasAccess =
+          typeof hasAnyPermission === 'function' &&
+          hasAnyPermission(permissionsList);
+      }
     } else {
-      hasAccess = hasAnyPermission(permissions);
+      hasAccess = true;
     }
-    if (import.meta.env.DEV) {
-      // console.log(`🔍 Checking permissions [${permissions.join(', ')}]:`, hasAccess);
-    }
+  } catch {
+    hasAccess = false;
   }
-  // No permissions specified, allow access
-  else {
+
+  if (!hasAccess && hasRoleBypass && !noRoleBypass) {
     hasAccess = true;
   }
 
-  if (!hasAccess && hasRoleBypass) {
-    hasAccess = true;
-  }
-
-  // Se não tem acesso, não renderizar nada (elemento simplesmente não aparece)
   if (!hasAccess) {
+    if (fallbackPath) return <Navigate to={fallbackPath} replace />;
     return null;
   }
 
   return <>{children}</>;
-};
+}
+
+export const PermissionRoute: React.FC<PermissionRouteProps> = (props) => (
+  <PermissionRouteErrorBoundary fallbackPath={props.fallbackPath}>
+    <PermissionRouteInner {...props} />
+  </PermissionRouteErrorBoundary>
+);

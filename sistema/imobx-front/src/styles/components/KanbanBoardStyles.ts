@@ -9,7 +9,7 @@ export const KanbanContainer = styled.div`
   overflow-y: auto;
   position: relative;
   box-sizing: border-box;
-  background: #fff;
+  background: ${props => props.theme.colors.background};
   -webkit-overflow-scrolling: touch;
 
   /* Tablet */
@@ -183,7 +183,7 @@ export const BackButton = styled.button`
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #fff;
+  background: ${props => props.theme.colors.cardBackground};
   color: ${props => props.theme.colors.text};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 8px;
@@ -208,10 +208,10 @@ export const BackButton = styled.button`
 
 export const AddColumnButton = styled.button<{ $disabled?: boolean }>`
   background: ${props =>
-    props.$disabled ? '#f1f5f9' : props.theme.colors.primary};
+    props.$disabled ? props.theme.colors.hover : props.theme.colors.primary};
   color: ${props =>
-    props.$disabled ? props.theme.colors.textSecondary : 'white'};
-  border: ${props => (props.$disabled ? '1px solid #e2e8f0' : 'none')};
+    props.$disabled ? props.theme.colors.textSecondary : props.theme.colors.cardBackground};
+  border: ${props => (props.$disabled ? `1px solid ${props.theme.colors.border}` : 'none')};
   border-radius: 8px;
   padding: 10px 16px;
   font-size: 0.875rem;
@@ -234,7 +234,7 @@ export const AddColumnButton = styled.button<{ $disabled?: boolean }>`
 
   &:hover {
     background: ${props =>
-      props.$disabled ? '#f1f5f9' : props.theme.colors.primaryDark};
+      props.$disabled ? props.theme.colors.hover : props.theme.colors.primaryDark};
   }
 
   @media (max-width: 1024px) and (min-width: 769px) {
@@ -256,7 +256,7 @@ export const AddColumnButton = styled.button<{ $disabled?: boolean }>`
 `;
 
 export const SettingsButton = styled.button`
-  background: #fff;
+  background: ${props => props.theme.colors.cardBackground};
   color: ${props => props.theme.colors.textSecondary};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 8px;
@@ -297,7 +297,7 @@ export const SettingsButton = styled.button`
 
 export const KanbanBoardWrapper = styled.div<{ $hasManyColumns?: boolean }>`
   width: 100%;
-  background: #fff;
+  background: ${props => props.theme.colors.background};
   /* Desktop: scroll horizontal quando há 5+ colunas, senão distribuir igualmente */
   overflow-x: ${props => (props.$hasManyColumns ? 'auto' : 'hidden')};
   overflow-y: visible;
@@ -339,7 +339,7 @@ export const KanbanBoardWrapper = styled.div<{ $hasManyColumns?: boolean }>`
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: ${props => props.theme.colors.borderLight};
     border-radius: 6px;
     margin: 0 8px;
   }
@@ -347,7 +347,7 @@ export const KanbanBoardWrapper = styled.div<{ $hasManyColumns?: boolean }>`
   &::-webkit-scrollbar-thumb {
     background: ${props => props.theme.colors.primary};
     border-radius: 6px;
-    border: 2px solid #fff;
+    border: 2px solid ${props => props.theme.colors.background};
     transition: all 0.2s ease;
 
     &:hover {
@@ -503,7 +503,7 @@ export const ErrorMessage = styled.p`
 
 export const RetryButton = styled.button`
   background: ${props => props.theme.colors.primary};
-  color: white;
+  color: ${props => props.theme.colors.cardBackground};
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -727,7 +727,7 @@ export const FilterButtonBadge = styled.span`
   padding: 0 6px;
   border-radius: 10px;
   background: ${props => props.theme.colors.primary};
-  color: white;
+  color: ${props => props.theme.colors.cardBackground};
   font-size: 0.75rem;
   font-weight: 600;
 
@@ -766,7 +766,7 @@ export const SearchInput = styled.input`
   padding: 12px 16px;
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 8px;
-  background: #fff;
+  background: ${props => props.theme.colors.cardBackground};
   color: ${props => props.theme.colors.text};
   font-size: 0.95rem;
   transition: all 0.2s ease;
@@ -802,14 +802,14 @@ export const ClearSearchButton = styled.button`
   height: 32px;
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 6px;
-  background: #fff;
+  background: ${props => props.theme.colors.cardBackground};
   color: ${props => props.theme.colors.textSecondary};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
     background: ${props => props.theme.colors.primary};
-    color: white;
+    color: ${props => props.theme.colors.cardBackground};
     border-color: ${props => props.theme.colors.primary};
   }
 `;

@@ -34,11 +34,26 @@ interface PermissionsProviderProps {
   children: ReactNode;
 }
 
+function roleToStr(v: unknown): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (typeof v === 'object' && v !== null && 'name' in v) {
+    const name = (v as { name?: unknown }).name;
+    if (typeof name === 'string') return name;
+    if (name == null) return '';
+    if (typeof name === 'number' || typeof name === 'boolean') return String(name);
+    return '';
+  }
+  return '';
+}
+
 export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
   children,
 }) => {
   const { getCurrentUser } = useAuth();
-  const user = getCurrentUser();
+  const user = getCurrentUser?.() ?? null;
+
   const permissionsHook = usePermissionsOptimized();
 
   usePermissionsInvalidation({
@@ -48,7 +63,6 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
     invalidateOnPermissionsUpdate: true,
   });
 
-  // Memoizar o valor padrão para evitar recriações desnecessárias
   const defaultProviderValue = React.useMemo(
     () => ({
       userPermissions: null,
@@ -68,8 +82,31 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
     []
   );
 
-  // Usar o hook diretamente quando há usuário, garantindo que mudanças sejam propagadas
-  const providerValue = user ? permissionsHook : defaultProviderValue;
+  const providerValue = React.useMemo(() => {
+    if (!user) return defaultProviderValue;
+    const h = permissionsHook;
+    return {
+      ...h,
+      userPermissions: h.userPermissions
+        ? {
+            permissionNames: Array.isArray(h.userPermissions.permissionNames)
+              ? h.userPermissions.permissionNames.filter((p): p is string => typeof p === 'string')
+              : [],
+            role: roleToStr(h.userPermissions.role),
+            companyId: typeof h.userPermissions.companyId === 'string' ? h.userPermissions.companyId : '',
+          }
+        : null,
+      error: h.error != null ? String(h.error) : null,
+      cacheStats: {
+        exists: Boolean(h.cacheStats?.exists),
+        isValid: Boolean(h.cacheStats?.isValid),
+        isStale: Boolean(h.cacheStats?.isStale),
+        age: typeof h.cacheStats?.age === 'number' ? h.cacheStats.age : undefined,
+        permissionsCount: typeof h.cacheStats?.permissionsCount === 'number' ? h.cacheStats.permissionsCount : undefined,
+        role: roleToStr(h.cacheStats?.role),
+      },
+    };
+  }, [user, permissionsHook]);
 
   return (
     <PermissionsContext.Provider value={providerValue}>

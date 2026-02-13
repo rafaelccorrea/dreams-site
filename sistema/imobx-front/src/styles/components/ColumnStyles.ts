@@ -4,7 +4,7 @@ export const ColumnContainer = styled.div<{
   $isOver?: boolean;
   $scrollMode?: 'scroll' | 'expand';
 }>`
-  background: #fff;
+  background: ${props => props.theme.colors.cardBackground};
   border: 1px solid
     ${props =>
       props.$isOver ? props.theme.colors.primary : props.theme.colors.border};
@@ -160,7 +160,7 @@ export const ColumnTitle = styled.h3<{
       case 'colored':
         return `
           background: ${props.theme.colors.primary};
-          color: white;
+          color: ${props.theme.colors.cardBackground};
           border: 1px solid ${props.theme.colors.primary};
         `;
       case 'simple':
@@ -235,7 +235,7 @@ export const MenuDropdown = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
-  background: #fff;
+  background: ${props => props.theme.colors.cardBackground};
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -298,7 +298,7 @@ export const TasksList = styled.div<{ $scrollMode?: 'scroll' | 'expand' }>`
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: ${props => props.theme.colors.borderLight};
     border-radius: 3px;
   }
 
@@ -369,7 +369,7 @@ export const TaskCount = styled.span`
 `;
 
 export const AddTaskButton = styled.button`
-  background: #fff;
+  background: ${props => props.theme.colors.cardBackground};
   border: 1px dashed ${props => props.theme.colors.border};
   color: ${props => props.theme.colors.textSecondary};
   cursor: pointer;

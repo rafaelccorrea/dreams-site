@@ -932,12 +932,12 @@ const PropertyBadge = styled.div`
   }
 `;
 
-const PriorityFlag = styled.div<{ priority: string }>`
+const PriorityFlag = styled.div<{ $priority: string }>`
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background: ${props => {
-    switch (props.priority) {
+    switch (props.$priority) {
       case 'urgent':
         return 'linear-gradient(135deg, #EF4444, #DC2626)';
       case 'high':

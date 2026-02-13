@@ -118,6 +118,11 @@ export interface CreatePurchaseProposalDto {
   status?: 'rascunho' | 'disponivel';
 }
 
+/** Payload para atualização parcial (PATCH). Todos os campos opcionais. */
+export type UpdatePurchaseProposalDto = Partial<CreatePurchaseProposalDto> & {
+  saleFormId?: string;
+};
+
 export interface CreateProposalResponse {
   success: boolean;
   message: string;
@@ -172,6 +177,8 @@ export interface PropostaListItem {
     unidade?: string;
     porcentagem?: number;
   }>;
+  /** Etapa do fluxo (backend): 1=Comprador, 2=Proprietário (após assinatura comprador), 3=Corretor/Captadores. Usado ao carregar proposta por ID. */
+  etapa?: 1 | 2 | 3;
 }
 
 export interface ListProposalsFilters {
@@ -402,17 +409,64 @@ export const buscarPropostaPorId = async (
 };
 
 /**
- * Retorna a URL para download do PDF da proposta (exige CPF do corretor ou gestor)
+ * Atualiza proposta parcialmente (PATCH). Exige corretorCpf ou gestorCpf com vínculo.
+ * @param id - ID da proposta
+ * @param payload - Campos a atualizar (parcial)
+ * @param cpfParam - corretorCpf ou gestorCpf
+ * @returns Proposta atualizada (inclui etapa)
+ */
+export const atualizarProposta = async (
+  id: string,
+  payload: UpdatePurchaseProposalDto,
+  cpfParam: { corretorCpf?: string; gestorCpf?: string }
+): Promise<PropostaListItem> => {
+  const idTrim = (id ?? '').toString().trim();
+  if (!idTrim || idTrim === 'undefined' || idTrim === 'null') {
+    throw {
+      success: false,
+      message: 'ID da proposta é obrigatório.',
+    } as ApiError;
+  }
+  const corretorCpf = cpfParam.corretorCpf?.replace(/\D/g, '') || '';
+  const gestorCpf = cpfParam.gestorCpf?.replace(/\D/g, '') || '';
+  if (!gestorCpf && !corretorCpf) {
+    throw {
+      success: false,
+      message: 'Informe corretorCpf ou gestorCpf para atualizar a proposta',
+    } as ApiError;
+  }
+  const param = gestorCpf
+    ? `gestorCpf=${encodeURIComponent(gestorCpf)}`
+    : `corretorCpf=${encodeURIComponent(corretorCpf)}`;
+  const response = await publicApi.patch<PropostaListItem>(
+    `/api/ficha-proposta/${idTrim}?${param}`,
+    payload
+  );
+  const data = (response.data as any)?.data ?? response.data;
+  if (data && typeof data === 'object' && 'id' in data) {
+    return data as PropostaListItem;
+  }
+  throw {
+    success: false,
+    message: 'Resposta da API em formato inesperado',
+  } as ApiError;
+};
+
+/**
+ * Retorna a URL para download do PDF da proposta (exige CPF do corretor ou gestor).
+ * @param etapa 1, 2 ou 3 - quando informado, o PDF exibe apenas os dados daquela etapa
  */
 export const getUrlPdfProposta = (
   propostaId: string,
   userCpf: string,
-  userTipo: 'gestor' | 'corretor'
+  userTipo: 'gestor' | 'corretor',
+  etapa?: 1 | 2 | 3
 ): string => {
   const cpf = userCpf.replace(/\D/g, '');
   const param =
     userTipo === 'gestor' ? `gestorCpf=${cpf}` : `corretorCpf=${cpf}`;
-  return `${API_BASE_URL}/api/ficha-proposta/${propostaId}/pdf?${param}`;
+  const etapaParam = etapa ? `&etapa=${etapa}` : '';
+  return `${API_BASE_URL}/api/ficha-proposta/${propostaId}/pdf?${param}${etapaParam}`;
 };
 
 /**
@@ -715,11 +769,16 @@ export const obterLinkAssinaturaProposta = async (
  * Requer gestorCpf ou corretorCpf (mesma regra do GET PDF).
  * POST /api/ficha-proposta/:id/reenviar-email?gestorCpf=... ou ?corretorCpf=...
  */
+/**
+ * Reenvia PDF da proposta por email. Opcionalmente envia apenas o PDF da etapa informada.
+ * @param etapa 1, 2 ou 3 - só é permitido reenviar etapas já liberadas pelo progresso da proposta
+ */
 export const reenviarEmailProposta = async (
   propostaId: string,
   gestorCpf: string | undefined,
   corretorCpf: string | undefined,
-  emails: string[]
+  emails: string[],
+  etapa?: 1 | 2 | 3
 ): Promise<{ success: boolean; message: string }> => {
   if (!gestorCpf?.trim() && !corretorCpf?.trim()) {
     throw {
@@ -730,9 +789,11 @@ export const reenviarEmailProposta = async (
   const params = new URLSearchParams();
   if (gestorCpf?.trim()) params.append('gestorCpf', gestorCpf.trim().replace(/\D/g, ''));
   if (corretorCpf?.trim()) params.append('corretorCpf', corretorCpf.trim().replace(/\D/g, ''));
+  const body: { emails: string[]; etapa?: 1 | 2 | 3 } = { emails };
+  if (etapa === 1 || etapa === 2 || etapa === 3) body.etapa = etapa;
   const response = await publicApi.post<{ success: boolean; message: string }>(
     `/api/ficha-proposta/${propostaId}/reenviar-email?${params.toString()}`,
-    { emails }
+    body
   );
   return response.data;
 };

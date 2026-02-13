@@ -85,14 +85,22 @@ class AuthStorageService {
     );
   }
 
-  // Obter dados do usuário
+  // Obter dados do usuário (role sempre normalizado para string para evitar "Cannot convert object to primitive value")
   getUserData(): UserData | null {
     try {
-      // Primeiro tenta localStorage, depois sessionStorage
       const userData =
         localStorage.getItem(this.USER_KEY) ||
         sessionStorage.getItem(this.USER_KEY);
-      return userData ? JSON.parse(userData) : null;
+      const user = userData ? JSON.parse(userData) : null;
+      if (!user) return null;
+      const role = user.role;
+      const roleStr =
+        typeof role === 'string'
+          ? role
+          : role != null && typeof role === 'object' && 'name' in role
+            ? String((role as { name?: unknown }).name ?? '')
+            : '';
+      return { ...user, role: roleStr };
     } catch (error) {
       console.error('Erro ao obter dados do usuário:', error);
       return null;

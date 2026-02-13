@@ -31,9 +31,11 @@ class PermissionsCacheService {
     userId: string
   ): void {
     try {
+      const roleStr =
+        typeof role === 'string' ? role : role != null && typeof role === 'object' && 'name' in role ? String((role as { name?: unknown }).name ?? '') : '';
       const cachedData: CachedPermissions = {
         permissions: [...permissions], // Clonar array
-        role,
+        role: roleStr,
         companyId,
         userId,
         timestamp: Date.now(),
@@ -104,7 +106,15 @@ class PermissionsCacheService {
       //   });
       // }
 
-      return parsed;
+      return {
+        ...parsed,
+        role:
+          typeof parsed.role === 'string'
+            ? parsed.role
+            : parsed.role != null && typeof parsed.role === 'object' && 'name' in parsed.role
+              ? String((parsed.role as { name?: unknown }).name ?? '')
+              : '',
+      };
     } catch (error) {
       console.error('❌ PermissionsCache: Erro ao recuperar cache:', error);
       this.clearCache();
@@ -246,7 +256,7 @@ class PermissionsCacheService {
       isStale: age >= this.CACHE_DURATION && age < this.MAX_CACHE_AGE,
       age: Math.round(age / 1000),
       permissionsCount: cached.permissions.length,
-      role: cached.role,
+      role: typeof cached.role === 'string' ? cached.role : '',
     };
   }
 }

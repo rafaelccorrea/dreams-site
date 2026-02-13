@@ -8,8 +8,9 @@ import {
   MdDelete,
   MdLink,
   MdCheckCircle,
+  MdRefresh,
 } from 'react-icons/md';
-import { showSuccess, showError } from '../../utils/notifications';
+import { showSuccess, showError, showInfo } from '../../utils/notifications';
 import {
   listarAssinaturasProposta,
   enviarPropostaParaAssinatura,
@@ -735,12 +736,22 @@ export const PropostaAssinaturasModal: React.FC<
 
   const alreadySent = signatures.length > 0;
 
+  const handleClose = () => {
+    if (!alreadySent) {
+      showInfo(
+        'Você pode reabrir pelo botão "Assinaturas" a qualquer momento para enviar para assinatura.',
+        { autoClose: 4000 }
+      );
+    }
+    onClose();
+  };
+
   return (
-    <Overlay $isOpen={isOpen} onClick={onClose}>
+    <Overlay $isOpen={isOpen} onClick={handleClose}>
       <Container onClick={e => e.stopPropagation()}>
         <Header>
           <Title>Assinaturas – {proposalNumber}</Title>
-          <CloseBtn type='button' onClick={onClose} aria-label='Fechar'>
+          <CloseBtn type='button' onClick={handleClose} aria-label='Fechar'>
             <MdClose size={22} />
           </CloseBtn>
         </Header>
@@ -751,10 +762,20 @@ export const PropostaAssinaturasModal: React.FC<
             <>
               {alreadySent && (
                 <SignaturesList>
-                  <ListTitle>Signatários</ListTitle>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
+                    <ListTitle style={{ marginBottom: 0 }}>Status das assinaturas</ListTitle>
+                    <BtnSecondary
+                      type='button'
+                      onClick={() => loadSignatures()}
+                      disabled={loading}
+                      style={{ padding: '8px 14px', fontSize: '0.875rem' }}
+                    >
+                      <MdRefresh size={18} /> Atualizar
+                    </BtnSecondary>
+                  </div>
                   <ListHelper>
                     Envie o link de assinatura apenas ao signatário
-                    correspondente (cada um recebe seu próprio link).
+                    correspondente (cada um recebe seu próprio link). Reabra este modal quando quiser para ver o status atualizado.
                   </ListHelper>
                   {signatures.map(sig => (
                     <SignatureCard key={sig.id}>
@@ -960,7 +981,7 @@ export const PropostaAssinaturasModal: React.FC<
               )}
             </BtnPrimary>
           )}
-          <BtnSecondary type='button' onClick={onClose}>
+          <BtnSecondary type='button' onClick={handleClose}>
             Fechar
           </BtnSecondary>
         </Footer>

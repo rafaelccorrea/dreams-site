@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import {
   MdAdd,
   MdDragIndicator,
@@ -10,6 +10,7 @@ import {
   MdBarChart,
   MdMoreVert,
   MdAutoAwesome,
+  MdManageAccounts,
 } from 'react-icons/md';
 import {
   DndContext,
@@ -253,6 +254,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     permissions,
     loading,
     error,
+    boardHasBeenLoaded,
     selectedProjectId,
     setSelectedProjectId,
     refresh,
@@ -270,6 +272,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
 
   const { settings } = useKanbanSettings();
   const { settings: viewSettings } = useKanbanViewSettings();
+  const theme = useTheme();
 
   const inferredPersonalWorkspace =
     Boolean(
@@ -1099,6 +1102,18 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     return tasks;
   }, [board.tasks, selectedAssigneeId, sortTasks]);
 
+  /** Total de cards do funil (soma dos totalTaskCount das colunas), para bater com os números das colunas */
+  const totalFunnelCards = React.useMemo(
+    () =>
+      board.columns.reduce(
+        (sum, col) => sum + (typeof col.totalTaskCount === 'number' ? col.totalTaskCount : 0),
+        0
+      ),
+    [board.columns]
+  );
+  const displayTotal = totalFunnelCards > 0 ? totalFunnelCards : board.tasks.length;
+  const hasFilterActive = Boolean(selectedAssigneeId);
+
   // Verificar permissões para criar equipes
   const canCreateTeams = () => {
     if (!user) return false;
@@ -1848,11 +1863,6 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
               console.log(
                 `📝 handleDragEnd - atualizando tarefa ${t.title} de posição ${t.position} para ${index}`
               );
-              // Ativar loading apenas para a primeira tarefa sendo movida
-              if (t.id === taskId) {
-                setIsMovingTask(true);
-                setMovingTaskId(t.id);
-              }
               moveTask({
                 taskId: t.id,
                 sourceColumnId: targetColumnId,
@@ -1862,23 +1872,12 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
               })
                 .then(() => {
                   if (t.id === taskId) {
-                    setIsMovingTask(false);
-                    setMovingTaskId(null);
-                    // Recarregar valores das colunas após mover tarefa
-                    // Usar setTimeout para garantir que o estado do board foi atualizado primeiro
                     setTimeout(() => {
-                      console.log(
-                        '🔄 Recarregando valores das colunas após reordenar tarefa'
-                      );
                       loadColumnValues();
                     }, 100);
                   }
                 })
                 .catch((error: any) => {
-                  if (t.id === taskId) {
-                    setIsMovingTask(false);
-                    setMovingTaskId(null);
-                  }
                   console.error('❌ Erro ao reordenar tarefa:', error);
                   // Tratar erro com mapeamento (não propagar o erro)
                   try {
@@ -2166,10 +2165,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
         return;
       }
 
-      // Ativar loading
-      setIsMovingTask(true);
-      setMovingTaskId(task.id);
-
+      // Movimentação por baixo dos panos (sem Lottie); rollback em caso de erro já é feito no hook
       if (moveTaskWithValidation) {
         moveTaskWithValidation({
           taskId: task.id,
@@ -2179,10 +2175,6 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
           actionData,
         })
           .then(async (response: MoveTaskResponse) => {
-            // Desativar loading
-            setIsMovingTask(false);
-            setMovingTaskId(null);
-
             // Recarregar valores das colunas após mover tarefa com sucesso
             // Usar setTimeout para garantir que o estado do board foi atualizado primeiro
             setTimeout(() => {
@@ -2210,10 +2202,6 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
             }
           })
           .catch((error: any) => {
-            // Desativar loading
-            setIsMovingTask(false);
-            setMovingTaskId(null);
-
             console.log('🔍 [executeMoveTask] Erro capturado:', {
               error,
               errorMessage: error.message,
@@ -2244,9 +2232,6 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
           targetPosition,
         })
           .then(() => {
-            // Desativar loading
-            setIsMovingTask(false);
-            setMovingTaskId(null);
             // Recarregar valores das colunas após mover tarefa
             // Usar setTimeout para garantir que o estado do board foi atualizado primeiro
             setTimeout(() => {
@@ -2257,12 +2242,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
             }, 100);
           })
           .catch((error: any) => {
-            // Desativar loading
-            setIsMovingTask(false);
-            setMovingTaskId(null);
-
             console.error('❌ Erro ao mover tarefa:', error);
-            // Tratar erro com mapeamento (não propagar o erro)
             try {
               handleMoveError(error, task);
             } catch (handleError: any) {
@@ -2448,7 +2428,7 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
     );
   }
 
-  if (board.columns.length === 0 && !loading) {
+  if (board.columns.length === 0 && !loading && boardHasBeenLoaded) {
     return (
       <KanbanContainer>
         <KanbanHeader>
@@ -2487,6 +2467,23 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
                       >
                         <MdAdd size={18} />
                         Adicionar coluna
+                      </MoreMenuItem>
+                    )}
+                    {permissions.canManageUsers && (
+                      <MoreMenuItem
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          const teamId = isPersonalWorkspace
+                            ? projectTeamId || selectedTeam?.id || initialTeamId
+                            : selectedTeam?.id || initialTeamId;
+                          navigate('/kanban/permissions', {
+                            state: { fromBoard: true, teamId: teamId || undefined },
+                          });
+                        }}
+                        title='Adicionar ou remover permissões de Kanban dos usuários'
+                      >
+                        <MdManageAccounts size={18} />
+                        Gerenciar usuários do Kanban
                       </MoreMenuItem>
                     )}
                   </MoreDropdown>
@@ -2607,6 +2604,23 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
                       {localColumns.length >= 6 && ' (6/6)'}
                     </MoreMenuItem>
                   )}
+                  {permissions.canManageUsers && (
+                    <MoreMenuItem
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        const teamId = isPersonalWorkspace
+                          ? projectTeamId || selectedTeam?.id || initialTeamId
+                          : selectedTeam?.id || initialTeamId;
+                        navigate('/kanban/permissions', {
+                          state: { fromBoard: true, teamId: teamId || undefined },
+                        });
+                      }}
+                      title='Adicionar ou remover permissões de Kanban dos usuários'
+                    >
+                      <MdManageAccounts size={18} />
+                      Gerenciar usuários do Kanban
+                    </MoreMenuItem>
+                  )}
                 </MoreDropdown>
               </MoreMenuWrapper>
             </KanbanActions>
@@ -2659,15 +2673,27 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
       </ToolbarRow>
 
       <NegotiationsCountBar>
-        <NegotiationsCountValue>{filteredTasks.length}</NegotiationsCountValue>
-        {filteredTasks.length === 1 ? 'Negociação' : 'Negociações'}
+        <NegotiationsCountValue>{displayTotal}</NegotiationsCountValue>
+        {displayTotal === 1 ? 'Negociação' : 'Negociações'}
+        {hasFilterActive && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: '0.85rem',
+              fontWeight: 'normal',
+              color: (theme as any)?.colors?.textSecondary ?? '#666',
+            }}
+          >
+            ({filteredTasks.length} exibidas)
+          </span>
+        )}
         {filteredTasks.length === 0 && board.tasks.length > 0 && (
           <span
             style={{
               marginLeft: 12,
               fontSize: '0.85rem',
               fontWeight: 'normal',
-              color: 'var(--text-secondary, #666)',
+              color: (theme as any)?.colors?.textSecondary ?? '#666',
             }}
           >
             Dica: use &quot;Sugeridos pela IA&quot; nos filtros para ver
@@ -3144,10 +3170,8 @@ export const KanbanBoardComponent: React.FC<KanbanBoardComponentProps> = ({
         taskTitle={validationErrorModal.taskTitle}
       />
 
-      {/* Loading Lottie durante movimentação */}
-      {(isMovingTask || isReorderingColumns) && (
-        <LottieLoading asOverlay={true} />
-      )}
+      {/* Loading Lottie apenas durante reordenação de colunas (movimentação de cards é por baixo dos panos) */}
+      {isReorderingColumns && <LottieLoading asOverlay={true} />}
 
       {/* Modal para preencher dados de ações de criação */}
       {pendingAction && (

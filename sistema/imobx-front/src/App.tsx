@@ -89,7 +89,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const RoleBasedDashboard = lazy(
   () => import('./components/RoleBasedDashboard')
 );
-// Retry para lazy load (evita "Failed to fetch dynamically imported module")
+// Retry + reload em falha de chunk (evita "Failed to fetch dynamically imported module" após deploy)
 function lazyWithRetry(
   importFn: () => Promise<{ default: React.ComponentType<any> }>,
   retries = 2
@@ -104,6 +104,19 @@ function lazyWithRetry(
         if (i < retries) await new Promise((r) => setTimeout(r, 500 * (i + 1)));
       }
     }
+    // Após novo deploy, chunks antigos (ex: TaskDetailsPage-CqcpWVTM.js) não existem mais.
+    // Forçar reload para o usuário carregar a nova versão.
+    const msg = lastError instanceof Error ? lastError.message : String(lastError);
+    if (
+      typeof window !== 'undefined' &&
+      (msg.includes('Failed to fetch dynamically imported module') ||
+        msg.includes('Importing a module script failed') ||
+        msg.includes('Loading chunk') ||
+        msg.includes('Loading CSS chunk'))
+    ) {
+      window.location.reload();
+      return new Promise(() => {}); // nunca resolve; a página recarrega
+    }
     throw lastError;
   });
 }
@@ -113,11 +126,13 @@ const KanbanSettingsPage = lazy(() => import('./pages/KanbanSettingsPage'));
 const ColorRulesPage = lazy(() => import('./pages/ColorRulesPage'));
 const KanbanMetricsPage = lazy(() => import('./pages/KanbanMetricsPage'));
 const KanbanInsightsPage = lazy(() => import('./pages/KanbanInsightsPage'));
+// Import direto para evitar erro "Cannot convert object to primitive value" no lazyInitializer ao acessar /kanban/permissions
+import { KanbanPermissionsPage } from './pages/KanbanPermissionsPage';
 const CreateTaskPage = lazy(() => import('./pages/CreateTaskPage'));
 const CreateColumnPage = lazy(() => import('./pages/CreateColumnPage'));
-const TaskDetailsPage = lazy(() => import('./pages/TaskDetailsPage'));
+const TaskDetailsPage = lazyWithRetry(() => import('./pages/TaskDetailsPage'));
 const CreateSubTaskPage = lazy(() => import('./pages/CreateSubTaskPage'));
-const SubTaskDetailsPage = lazy(() => import('./pages/SubTaskDetailsPage'));
+const SubTaskDetailsPage = lazyWithRetry(() => import('./pages/SubTaskDetailsPage'));
 const EditSubTaskPage = lazy(() => import('./pages/EditSubTaskPage'));
 const CreateValidationPage = lazy(() => import('./pages/CreateValidationPage'));
 const CreateActionPage = lazy(() => import('./pages/CreateActionPage'));
@@ -620,6 +635,24 @@ const AppContent: React.FC = () => {
                           <ProtectedRoute>
                             <PermissionRoute permission='kanban:view_analytics'>
                               <KanbanInsightsPage />
+                            </PermissionRoute>
+                          </ProtectedRoute>
+                        </ProtectedRouteWithPermissions>
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path='/kanban/permissions'
+                    element={
+                      <ErrorBoundary>
+                        <ProtectedRouteWithPermissions>
+                          <ProtectedRoute>
+                            <PermissionRoute
+                              permission='kanban:manage_users'
+                              noRoleBypass
+                              fallbackPath='/kanban'
+                            >
+                              <KanbanPermissionsPage />
                             </PermissionRoute>
                           </ProtectedRoute>
                         </ProtectedRouteWithPermissions>
@@ -2795,16 +2828,22 @@ const App: React.FC = () => {
   React.useEffect(() => {
     // console.log('🎯 App: useEffect de error handlers registrado');
     const handleError = (event: ErrorEvent) => {
-      console.error('❌ ERRO GLOBAL NÃO TRATADO:', event.error);
-      console.error('❌ Stack trace:', event.error?.stack);
-      console.error('❌ Message:', event.message);
-      console.error('❌ Filename:', event.filename);
+      const err = event.error;
+      const msg = err?.message != null ? String(err.message) : event.message;
+      const stack = err?.stack != null ? String(err.stack) : '';
+      const filename = event.filename != null ? String(event.filename) : '';
+      console.error('❌ ERRO GLOBAL NÃO TRATADO:', msg);
+      if (stack) console.error('❌ Stack trace:', stack);
+      if (filename) console.error('❌ Filename:', filename);
       console.error('❌ Line:', event.lineno, 'Column:', event.colno);
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('❌ PROMISE REJECTION NÃO TRATADA:', event.reason);
-      console.error('❌ Stack:', event.reason?.stack);
+      const r = event.reason;
+      const msg = r?.message != null ? String(r.message) : String(r);
+      const stack = r?.stack != null ? String(r.stack) : '';
+      console.error('❌ PROMISE REJECTION NÃO TRATADA:', msg);
+      if (stack) console.error('❌ Stack:', stack);
     };
 
     window.addEventListener('error', handleError);

@@ -54,9 +54,12 @@ export const useKanban = () => {
     canCreateColumns: false,
     canEditColumns: false,
     canDeleteColumns: false,
+    canManageUsers: false,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** True após pelo menos uma resposta bem-sucedida do getBoard (evita "Nenhuma coluna" prematuro) */
+  const [boardHasBeenLoaded, setBoardHasBeenLoaded] = useState(false);
   /** Opções de filtro (users, clients, properties) carregam em background; true até concluir */
   const [filterOptionsLoading, setFilterOptionsLoading] = useState(false);
 
@@ -64,6 +67,14 @@ export const useKanban = () => {
   const fetchBoardInFlightRef = useRef<{
     key: string;
     promise: Promise<void>;
+  } | null>(null);
+
+  /** Cache do board: exibe instantaneamente e revalida em background (atualização sutil) */
+  const BOARD_CACHE_TTL_MS = 6000;
+  const boardCacheRef = useRef<{
+    key: string;
+    data: KanbanBoard;
+    timestamp: number;
   } | null>(null);
 
   const fetchBoard = useCallback(
@@ -75,10 +86,6 @@ export const useKanban = () => {
     ) => {
       const isColumnOnlyRefresh = Boolean(options?.columnIdOnly);
       try {
-        if (!isColumnOnlyRefresh) {
-          setLoading(true);
-          setError(null);
-        }
         // console.log('🔄 Carregando quadro Kanban para equipe:', teamId, 'projeto:', projectId);
 
         // Validar teamId - mas permitir teamId especial para workspace pessoal
@@ -319,7 +326,7 @@ export const useKanban = () => {
           return inFlight.promise;
         }
 
-        const runRequest = async (): Promise<void> => {
+        const runRequestInternal = async (): Promise<void> => {
           const boardData = await kanbanApi.getBoard(teamId, filterParams);
 
           // Se os filtros foram aplicados no backend, não precisamos filtrar novamente
@@ -345,20 +352,26 @@ export const useKanban = () => {
             }));
           } else {
             setBoard(boardData);
+            setBoardHasBeenLoaded(true);
+            boardCacheRef.current = {
+              key: requestKey,
+              data: boardData,
+              timestamp: Date.now(),
+            };
           }
 
           if (!columnIdOnly) {
-            setPermissions(
-              boardData.permissions || {
-                canCreateTasks: false,
-                canEditTasks: false,
-                canDeleteTasks: false,
-                canMoveTasks: false,
-                canCreateColumns: false,
-                canEditColumns: false,
-                canDeleteColumns: false,
-              }
-            );
+            setPermissions({
+              canCreateTasks: false,
+              canEditTasks: false,
+              canDeleteTasks: false,
+              canMoveTasks: false,
+              canCreateColumns: false,
+              canEditColumns: false,
+              canDeleteColumns: false,
+              canManageUsers: false,
+              ...boardData.permissions,
+            });
 
             // Opções que não dependem de API: preencher na hora para o drawer já poder mostrar
             setFilterOptions(prev => ({
@@ -448,7 +461,36 @@ export const useKanban = () => {
           }
         };
 
-        const promise = runRequest();
+        // Cache inteligente: mesma requisição dentro do TTL → exibir cache e revalidar em background
+        const cached = boardCacheRef.current;
+        const cacheHit =
+          !isColumnOnlyRefresh &&
+          !columnIdOnly &&
+          cached?.key === requestKey &&
+          Date.now() - cached.timestamp < BOARD_CACHE_TTL_MS;
+        if (cacheHit && cached) {
+          setBoard(cached.data);
+          setLoading(false);
+          setError(null);
+          setBoardHasBeenLoaded(true);
+          const bgPromise = runRequestInternal();
+          const wrappedBg = bgPromise
+            .catch(() => {})
+            .finally(() => {
+              if (fetchBoardInFlightRef.current?.key === requestKey)
+                fetchBoardInFlightRef.current = null;
+            });
+          fetchBoardInFlightRef.current = { key: requestKey, promise: wrappedBg };
+          return wrappedBg;
+        }
+
+        if (!isColumnOnlyRefresh) {
+          setLoading(true);
+          setError(null);
+          setBoardHasBeenLoaded(false);
+        }
+
+        const promise = runRequestInternal();
         const wrapped = promise
           .catch((err: any) => {
             console.error('❌ Erro ao carregar quadro Kanban:', err);
@@ -988,6 +1030,12 @@ export const useKanban = () => {
       setBoard(prev => ({
         ...prev,
         tasks: [...prev.tasks, ...res.data],
+        // Atualizar total da coluna para o contador não aumentar ao carregar mais
+        columns: prev.columns.map(c =>
+          c.id === columnId
+            ? { ...c, totalTaskCount: res.total }
+            : c
+        ),
       }));
     },
     []
@@ -1013,6 +1061,11 @@ export const useKanban = () => {
           ...prev.tasks.filter((t: KanbanTask) => t.columnId !== columnId),
           ...res.data,
         ],
+        columns: prev.columns.map(c =>
+          c.id === columnId
+            ? { ...c, totalTaskCount: res.total }
+            : c
+        ),
       }));
     },
     []
@@ -1027,6 +1080,7 @@ export const useKanban = () => {
     permissions,
     loading,
     error,
+    boardHasBeenLoaded,
     selectedProjectId,
     setSelectedProjectId,
     createColumn,

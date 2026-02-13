@@ -11,6 +11,10 @@ export interface KanbanColumn {
   createdById: string;
   createdAt: Date;
   updatedAt: Date;
+  /** Total de tarefas na coluna (vindo da API). Usar para exibir contagem real em vez de tasks.length */
+  totalTaskCount?: number;
+  /** Soma do valor (R$) das tarefas na coluna (vindo da API). Não aumenta ao "Carregar mais". */
+  totalValue?: number;
 }
 
 // Interfaces para Cliente e Imóvel vinculados às tarefas
@@ -229,6 +233,30 @@ export interface KanbanPermissions {
   canCreateColumns: boolean;
   canEditColumns: boolean;
   canDeleteColumns: boolean;
+  /** Super admin Kanban: gerenciar permissões dos usuários no Kanban */
+  canManageUsers?: boolean;
+}
+
+/** Payload para definir permissão de um usuário em um funil (board). Só visualizar = canView true e demais false. */
+export interface BoardPermissionPayload {
+  canView: boolean;
+  canMoveCards: boolean;
+  canDeleteCards: boolean;
+  canCreateCards: boolean;
+  canEditCards: boolean;
+}
+
+/** Item de permissão por funil retornado pela API. */
+export interface BoardPermissionItem {
+  id: string;
+  userId: string;
+  teamId: string;
+  canView: boolean;
+  canMoveCards: boolean;
+  canDeleteCards: boolean;
+  canCreateCards: boolean;
+  canEditCards: boolean;
+  user?: { id: string; name?: string; email?: string };
 }
 
 // Interfaces para filtros

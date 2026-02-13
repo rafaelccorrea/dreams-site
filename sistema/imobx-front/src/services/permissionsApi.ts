@@ -77,6 +77,14 @@ export const permissionsApi = {
     await api.put(`/permissions/user/${userId}/set`, data);
   },
 
+  /** Definir apenas permissões de Kanban do usuário (super admin Kanban) */
+  setUserKanbanPermissions: async (
+    userId: string,
+    data: AssignPermissionsDto
+  ): Promise<void> => {
+    await api.put(`/permissions/user/${userId}/kanban`, data);
+  },
+
   // Remove specific permission from user
   removePermission: async (
     userId: string,

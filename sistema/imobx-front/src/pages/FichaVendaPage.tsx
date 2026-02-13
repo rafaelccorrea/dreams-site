@@ -244,10 +244,21 @@ interface ComissaoGerencia {
   nivel: number;
   porcentagem: number;
   nome?: string;
+  /** ID do gestor (temp-uniao-users) para identificar CPF e limite Jorge */
+  gestorId?: string;
+  /** CPF do gestor (vindo da API ou para envio; usado para limite Jorge) */
+  cpf?: string;
 }
 
 // Lista de unidades
 const UNIDADES = ['União Esmeralda', 'União Rio Branco'];
+
+// Limites de comissão na ficha de venda
+const MAX_COMISSAO_CAPTACAO_VENDAS = 55; // corretor + captadores
+const MAX_COMISSAO_GESTOR = 5;
+const MAX_COMISSAO_JORGE = 4;
+/** CPF do Jorge para limite de 4% na gerência (apenas dígitos) */
+const CPF_JORGE = '34448011810';
 
 interface FichaVendaForm {
   // Bloco 1 - Metadados
@@ -1765,6 +1776,20 @@ const FichaVendaPage: React.FC = () => {
     [comissoesGerenciasWatch]
   );
 
+  /** Identifica se a gerência é do Jorge (limite 4%) pelo CPF do gestor. */
+  const isJorgeGerencia = useCallback(
+    (gerencia: ComissaoGerencia) => {
+      const gestor =
+        gestoresDisponiveis.find(g => g.id === gerencia.gestorId) ??
+        gestoresDisponiveis.find(g => g.nome === gerencia.nome);
+      const cpfNorm = (gerencia.cpf ?? gestor?.cpf ?? '')
+        .toString()
+        .replace(/\D/g, '');
+      return cpfNorm === CPF_JORGE;
+    },
+    [gestoresDisponiveis]
+  );
+
   /** Lista para o select Captador: corretores + gestores (tudo). Deduplicado por id. */
   const opcoesCaptador = React.useMemo(() => {
     const ids = new Set<string>();
@@ -2401,7 +2426,17 @@ const FichaVendaPage: React.FC = () => {
             if (captadores.length > 0) item.captadores = captadores;
             return item;
           }),
-        gerencias: data.comissoesGerencias,
+        gerencias: data.comissoesGerencias.map(g => {
+          const gestor =
+            gestoresDisponiveis.find(x => x.id === g.gestorId) ??
+            gestoresDisponiveis.find(x => x.nome === g.nome);
+          return {
+            nivel: g.nivel,
+            porcentagem: g.porcentagem,
+            nome: g.nome ?? gestor?.nome,
+            cpf: g.cpf ?? gestor?.cpf,
+          };
+        }),
       },
       colaboradores: {
         preAtendimento: data.colaboradorPreAtendimento?.trim() || undefined,
@@ -4135,19 +4170,21 @@ const FichaVendaPage: React.FC = () => {
                       alignItems: 'center',
                     }}
                   >
-                    <Button
-                      type='button'
-                      $variant='secondary'
-                      onClick={() => setShowSelectCorretorModal(true)}
-                      style={{
-                        padding: '10px 20px',
-                        borderRadius: '10px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      <MdPerson style={{ marginRight: '8px' }} />
-                      Trocar Corretor
-                    </Button>
+                    {userTipo !== 'corretor' && (
+                      <Button
+                        type='button'
+                        $variant='secondary'
+                        onClick={() => setShowSelectCorretorModal(true)}
+                        style={{
+                          padding: '10px 20px',
+                          borderRadius: '10px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <MdPerson style={{ marginRight: '8px' }} />
+                        Trocar Corretor
+                      </Button>
+                    )}
                     <Button
                       type='button'
                       $variant='secondary'
@@ -7239,22 +7276,52 @@ const FichaVendaPage: React.FC = () => {
                                             color: corretorColor.border,
                                           }}
                                         />
-                                        Porcentagem{' '}
+                                        Porcentagem (máx. {MAX_COMISSAO_CAPTACAO_VENDAS}% com captadores){' '}
                                         <RequiredIndicator>*</RequiredIndicator>
                                       </FormLabel>
                                       <div style={{ position: 'relative' }}>
                                         <FormInput
                                           type='number'
                                           min='0'
-                                          max='100'
+                                          max={Math.max(
+                                            0,
+                                            MAX_COMISSAO_CAPTACAO_VENDAS -
+                                              (corretor.captadores ?? []).reduce(
+                                                (s, cap) =>
+                                                  s +
+                                                  (typeof cap.porcentagem ===
+                                                  'number'
+                                                    ? cap.porcentagem
+                                                    : Number(cap.porcentagem) ||
+                                                      0),
+                                                0
+                                              )
+                                          )}
                                           step='0.01'
                                           value={corretor.porcentagem}
                                           onChange={e => {
                                             const updated = [
                                               ...comissoesCorretores,
                                             ];
-                                            updated[index].porcentagem =
-                                              parseFloat(e.target.value) || 0;
+                                            const somaCapt =
+                                              (corretor.captadores ?? []).reduce(
+                                                (s, cap) =>
+                                                  s +
+                                                  (typeof cap.porcentagem ===
+                                                  'number'
+                                                    ? cap.porcentagem
+                                                    : Number(cap.porcentagem) ||
+                                                      0),
+                                                0
+                                              );
+                                            const maxCorretor =
+                                              MAX_COMISSAO_CAPTACAO_VENDAS -
+                                              somaCapt;
+                                            const val = Math.min(
+                                              parseFloat(e.target.value) || 0,
+                                              maxCorretor
+                                            );
+                                            updated[index].porcentagem = val;
                                             setValue(
                                               'comissoesCorretores',
                                               updated
@@ -7285,6 +7352,11 @@ const FichaVendaPage: React.FC = () => {
                                           %
                                         </div>
                                       </div>
+                                      <HelperText>
+                                        Captação e vendas: máximo{' '}
+                                        {MAX_COMISSAO_CAPTACAO_VENDAS}% (corretor
+                                        + captadores).
+                                      </HelperText>
                                     </FormGroup>
 
                                     {/* Até 3 captadores por corretor */}
@@ -7355,17 +7427,52 @@ const FichaVendaPage: React.FC = () => {
                                           <FormInput
                                             type='number'
                                             min={0}
-                                            max={100}
+                                            max={Math.max(
+                                              0,
+                                              MAX_COMISSAO_CAPTACAO_VENDAS -
+                                                corretor.porcentagem -
+                                                (corretor.captadores ?? [])
+                                                  .filter((_, i) => i !== capIdx)
+                                                  .reduce(
+                                                    (s, c) =>
+                                                      s +
+                                                      (typeof c.porcentagem ===
+                                                      'number'
+                                                        ? c.porcentagem
+                                                        : Number(c.porcentagem) ||
+                                                          0),
+                                                    0
+                                                  )
+                                            )}
                                             step={0.5}
                                             placeholder='%'
                                             value={cap.porcentagem != null ? String(cap.porcentagem) : ''}
                                             onChange={e => {
                                               const num = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                                              const somaOutros = (corretor.captadores ?? [])
+                                                .filter((_, i) => i !== capIdx)
+                                                .reduce(
+                                                  (s, c) =>
+                                                    s +
+                                                    (typeof c.porcentagem === 'number'
+                                                      ? c.porcentagem
+                                                      : Number(c.porcentagem) || 0),
+                                                  0
+                                                );
+                                              const maxCap = Math.max(
+                                                0,
+                                                MAX_COMISSAO_CAPTACAO_VENDAS -
+                                                  corretor.porcentagem -
+                                                  somaOutros
+                                              );
                                               const list = [...(corretor.captadores ?? [])];
                                               if (list[capIdx]) {
                                                 list[capIdx] = {
                                                   ...list[capIdx],
-                                                  porcentagem: num != null && !Number.isNaN(num) ? Math.min(100, Math.max(0, num)) : undefined,
+                                                  porcentagem:
+                                                    num != null && !Number.isNaN(num)
+                                                      ? Math.min(maxCap, Math.max(0, num))
+                                                      : undefined,
                                                 };
                                               }
                                               const updated = [...comissoesCorretores];
@@ -7627,7 +7734,13 @@ const FichaVendaPage: React.FC = () => {
                                           Nome do Gestor
                                         </FormLabel>
                                         <FormSelect
-                                          value={gerencia.nome || ''}
+                                          value={
+                                            gerencia.gestorId ??
+                                            gestoresDisponiveis.find(
+                                              gg => gg.nome === gerencia.nome
+                                            )?.id ??
+                                            ''
+                                          }
                                           onChange={e => {
                                             const updated = [
                                               ...comissoesGerencias,
@@ -7635,9 +7748,32 @@ const FichaVendaPage: React.FC = () => {
                                             const index = updated.findIndex(
                                               g => g.nivel === nivel
                                             );
+                                            const selectedId =
+                                              e.target.value?.trim() || '';
+                                            const gestor =
+                                              selectedId &&
+                                              gestoresDisponiveis.find(
+                                                gg => gg.id === selectedId
+                                              );
                                             if (index >= 0) {
+                                              updated[index].gestorId =
+                                                selectedId || undefined;
                                               updated[index].nome =
-                                                e.target.value;
+                                                gestor?.nome ?? '';
+                                              updated[index].cpf =
+                                                gestor?.cpf ?? undefined;
+                                              const isJorge =
+                                                (gestor?.cpf ?? '')
+                                                  .replace(/\D/g, '') ===
+                                                CPF_JORGE;
+                                              if (
+                                                isJorge &&
+                                                (updated[index].porcentagem ??
+                                                  0) > MAX_COMISSAO_JORGE
+                                              ) {
+                                                updated[index].porcentagem =
+                                                  MAX_COMISSAO_JORGE;
+                                              }
                                               setValue(
                                                 'comissoesGerencias',
                                                 updated
@@ -7655,7 +7791,7 @@ const FichaVendaPage: React.FC = () => {
                                             Selecione o gestor...
                                           </option>
                                           {gestoresDisponiveis.map(g => (
-                                            <option key={g.id} value={g.nome}>
+                                            <option key={g.id} value={g.id}>
                                               {g.nome}
                                               {g.unidade
                                                 ? ` · ${g.unidade}`
@@ -7678,7 +7814,11 @@ const FichaVendaPage: React.FC = () => {
                                             size={18}
                                             style={{ color: nivelColor.border }}
                                           />
-                                          Porcentagem{' '}
+                                          Porcentagem (máx.{' '}
+                                          {isJorgeGerencia(gerencia)
+                                            ? MAX_COMISSAO_JORGE
+                                            : MAX_COMISSAO_GESTOR}
+                                          %){' '}
                                           <RequiredIndicator>
                                             *
                                           </RequiredIndicator>
@@ -7687,20 +7827,31 @@ const FichaVendaPage: React.FC = () => {
                                           <FormInput
                                             type='number'
                                             min='0'
-                                            max='100'
+                                            max={
+                                              isJorgeGerencia(gerencia)
+                                                ? MAX_COMISSAO_JORGE
+                                                : MAX_COMISSAO_GESTOR
+                                            }
                                             step='0.01'
                                             value={gerencia.porcentagem}
                                             onChange={e => {
                                               const updated = [
                                                 ...comissoesGerencias,
                                               ];
-                                              const index = updated.findIndex(
+                                              const idx = updated.findIndex(
                                                 g => g.nivel === nivel
                                               );
-                                              if (index >= 0) {
-                                                updated[index].porcentagem =
-                                                  parseFloat(e.target.value) ||
-                                                  0;
+                                              if (idx >= 0) {
+                                                const maxGer = isJorgeGerencia(
+                                                  updated[idx]
+                                                )
+                                                  ? MAX_COMISSAO_JORGE
+                                                  : MAX_COMISSAO_GESTOR;
+                                                const val = Math.min(
+                                                  parseFloat(e.target.value) || 0,
+                                                  maxGer
+                                                );
+                                                updated[idx].porcentagem = val;
                                                 setValue(
                                                   'comissoesGerencias',
                                                   updated
@@ -7732,6 +7883,11 @@ const FichaVendaPage: React.FC = () => {
                                             %
                                           </div>
                                         </div>
+                                        <HelperText>
+                                          {isJorgeGerencia(gerencia)
+                                            ? `Jorge: máximo ${MAX_COMISSAO_JORGE}%.`
+                                            : `Gestor: máximo ${MAX_COMISSAO_GESTOR}%.`}
+                                        </HelperText>
                                       </FormGroup>
                                     </FormGrid>
                                   </div>

@@ -22,3 +22,4 @@ export { MetricsShimmer } from './MetricsShimmer';
 export { WhatsAppShimmer } from './WhatsAppShimmer';
 export { WhatsAppConfigShimmer } from './WhatsAppConfigShimmer';
 export { IntegrationsShimmer } from './IntegrationsShimmer';
+export { KanbanPermissionsShimmer } from './KanbanPermissionsShimmer';
