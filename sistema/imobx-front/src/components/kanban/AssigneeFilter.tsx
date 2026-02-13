@@ -21,18 +21,15 @@ const FilterContainer = styled.div`
   -webkit-overflow-scrolling: touch;
   flex: 1;
   min-width: 0;
+  scroll-behavior: smooth;
 
+  /* Carrossel moderno: barra de scroll oculta, rolagem com mouse/touch mantida */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   &::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: ${props => props.theme.colors.border};
-    border-radius: 2px;
+    display: none;
+    width: 0;
+    height: 0;
   }
 
   @media (max-width: 1024px) and (min-width: 769px) {
@@ -41,10 +38,6 @@ const FilterContainer = styled.div`
 
   @media (max-width: 768px) {
     gap: 10px;
-
-    &::-webkit-scrollbar {
-      height: 3px;
-    }
   }
 
   @media (max-width: 480px) {
@@ -162,25 +155,29 @@ const UnassignedButton = styled.button<{ $isActive: boolean }>`
 
 const TaskCount = styled.div`
   position: absolute;
-  bottom: -4px;
-  right: -4px;
+  bottom: 0;
+  right: 0;
   z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: ${props => props.theme.colors.primary};
   color: white;
   font-size: 0.625rem;
   font-weight: 700;
-  padding: 2px 4px;
-  border-radius: 8px;
-  min-width: 16px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  box-sizing: border-box;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
   @media (max-width: 768px) {
     font-size: 0.55rem;
-    padding: 1px 3px;
-    min-width: 14px;
-    bottom: -3px;
-    right: -3px;
+    padding: 1px 4px;
+    min-width: 16px;
+    height: 16px;
   }
 `;
 
@@ -271,53 +268,25 @@ const VerMaisButton = styled.button`
   }
 `;
 
-const CarouselWrapper = styled.div<{ $visible: boolean }>`
+/** Quando expandido: mesmo layout de avatares agrupados (overlap), com scroll horizontal se precisar */
+const ExpandedAvatarScroll = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  /* Até ~10 avatares visíveis na linha; o restante por scroll (carrossel) */
-  max-width: min(100%, ${(36 + 8) * MAX_VISIBLE_IN_ROW + 24}px);
   overflow-x: auto;
   overflow-y: hidden;
   padding: 8px 4px 4px 0;
   -webkit-overflow-scrolling: touch;
   animation: ${expandIn} 0.25s ease-out forwards;
-  scrollbar-width: thin;
   flex: 1;
   min-width: 0;
+  scroll-behavior: smooth;
 
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   &::-webkit-scrollbar {
-    height: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: ${props => props.theme.colors.background};
-    border-radius: 3px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: ${props => props.theme.colors.border};
-    border-radius: 3px;
-  }
-`;
-
-const CarouselAvatarButton = styled.button<{ $isActive: boolean }>`
-  flex-shrink: 0;
-  background: ${props => props.theme.colors.cardBackground};
-  border: 2px solid
-    ${props =>
-      props.$isActive ? props.theme.colors.primary : props.theme.colors.cardBackground};
-  border-radius: 50%;
-  padding: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 2px ${props => props.theme.colors.cardBackground};
-
-  &:hover {
-    transform: scale(1.08);
-    border-color: ${props =>
-      props.$isActive ? props.theme.colors.primary : props.theme.colors.border};
+    display: none;
+    width: 0;
+    height: 0;
   }
 `;
 
@@ -465,44 +434,49 @@ export const AssigneeFilter: React.FC<AssigneeFilterProps> = ({
           )}
         </>
       ) : (
-        <CarouselWrapper $visible={isExpanded}>
-          {assignees.unassignedCount > 0 && (
-            <AvatarWrapper>
-              <UnassignedButton
-                $isActive={selectedAssigneeId === 'unassigned'}
-                onClick={() => handleAssigneeClick('unassigned')}
-                title={`${assignees.unassignedCount} tarefa(s) sem responsável`}
-              >
-                <MdPersonOff size={avatarSize === 32 ? 14 : 16} />
-              </UnassignedButton>
-              <TaskCount>{assignees.unassignedCount}</TaskCount>
-            </AvatarWrapper>
-          )}
-          {assignees.assigned.map(assignee => (
-            <AvatarWrapper key={assignee.id}>
-              <CarouselAvatarButton
-                $isActive={selectedAssigneeId === assignee.id}
-                onClick={() => handleAssigneeClick(assignee.id)}
-                title={`${assignee.name} - ${assignee.count} tarefa(s)`}
-              >
-                <Avatar
-                  name={assignee.name}
-                  image={assignee.avatar}
-                  size={avatarSize}
-                />
-              </CarouselAvatarButton>
-              <TaskCount>{assignee.count}</TaskCount>
-            </AvatarWrapper>
-          ))}
+        <>
+          <ExpandedAvatarScroll>
+            <AvatarStack>
+              {assignees.unassignedCount > 0 && (
+                <AvatarWrapper>
+                  <UnassignedButton
+                    $isActive={selectedAssigneeId === 'unassigned'}
+                    onClick={() => handleAssigneeClick('unassigned')}
+                    title={`${assignees.unassignedCount} tarefa(s) sem responsável`}
+                  >
+                    <MdPersonOff size={avatarSize === 32 ? 14 : 16} />
+                  </UnassignedButton>
+                  <TaskCount>{assignees.unassignedCount}</TaskCount>
+                </AvatarWrapper>
+              )}
+              {assignees.assigned.map((assignee, index) => (
+                <AvatarWrapper key={assignee.id}>
+                  <AvatarButton
+                    $isActive={selectedAssigneeId === assignee.id}
+                    $overlap={index > 0 || assignees.unassignedCount > 0}
+                    onClick={() => handleAssigneeClick(assignee.id)}
+                    title={`${assignee.name} - ${assignee.count} tarefa(s)`}
+                  >
+                    <Avatar
+                      name={assignee.name}
+                      image={assignee.avatar}
+                      size={avatarSize}
+                    />
+                  </AvatarButton>
+                  <TaskCount>{assignee.count}</TaskCount>
+                </AvatarWrapper>
+              ))}
+            </AvatarStack>
+          </ExpandedAvatarScroll>
           <VerMenosButton
             type="button"
             onClick={() => setIsExpanded(false)}
-            aria-label="Recolher lista"
+            aria-label="Mostrar menos"
           >
             <MdExpandLess size={18} />
             Ver menos
           </VerMenosButton>
-        </CarouselWrapper>
+        </>
       )}
 
       {selectedAssigneeId && (

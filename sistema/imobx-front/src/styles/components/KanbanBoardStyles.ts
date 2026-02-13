@@ -20,13 +20,13 @@ export const KanbanContainer = styled.div`
   /* Mobile */
   @media (max-width: 768px) {
     padding: 12px 8px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
   }
 
   /* Mobile pequeno */
   @media (max-width: 480px) {
     padding: 10px 6px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
 `;
 
@@ -301,7 +301,7 @@ export const KanbanBoardWrapper = styled.div<{ $hasManyColumns?: boolean }>`
   /* Desktop: scroll horizontal quando há 5+ colunas, senão distribuir igualmente */
   overflow-x: ${props => (props.$hasManyColumns ? 'auto' : 'hidden')};
   overflow-y: visible;
-  padding: 0 0 24px 0;
+  padding: 0 0 48px 0;
   position: relative;
 
   /* Prevenir seleção de texto */
@@ -368,8 +368,8 @@ export const KanbanBoardWrapper = styled.div<{ $hasManyColumns?: boolean }>`
   @media (max-width: 768px) {
     overflow-x: auto;
     overflow-y: visible;
-    padding: 0 0 16px 0;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding: 0 0 32px 0;
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
     cursor: grab;
     -webkit-overflow-scrolling: touch;
 
@@ -379,8 +379,8 @@ export const KanbanBoardWrapper = styled.div<{ $hasManyColumns?: boolean }>`
   }
 
   @media (max-width: 480px) {
-    padding: 0 0 12px 0;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 0 0 24px 0;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
   }
 `;
 
