@@ -1,0 +1,6 @@
+# Regras do repositório imobx-front
+
+## Commits
+- **Sempre fazer commit estando dentro desta pasta (`imobx-front`).**
+- Não commitar arquivos do front a partir do repositório pai (system_imob/sistema). O front tem seu próprio repositório Git aqui.
+- Ao fazer commit de alterações do frontend: `cd imobx-front` e então `git add` / `git commit`.
